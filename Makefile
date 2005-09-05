@@ -1,5 +1,5 @@
 NAME	=	lltag
-VERSION	=	0.6.1
+VERSION	=	0.6.2
 
 .PHONY: lltag clean install uninstall tarball
 
@@ -38,6 +38,10 @@ tarball::
 	cp formats /tmp/$(TARBALL)
 	cp lltag.1 /tmp/$(TARBALL)
 	cp Makefile /tmp/$(TARBALL)
-	cd /tmp && cp -a $(TARBALL) $(DEBIAN_TARBALL) && tar cfz $(DEBIAN_TARBALL).tar.gz $(DEBIAN_TARBALL) && rm -rf $(DEBIAN_TARBALL)
-	cd /tmp && tar cfj $(TARBALL).tar.bz2 $(TARBALL) && rm -rf /tmp/$(TARBALL)
+	cp COPYING /tmp/$(TARBALL)
+	cp README /tmp/$(TARBALL)
+	cp Changes /tmp/$(TARBALL)
+	cd /tmp && tar cfz $(DEBIAN_TARBALL).tar.gz $(TARBALL)
+	cd /tmp && tar cfj $(TARBALL).tar.bz2 $(TARBALL)
 	mv /tmp/$(DEBIAN_TARBALL).tar.gz /tmp/$(TARBALL).tar.bz2 ..
+	rm -rf /tmp/$(TARBALL)
