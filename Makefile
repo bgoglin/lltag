@@ -1,7 +1,7 @@
 NAME	=	lltag
-VERSION	=	0.6
+VERSION	=	0.6.1
 
-.PHONY: install uninstall tarball
+.PHONY: lltag clean install uninstall tarball
 
 DESTDIR	=	
 PREFIX	=	/usr/local
@@ -16,6 +16,9 @@ DEBIAN_TARBALL	=	$(NAME)_$(VERSION).orig
 
 lltag::
 	sed -e 's!@SYSCONFDIR@!$(SYSCONFDIR)!g' -e 's!@VERSION@!$(VERSION)!g' < lltag.in > lltag
+
+clean::
+	rm -f lltag
 
 install:: lltag
 	install -d -m 0755 $(DESTDIR)$(BINDIR) $(DESTDIR)$(SYSCONFDIR)/lltag $(DESTDIR)$(MANDIR)/man1
