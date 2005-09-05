@@ -1,3 +1,9 @@
+lltag (0.3.1)
+
+  * Add author and homepage to usage.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  1 Mar 2005 02:14:44 +0100
+
 lltag (0.3)
 
   * Format must now be passed with -F.
