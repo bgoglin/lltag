@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Brice Goglin <Brice.Goglin@ens-lyon.org>
 Build-Depends-Indep: debhelper (>= 4.0.2)
-Standards-Version: 3.6.2
+Standards-Version: 3.6.2.1
 
 Package: lltag
 Provides: llmp3tag

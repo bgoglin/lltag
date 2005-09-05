@@ -44,7 +44,7 @@ sub usage() {
     print "     -p, --nopath           Remove the path from filenames when matching\n" ;
     print map { "     -".$field_letter[$_].", --".$field_name[$_].$field_trailing_spaces[$_]
 		    ." <val>     Set the default value for "
-		    .$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
+		    .ucfirst($field_name[$_])."\n" } ( 0 .. $fields-1 ) ;
     print "     --spaces               Allow no or multiple spaces\n" ;
     print "     --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
@@ -56,7 +56,7 @@ sub usage() {
     print "     -v, --verbose          Verbose messages\n" ;
     print "     -h, --help             Show this help\n" ;
     print "   Format is composed of anything you want with special fields:\n" ;
-    print map { "     %".$field_letter[$_]." means ".$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
+    print map { "     %".$field_letter[$_]." means ".ucfirst($field_name[$_])."\n" } ( 0 .. $fields-1 ) ;
     print "     %d means Dummy text\n" ;
     print "     %% means %\n" ;
     print "\n" ;
@@ -547,13 +547,9 @@ while ( @files ) {
     $#field = $fields-1 ;
     if ($guess_opt or @parsers) {
 	print "  Didn't find any parser!\n" ;
-	#TOFIX: ask each field ?
     }
-    if ( grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
-	# only tag if there's something to actually set
-	my $res = tag_with_fields ($file, $tag_type, 0, 0, @field) ;
-	die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
-    }
+    my $res = confirm_and_tag ($file, $tag_type, 1, 0, @field) ;
+    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
 
   NEXT_FILE:
     shift ;
@@ -564,9 +560,9 @@ while ( @files ) {
 
 sub confirm_letters {
     my $behaviors = shift ;
-    my $string = "[Y" ;
+    my $string = "[Yv" ;
     $string .= "u" if $behaviors & $TAG_MAY_PREFER ;
-    $string .= "a" ;
+    $string .= "ae" ;
     $string .= "n" if $behaviors & $TAG_MAY_SKIP_PARSER ;
     $string .= "p" if $behaviors & $TAG_MAY_SKIP_PATH_PARSER ;
     $string .= "s,(h)elp]" ;
@@ -576,9 +572,11 @@ sub confirm_letters {
 sub confirm_usage {
     my $behaviors = shift ;
     print "        y => Yes, tag with this format (default)\n" ;
+    print "        v => View which fields would be set\n" ;
     print "        u => Use this format for all files until one does not match\n"
 	if $behaviors & $TAG_MAY_PREFER ;
     print "        a => Always yes, stop asking for a confirmation\n" ;
+    print "        e => Edit these fields before tagging\n" ;
     print "        n => No, try the next matching format\n"
 	if $behaviors & $TAG_MAY_SKIP_PARSER ;
     print "        p => No, try the next path matching format\n"
@@ -610,7 +608,8 @@ sub tag_with_parser {
 	    my $val = ${$i} ;
 	    $val =~ s/($sep_opt)/ /g if (defined $sep_opt) ;
 	    if ($field_set[$indice]) {
-		print "      WARNING: $field_name[$indice] already set to '$field[$indice]', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
+		print "      WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
+		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
 		goto NEXT_FIELD ;
 	    }
 	    $field[$indice] = $val ;
@@ -625,15 +624,10 @@ sub tag_with_parser {
 	$i++ ;
     }
 
-    if ( grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
-	# only tag if there's something to actually set
-	return tag_with_fields ($file, $tag_type, $confirm, $behaviors, @field) ;
-    } else {
-	return $TAG_SUCCESS ;
-    }
+    return confirm_and_tag ($file, $tag_type, $confirm, $behaviors, @field) ;
 }
 
-sub tag_with_fields {
+sub confirm_and_tag {
     my $file = shift ;
     my $tag_type = shift ;
     my $confirm = shift ;
@@ -656,6 +650,11 @@ sub tag_with_fields {
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
 	    goto TAG_IT ;
+	} elsif ($reply eq "v") {
+	    for(my $i = 0; $i < $fields; $i++) {
+		print "        ".ucfirst($field_name[$i]).$field_trailing_spaces[$i].": ".$field[$i]."\n" if defined $field[$i] ;
+	    }
+	    goto ASK_CONFIRM ;
 	} elsif ($reply =~ /^a/i) {
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
 	    goto TAG_IT ;
@@ -669,6 +668,42 @@ sub tag_with_fields {
 	    return $TAG_SKIP_PATH_PARSER ;
 	} elsif ($reply =~ /^s/i) {
 	    return $TAG_SKIP_FILE ;
+	} elsif ($reply =~ /^e/i) {
+
+	    my @edit_field = @field ;
+	    $#edit_field = $fields-1 ;
+	  ASK_EDIT:
+	    print "        Edit a field [atAngyec,(h)elp] ? " ;
+	    my $edit_reply = <> ;
+	    chomp $edit_reply ;
+	    if ($edit_reply =~ /^($field_letters)$/) {
+		my $i = ( grep { $edit_reply eq $field_letter[$_] } ( 0 .. $fields-1 ) ) [0] ;
+		print "          Enter ".ucfirst($field_name[$i])." field (" ;
+		print "<enter> to keep '".$edit_field[$i]."', " if defined $edit_field[$i] ;
+		print "CLEAR to clear): " ;
+		my $val = <> ;
+		chomp $val ;
+		if ($val) {
+			$val = "" if $val eq "CLEAR" ;
+			$edit_field[$i] = $val ;
+		}
+		goto ASK_EDIT ;
+	    } elsif ($edit_reply eq "e") {
+		@field = @edit_field ;
+		goto TAG_IT ;
+	    } elsif ($edit_reply eq "c") {
+		goto ASK_CONFIRM ;
+	    } else {
+		for(my $i = 0; $i < $fields; $i++) {
+		    my $val = $edit_field[$i];
+		    $val = "<unchanged>" if not defined $val ;
+		    print "          ".$field_letter[$i]." => Edit ".ucfirst($field_name[$i]).$field_trailing_spaces[$i]." (='".$val."')\n" ;
+		}
+		print "          e => End edition and tag\n" ;
+		print "          c => Cancel edition\n" ;
+		goto ASK_EDIT ;
+	    }
+
 	} else {
 	    confirm_usage ($behaviors) ;
 	    goto ASK_CONFIRM ;
@@ -676,6 +711,27 @@ sub tag_with_fields {
     }
 
   TAG_IT:
+    my $res = tag_with_fields ($file, $tag_type, @field) ;
+    return $TAG_SUCCESS_PREFERED if $prefered and $res == $TAG_SUCCESS ;
+    return $res ;
+}
+
+sub tag_with_fields {
+    my $file = shift ;
+    my $tag_type = shift ;
+
+    # remaining args are fields
+    my @field ;
+    for(my $i = 0; $i < $fields; $i++) {
+	$field[$i] = shift;
+    }
+
+    # is there actually something to do ?
+    if ( ! grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
+	print "      Nothing to do.\n" ;
+	return $TAG_SUCCESS ;
+    }
+
     # tagging command line
     my @system_args ;
     if ($tag_type eq $ogg_type) {
@@ -704,6 +760,5 @@ sub tag_with_fields {
 	system @system_args ;
     }
 
-    return $TAG_SUCCESS_PREFERED if $prefered ;
     return $TAG_SUCCESS ;
 }
