@@ -24,6 +24,7 @@ sub usage() {
     print "   Available options are:\n" ;
     print "     -F, --format <format>  Try format\n" ;
     print "     -G, --guess            Guess format\n" ;
+    print "     -R, --recursive        Recursively search all files in subdirectories\n" ;
     print "     -p, --nopath           Remove the path from filenames when matching\n" ;
     print map { "     -".$field_letter[$_].", --".$field_name[$_]
 		    ." <val>     Set the default value for "
@@ -55,13 +56,14 @@ my $sep_opt = undef ;
 my $type_opt = undef ;
 my $verbose_opt = 0 ;
 my $yes_opt = 0 ;
+my $recursive_opt = 0 ;
 
 my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
 
 # subregexp
-my $match_path = '(?:.*\/)*' ;
-my $match_any = '((?:[^ ]+ +)*[^ ]+)' ;
+my $match_path = '(?:[^/]*\/)*' ;
+my $match_any = '((?:[^ /]+ +)*[^ /]+)' ;
 my $match_num = '([0-9]+)' ;
 my $match_space = ' ';
 my $match_spaces = ' *' ;
@@ -77,6 +79,7 @@ my @format_strings = () ;
 GetOptions(
 	   'F|format=s'   => \@format_strings,
 	   'G|guess'      => \$guess_opt,
+	   'R|recursive'  => \$recursive_opt,
 	   'p|nopath'     => \$nopath_opt,
 	   'spaces'       => sub { $match_limit = $match_space = $match_spaces ; },
 	   'sep=s'        => \$sep_opt,
@@ -95,7 +98,25 @@ die "No files specified\n" if !@ARGV ;
 
 my @files = () ;
 while ( @ARGV ) {
-    push (@files, shift @ARGV) ;
+    if ($recursive_opt) {
+	my $dir = shift @ARGV ;
+	open FIND, "find $dir |" ;
+	my @dirfiles = <FIND> ;
+	close FIND ;
+	foreach my $file (@dirfiles) {
+	    chomp $file ;
+	    if (-f $file) {
+		push (@files, $file) ;
+	    }
+	}
+    } else {
+	my $file = shift @ARGV ;
+	if (-f $file) {
+	    push (@files, $file) ;
+	} else {
+	    print "Skipping the non-file '$file'\n" ;
+	}
+    }
 }
 
 # yes/ask option status may vary with user confirmation replies

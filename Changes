@@ -1,3 +1,12 @@
+lltag (0.4.2)
+
+  * Add -R|--recursive option.
+  * Check that files are really files.
+  * Fix path matching which could lead to parts of the path matched with
+    the filename.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon,  7 Mar 2005 00:00:04 +0100
+
 lltag (0.4.1)
 
   * Add manpage.

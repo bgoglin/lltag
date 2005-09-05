@@ -8,6 +8,7 @@ lltag \- tag mp3/ogg music files automagically
 .B lltag
 .RB [ \-F\ format ]
 .RB [ \-G ]
+.RB [ \-R ]
 .RB [ \-p ]
 .RB [ \-a\ artist ]
 .RB [ \-t\ title ]
@@ -90,6 +91,9 @@ Tag all files as OGG files, using \fIvorbiscomment\fR.
 .TP
 .I "\-p, \-\-nopath"
 Do not consider the path of files when matching.
+.TP
+.I "\-R, \-\-recursive"
+Recursively search for files in subdirectories.
 .TP
 .I "\-\-sep char"
 Replace the specified character with space in tags.
