@@ -1,0 +1,46 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper.
+# GNU copyright 1997 to 1999 by Joey Hess.
+
+#export DH_VERBOSE=1
+export DH_COMPAT=3
+
+#configure: configure-stamp
+#configure-stamp:
+#	dh_testdir
+#	touch configure-stamp
+
+#build: configure-stamp build-stamp
+build: build-stamp
+build-stamp:
+	dh_testdir
+	touch build-stamp
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	install -D -m 0755 llmp3tag $(CURDIR)/debian/llmp3tag/usr/bin/llmp3tag
+
+# Build architecture-independent files here.
+binary-indep: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_perl
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep
+.PHONY: build clean binary-indep binary install configure

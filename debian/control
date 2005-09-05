@@ -1,0 +1,12 @@
+Source: llmp3tag
+Section: utils
+Priority: optional
+Maintainer: Brice Goglin <Brice.Goglin@ens-lyon.org>
+
+Package: llmp3tag
+Architecture: all
+Provides: llmp3tag
+Depends: ${perl:Depends}, mp3info
+Description: Loulous backup
+  llmp3tag sets ID3 tags of mp3 files using a command line
+  format matching filenames.
