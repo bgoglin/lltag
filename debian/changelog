@@ -1,13 +1,20 @@
+lltag (0.3-1) unstable; urgency=low
+
+  * New upstream release, now named lltag.
+  * Split Debian and upstream changelogs.
+  * Use upstream Makefile in debian/rules.
+  * Check with lintian.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 27 Feb 2005 12:10:35 +0100
+
 llmp3tag (0.2-1) unstable; urgency=low
 
-  * Rewrite parsing of the format to create indexed regexp to fix some issues.
-  * %n now only matches numbers.
-  * Some cleanup in the code.
+  * New upstream release.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 27 Feb 2005 02:14:50 +0100
 
 llmp3tag (0.1-1) unstable; urgency=low
 
-  * Initial release.
+  * Initial upstream release.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Wed, 15 Dec 2004 19:47:00 +0200

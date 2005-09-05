@@ -1,0 +1,29 @@
+lltag (0.3)
+
+  * Format must now be passed with -F.
+  * Multiple formats are allowed, the first that matches will be used.
+  * Extension is no-longer included in format.
+  * Support both ogg and mp3 tagging.
+  * --ogg and --mp3 options to force tagging instead of by-extension detection.
+  * Detect wrong %x code in format.
+  * Detect and warn about problematic regexps.
+  * Cleanup of messages.
+  * Large cleanup of the code.
+  * Split Debian and upstream changelogs.
+  * Add a Makefile.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 27 Feb 2005 11:47:16 +0100
+
+llmp3tag (0.2)
+
+  * Rewrite parsing of the format to create indexed regexp to fix some issues.
+  * %n now only matches numbers.
+  * Some cleanup in the code.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 27 Feb 2005 02:14:50 +0100
+
+llmp3tag (0.1)
+
+  * Initial release.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Wed, 15 Dec 2004 19:47:00 +0200

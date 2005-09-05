@@ -1,12 +1,19 @@
-Source: llmp3tag
+Source: lltag
 Section: utils
 Priority: optional
 Maintainer: Brice Goglin <Brice.Goglin@ens-lyon.org>
+Build-Depends-Indep: debhelper (>= 4.0.2)
+Standards-Version: 3.6.1
 
-Package: llmp3tag
-Architecture: all
+Package: lltag
 Provides: llmp3tag
-Depends: ${perl:Depends}, mp3info
+Replaces: llmp3tag
+Conflicts: llmp3tag
+Architecture: all
+Depends: ${perl:Depends}, mp3info, vorbis-tools
 Description: Loulous backup
-  llmp3tag sets ID3 tags of mp3 files using a command line
-  format matching filenames.
+ lltag sets ID3 tags of mp3 files and Ogg tag using
+ command line formats matching filenames.
+ It can be used to handle multiple files at once using
+ different formats. It will try each format until one
+ matches.

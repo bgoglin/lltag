@@ -1,0 +1,236 @@
+#!/usr/bin/perl -w
+
+use strict ;
+no strict "refs" ;
+
+# format parameters
+# (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year)
+my @field_name = ('Artist', 'Title', 'Album', 'Track Number', 'Genre', 'Year') ;
+my @field_format_name = ('a', 't', 'A', 'n', 'g', 'y') ;
+my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y') ;
+my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE') ;
+my @field_default = (undef, undef, undef, undef, undef, undef) ;
+my $fields = $#field_name + 1 ;
+
+# usage
+sub usage() {
+    print STDERR $0." is a frontend to flexibly tag music files.\n" ;
+    print STDERR "Usage: ".$0." [options] files...\n" ;
+    print STDERR "   available options are:\n" ;
+    print STDERR "     -F <format>  Try format\n" ;
+    print STDERR "     --mp3/--ogg  Force mp3 or ogg tagging instead of by-extension detection" ;
+    print STDERR "     --dry-run    Do nothing but show what would have been done\n" ;
+    print STDERR "     -v           Verbose\n" ;
+    print STDERR "     -b           Remove the path from filenames when matching the format\n" ;
+    print STDERR (map { "     -".$field_format_name[$_]." <val>     Set the default value for "
+			    .$field_name[$_]."\n" } ( 0 .. $fields-1 )) ;
+    print STDERR "     -h           Show this help\n" ;
+    print STDERR "   format is composed of anything you want with special fields:\n" ;
+    print STDERR (map { "     %".$field_format_name[$_]." means ".$field_name[$_]."\n" } ( 0 .. $fields-1 )) ;
+    print STDERR "     %d means Dummy text\n" ;
+    print STDERR "     %% means %\n" ;
+    exit 1;
+}
+
+# cmdline options
+my $basename_opt = 0 ;
+my $dryrun_opt = 0 ;
+my $verbose_opt = 0 ;
+my $type_opt = undef ;
+
+my $ogg_type = "ogg" ;
+my $mp3_type = "mp3" ;
+
+# parsers
+my @format_strings = () ;
+
+usage() if ($#ARGV == -1) ;
+
+while (1) {
+    my $arg = $ARGV[0] ;
+    last if !($arg =~ /^-/) ;
+    if ($arg eq "-F") {
+	@format_strings = ( @format_strings, $ARGV[1] ) ;
+	shift ;
+    } elsif ($arg eq "--mp3") {
+	$type_opt = $mp3_type ;
+    } elsif ($arg eq "--ogg") {
+	$type_opt = $ogg_type ;
+    } elsif ($arg eq "-b") {
+	$basename_opt = 1 ;
+    } elsif ($arg eq "--dry-run") {
+	$dryrun_opt = 1 ;
+    } elsif ($arg eq "-v") {
+	$verbose_opt = 1 ;
+    } elsif ($arg eq "-h") {
+	usage() ;
+    } else {
+	# default field value
+	my $i = (grep { $arg eq "-".$field_format_name[$_] } ( 0 .. $fields-1 )) [0] ;
+	if (defined $i) {
+	    $field_default[$i] = $ARGV[1] ;
+	    shift ;
+	}
+    }
+    shift ;
+}
+
+# change format names into a parsing string
+my $field_format_names = (join '|', @field_format_name).'|d' ;
+
+# subregexp
+my $match_any = "(.*)" ;
+my $match_num = "([0-9]*)" ;
+
+# change a format strings into usable infos
+sub study_format {
+    my $format_string = shift ;
+
+    print "Studying format '". $format_string ."'...\n" ;
+
+    my $parser ;
+    $parser->{format} = $format_string ;
+
+    # create the regexp and store indice fields
+    my @array = split(//, $format_string) ;
+    my $j = 0 ;
+    for(my $i = 0; $i < @array - 1; $i++) {
+	# if that's not a %, keep it
+	next unless $array[$i] eq "%" ;
+	# remove % and check next char
+	splice (@array, $i, 1) ;
+	# replace the char with the matching
+	my $char = $array[$i] ;
+	next if $char eq "%" ;
+	if ($array[$i] eq "n") {
+	    $array[$i] = $match_num ;
+	} elsif ($array[$i] =~ /$field_format_names/) {
+	    $array[$i] = $match_any ;
+	} else {
+	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	}
+	# store the indice
+	if ($char eq "d") {
+	    $parser->{$j} = -1 ;
+	} else {
+	    my @indices = grep { $char eq $field_format_name[$_] } ( 0 .. $fields-1 ) ;
+	    $parser->{$j} = $indices[0] ;	
+	}
+	$j++ ;
+    }
+    
+    # done
+    $parser->{regexp} = join("", @array) ;
+    $parser->{indices} = $j ;
+
+    # check insolvable regexp
+    for(my $i = 0; $i < @array - 1; $i++) {
+	my $char = $array[$i] ;
+	my $nextchar = $array[$i+1] ;
+	if ( $char eq $match_any and
+	     ( $nextchar eq $match_any or $nextchar eq $match_num ) ) {
+	    print "  WARNING: Format '". $format_string
+		."' leads to problematic subregexp '". $char.$nextchar
+		."' that won't probably match as desired.\n" ;
+	}
+    }
+    
+    if ($verbose_opt) {
+	print "  Format string will parse with: ". $parser->{regexp} ."\n" ;
+	print "    Fields are: ". (join ';', 
+				 map ( $parser->{$_} ."(".
+				       ( $parser->{$_} == -1 ? "d" : $field_format_name[$parser->{$_}] )
+				       .")" , (0..$j-1) )
+				 )."\n" ;
+    }
+
+    return $parser ;
+}
+
+# get the parsers
+my @parsers = map ( study_format($_), @format_strings ) ;
+
+die "No format to try\n" unless @parsers ;
+
+# parse remaining arguments (they are supposed to be filenames)
+while ( defined $ARGV[0] ) {
+    my $file = $ARGV[0] ;
+    print "Tagging file \"".$file."\"...\n" ;
+
+    # removing path if asked
+    if ($basename_opt && $file =~ /\//) {
+	$file =~ s/.*\/([^\/]+)/$1/ ;
+    }
+    
+    # split into filename and extension
+    my @parts = split (/\./, $file) ;
+    my $extension = pop @parts ;
+    my $filename = join (".", @parts) ;
+    
+    # type of tagging
+    my $tag_type = $type_opt ;
+    if (not defined $tag_type) {
+	if ($extension eq "ogg") {
+	    $tag_type = $ogg_type ;
+	} elsif ($extension eq "mp3") {
+	    $tag_type = $mp3_type ;
+	} else {
+	    print STDERR "  ERROR: Don't know what type is file '$file'\n" ;
+	    goto NEXT_FILE;
+	}
+    }
+
+    # getting fields
+    my @field = @field_default ;
+    $#field = $fields ;
+
+    # try each format until one works
+    foreach my $parser (@parsers) {
+	print "  with format '". $parser->{format} ."'...\n" ;
+	if ($filename =~ $parser->{regexp}) {
+	    my $i = 1 ;
+	    while ( $i <= $parser->{indices} ) {
+		if ( $parser->{$i-1} >= 0 ) {
+		    $field[$parser->{$i-1}] = ${$i} ;
+		    if ($verbose_opt) {
+			print "    Field '". $field_name[$parser->{$i-1}]
+			    ."' is '". ${$i} ."'\n" ;
+		    }
+		}
+		$i++ ;
+	    }
+	    
+	    # tagging command line
+	    my @system_args ;
+	    if ($tag_type eq $ogg_type) {
+		@system_args =
+		    ( "vorbiscomment", "-wq",
+		      ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
+			( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+			) ,
+		      $file
+		      ) ;
+	    } elsif ($tag_type eq $mp3_type) {
+		@system_args =
+		    ( "mp3info" ,
+		      ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
+			( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+			) ,
+		      $file
+		      ) ;
+	    }
+
+	    # tag
+	    if ($dryrun_opt) {
+		print "    ". +(join '#', @system_args) ."\n" ;
+	    } else {
+		system @system_args ;
+		goto NEXT_FILE ;
+	    }
+	} else {
+	    print STDERR "    ERROR: Filename '". $file ."' does not match format '". $parser->{format} ."'.\n" ;
+	}
+    }
+  NEXT_FILE:
+    shift ;
+}

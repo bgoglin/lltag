@@ -26,13 +26,13 @@ install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	install -D -m 0755 llmp3tag $(CURDIR)/debian/llmp3tag/usr/bin/llmp3tag
+	make install DESTDIR=$(CURDIR)/debian/lltag PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
 
 # Build architecture-independent files here.
 binary-indep: build install
 	dh_testdir
 	dh_testroot
-	dh_installchangelogs
+	dh_installchangelogs Changes
 	dh_installdocs
 	dh_compress
 	dh_fixperms
