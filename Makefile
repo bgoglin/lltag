@@ -1,5 +1,5 @@
 NAME	=	lltag
-VERSION	=	0.5.1
+VERSION	=	0.5.2
 
 .PHONY: install uninstall tarball
 
@@ -11,10 +11,12 @@ DATADIR	=	$(PREFIX)/share
 SYSCONFDIR	=	$(PREFIX)/etc
 MANDIR	=	$(PREFIX)/man
 
-TARBALL	=	$(NAME)_$(VERSION).orig
+TARBALL	=	$(NAME)-$(VERSION)
+DEBIAN_TARBALL	=	$(NAME)_$(VERSION).orig
 
 install::
 	install -d -m 0755 $(DESTDIR)$(BINDIR) $(DESTDIR)$(SYSCONFDIR)/lltag $(DESTDIR)$(MANDIR)/man1
+	sed -e 's!@SYSCONFDIR@!$(SYSCONFDIR)!g' < lltag.in > lltag
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
 	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag
 	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1
@@ -27,10 +29,10 @@ uninstall::
 
 tarball::
 	mkdir /tmp/$(TARBALL)
-	cp lltag /tmp/$(TARBALL)
+	cp lltag.in /tmp/$(TARBALL)
 	cp formats /tmp/$(TARBALL)
 	cp lltag.1 /tmp/$(TARBALL)
 	cp Makefile /tmp/$(TARBALL)
-	cd /tmp && tar cfz $(TARBALL).tar.gz $(TARBALL)
-	rm -rf /tmp/$(TARBALL)
-	mv /tmp/$(TARBALL).tar.gz ..
+	cd /tmp && cp -a $(TARBALL) $(DEBIAN_TARBALL) && tar cfz $(DEBIAN_TARBALL).tar.gz $(DEBIAN_TARBALL) && rm -rf $(DEBIAN_TARBALL)
+	cd /tmp && tar cfj $(TARBALL).tar.bz2 $(TARBALL) && rm -rf /tmp/$(TARBALL)
+	mv /tmp/$(DEBIAN_TARBALL).tar.gz /tmp/$(TARBALL).tar.bz2 ..
