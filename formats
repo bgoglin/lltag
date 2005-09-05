@@ -43,6 +43,11 @@ type = path
 regexp = %P%L%A%L/%L%A%L
 indices = a,A
 
+[%a - %A]
+type = path
+regexp = %P%L%A%S-%S%A%L
+indices = a,A
+
 [%a]
 type = path
 regexp = %P%L%A%L

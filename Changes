@@ -1,3 +1,10 @@
+lltag (0.5.1)
+
+  * Fix -G option for directory containing spaces.
+  * Add missing '%a - %A' path format.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Wed, 30 Mar 2005 23:53:34 +0200
+
 lltag (0.5)
 
   * Add /etc/lltag/formats file to store formats.
