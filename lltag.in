@@ -78,6 +78,7 @@ my $verbose_opt = 0 ;
 my $yes_opt = 0 ;
 my $recursive_opt = 0 ;
 my $list_formats_opt = 0 ;
+my $default_opt = 0 ;
 
 my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
@@ -113,7 +114,9 @@ GetOptions(
 	   'h|help'       => sub { usage () ; },
 	   'V|version'    => sub { version () ; },
 	   'L|list'       => \$list_formats_opt,
-	   map { $field_letter[$_].'|'.$field_name[$_].'=s' => \$field_default[$_], } ( 0 .. $fields-1 )
+	   map { my $i = $_; $field_letter[$i].'|'.$field_name[$i].'=s'
+		=> sub { shift ; $field_default[$i] = shift ; $default_opt = 1 ; },
+	  	} ( 0 .. $fields-1 )
 	   ) or usage () ;
 
 # yes/ask option status may vary with user confirmation replies
@@ -124,8 +127,22 @@ my $current_ask_opt = $ask_opt ;
 $match_limit = $match_space = $match_spaces if $spaces_opt ;
 
 # if no parsers and no guess
-die "No format to try\n" unless @format_strings or $guess_opt or $list_formats_opt;
+die "No format to try\n" unless @format_strings or $guess_opt or $default_opt or $list_formats_opt;
 # TOFIX: show tags instead of tagging ? add an option to show tags ?
+
+#######################################################
+# Tagging return values
+my $TAG_SUCCESS = 0 ;
+my $TAG_SKIP_FILE = -1 ;
+my $TAG_SKIP_PARSER = -2 ;
+my $TAG_SKIP_PATH_PARSER = -3 ;
+my $TAG_SUCCESS_PREFERED = 1 ;
+
+#######################################################
+# Tagging acceptable behavior
+my $TAG_MAY_SKIP_PARSER = 1 ;
+my $TAG_MAY_SKIP_PATH_PARSER = 2 ;
+my $TAG_MAY_PREFER = 4 ;
 
 #######################################################
 # internal parsers
@@ -293,20 +310,25 @@ sub parse_file_with_internal_parsers
 	foreach my $path_parser (@internal_path_parsers) {
 	    if ($path =~ /^$path_parser->{regexp}$/) {
 		foreach my $filename_parser (@internal_filename_parsers) {
-		    # match the whole path+filename to get a clean @_ for tag_file
+		    # match the whole path+filename to get a clean @_ for tag_with_parser
 		    if ("$path/$filename" =~ m/^$path_parser->{regexp}\/$filename_parser->{regexp}$/) {
 			print "    '$path_parser->{title}/$filename_parser->{title}' matches this file\n" ;
 			my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
 			# try to tag, with confirmation
-			my $res = tag_file ($file, $tag_type, $whole_parser, 1, @_) ;
-			if ($res <= 0) {
+			my $res = tag_with_parser ($file, $tag_type, $whole_parser,
+						   1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER, @_) ;
+			if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERED || $res == $TAG_SKIP_FILE) {
+			    if ($res == $TAG_SUCCESS_PREFERED) {
+				$preferred_parser = $whole_parser ;
+			    }
 			    return $res ;
 			}
-			# try next path parser if res == 2
-			if ($res == 2) {
+			# try next path parser if asked
+			if ($res == $TAG_SKIP_PATH_PARSER) {
 			    goto NEXT_PATH_PARSER;
 			}
-			# else try next parser
+			# try next parser
+			die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
 		    }
 		}
 	    }
@@ -318,10 +340,16 @@ sub parse_file_with_internal_parsers
 	    if ($filename =~ /^$filename_parser->{regexp}$/) {
 		print "    '$filename_parser->{title}' matches this file\n" ;
 		# try to tag, with confirmation
-		my $res = tag_file ($file, $tag_type, $filename_parser, 1, @_) ;
-		if ($res <= 0) {
+		my $res = tag_with_parser ($file, $tag_type, $filename_parser,
+					   1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
+		if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERED || $res == $TAG_SKIP_FILE) {
+		    if ($res == $TAG_SUCCESS_PREFERED) {
+			$preferred_parser = $filename_parser ;
+		    }
 		    return $res ;
 		}
+		# try next parser
+		die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
 	    }
 	}
     }
@@ -347,13 +375,13 @@ sub generate_user_parser {
     # merge spaces if --spaces was passed
     if ($spaces_opt) {
 	$format_string =~ s/ +/ /g ;
-    } 
-    
+    }
+
     # create the regexp and store indice fields
     my @array = split(//, $format_string) ;
     my $j = 0 ;
     for(my $i = 0; $i < @array - 1; $i++) {
-	
+
 	# normal characters
 	if ($array[$i] ne "%") {
 	    if ($array[$i] eq " ") {
@@ -388,7 +416,7 @@ sub generate_user_parser {
 	}
 	$j++ ;
     }
-    
+
     # done
     if ($spaces_opt) {
 	$parser->{regexp} = $match_limit. join("", @array) .$match_limit ;
@@ -408,10 +436,10 @@ sub generate_user_parser {
 		."' that won't probably match as desired.\n" ;
 	}
     }
-    
+
     if ($verbose_opt) {
 	print "  Format string will parse with: ". $parser->{regexp} ."\n" ;
-	print "    Fields are: ". (join ';', 
+	print "    Fields are: ". (join ';',
 				 map ( $parser->{$_} ."(".
 				       ( $parser->{$_} == -1 ? "d" : $field_letter[$parser->{$_}] )
 				       .")" , (0..$j-1) )
@@ -436,11 +464,15 @@ sub parse_file_with_user_parsers
 	if ($filename =~ /^$parser->{regexp}$/) {
 	    print "\n" ;
 	    # try to tag, without confirmation
-	    my $res = tag_file ($file, $tag_type, $parser, 0, @_) ;
-	    if ($res <= 0) {
+	    my $res = tag_with_parser ($file, $tag_type, $parser, 0, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
+	    if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERED || $res == $TAG_SKIP_FILE) {
+		if ($res == $TAG_SUCCESS_PREFERED) {
+		    $preferred_parser = $parser ;
+		}
 		return $res ;
 	    }
 	    # try next parser
+	    die "Unknown tag return value: $res.\n" if $res != $TAG_SKIP_PARSER ;
 	} else {
 	    print "Does not match.\n" ;
 	}
@@ -461,12 +493,12 @@ while ( @files ) {
     if ($nopath_opt && $filename =~ /\//) {
 	$filename =~ s/.*\/([^\/]+)/$1/ ;
     }
-    
+
     # split into filename and extension
     my @parts = split (/\./, $filename) ;
     my $extension = pop @parts ;
     $filename = join (".", @parts) ;
-    
+
     # split into filename and extension
     my $tag_type = $type_opt ;
     if (not defined $tag_type) {
@@ -480,11 +512,14 @@ while ( @files ) {
 	}
     }
 
+    # try the prefered parser first
     if (defined $preferred_parser) {
 	if ($filename =~ /^$preferred_parser->{regexp}$/) {
-	    if (tag_file ($file, $tag_type, $preferred_parser, 0, @_) <= 0) {
-		goto NEXT_FILE ;
-	    }
+	    my $res = tag_with_parser ($file, $tag_type, $preferred_parser, 0, 0, @_) ;
+	    # there can't be any confirmation here, SKIP is not possible
+	    # only SUCCESS if possible
+	    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS ;
+	    goto NEXT_FILE ;
 	} else {
 	    print "  Preferred parser '$preferred_parser->{title}' does not match this file\n" ;
 	    print "    Returning to original mode\n" ;
@@ -493,18 +528,27 @@ while ( @files ) {
 	$preferred_parser = undef ;
     }
 
+    # try user provided parsers then
     if (parse_file_with_user_parsers($file, $filename, $tag_type) <= 0) {
 	goto NEXT_FILE ;
     }
 
+    # try to guess my internal format database then
     if ($guess_opt) {
 	if (parse_file_with_internal_parsers($file, $filename, $tag_type) <= 0) {
 	    goto NEXT_FILE ;
 	}
     }
 
-    print "  Didn't find any parser!\n" ;
-    #TOFIX: ask each field ?
+    # tag with default values only
+    my @field = @field_default ;
+    $#field = $fields-1 ;
+    if ($guess_opt or @parsers) {
+	print "  Didn't find any parser!\n" ;
+	#TOFIX: ask each field ?
+    }
+    my $res = tag_with_fields ($file, $tag_type, 0, 0, @field) ;
+    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
 
   NEXT_FILE:
     shift ;
@@ -513,24 +557,41 @@ while ( @files ) {
 #######################################################
 # effective tagging
 
+sub confirm_letters {
+    my $behaviors = shift ;
+    my $string = "[Y" ;
+    $string .= "u" if $behaviors & $TAG_MAY_PREFER ;
+    $string .= "a" ;
+    $string .= "n" if $behaviors & $TAG_MAY_SKIP_PARSER ;
+    $string .= "p" if $behaviors & $TAG_MAY_SKIP_PATH_PARSER ;
+    $string .= "s,(h)elp]" ;
+    return $string ;
+}
+
 sub confirm_usage {
+    my $behaviors = shift ;
     print "        y => Yes, tag with this format (default)\n" ;
-    print "        u => Use this format for all remaining matching files\n" ;
+    print "        u => Use this format for all files until one does not match\n"
+	if $behaviors & $TAG_MAY_PREFER ;
     print "        a => Always yes, stop asking for a confirmation\n" ;
-    print "        n => No, try the next matching format\n" ;
-    print "        p => No, try the next path matching format\n" ;
+    print "        n => No, try the next matching format\n"
+	if $behaviors & $TAG_MAY_SKIP_PARSER ;
+    print "        p => No, try the next path matching format\n"
+	if $behaviors & $TAG_MAY_SKIP_PATH_PARSER ;
     print "        s => Skip this file, don't tag it\n" ;
     print "        h => Show this help\n" ;
 }
 
-sub tag_file {
+sub tag_with_parser {
     my $file = shift ;
     my $tag_type = shift ;
     my $parser = shift ;
     my $confirm = shift ;
+    my $behaviors = shift ;
 
+    # get default fields (without modifying the original)
     my @field = @field_default ;
-    $#field = $fields ;
+    $#field = $fields-1 ;
 
     # get fields and show them if asked
     my $i = 1 ;
@@ -540,7 +601,7 @@ sub tag_file {
 	    if (defined $sep_opt) {
 		$val =~ s/$sep_opt/ /g ;
 	    }
-	    $field[$parser->{$i-1}] = $val ;		
+	    $field[$parser->{$i-1}] = $val ;
 	    if ($verbose_opt or $confirm or $current_ask_opt) {
 		print "      ". ucfirst($field_name[$parser->{$i-1}])
 		    .$field_trailing_spaces[$parser->{$i-1}]
@@ -550,10 +611,28 @@ sub tag_file {
 	$i++ ;
     }
 
+    return tag_with_fields ($file, $tag_type, $confirm, $behaviors, @field) ;
+}
+
+sub tag_with_fields {
+    my $file = shift ;
+    my $tag_type = shift ;
+    my $confirm = shift ;
+    my $behaviors = shift ;
+
+    # remaining args are fields
+    my @field ;
+    for(my $i = 0; $i < $fields; $i++) {
+	$field[$i] = shift;
+    }
+
+    # prefer this type of tagging ?
+    my $prefered = 0 ;
+
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "      Really tag the file [Yuanps,(h)elp] ? " ;
+	print "      Really tag the file ".(confirm_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
@@ -561,29 +640,28 @@ sub tag_file {
 	} elsif ($reply =~ /^a/i) {
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
 	    goto TAG_IT ;
-	} elsif ($reply =~ /^u/i) {
-	    $preferred_parser = $parser ;
+	} elsif ($behaviors & $TAG_MAY_PREFER and $reply =~ /^u/i) {
+	    $prefered = 1 ;
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
 	    goto TAG_IT ;
-	} elsif ($reply =~ /^n/i) {
-	    return 1 ;
-	} elsif ($reply =~ /^p/i) {
-	    return 2 ;
+	} elsif ($behaviors & $TAG_MAY_SKIP_PARSER and $reply =~ /^n/i) {
+	    return $TAG_SKIP_PARSER ;
+	} elsif ($behaviors & $TAG_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
+	    return $TAG_SKIP_PATH_PARSER ;
 	} elsif ($reply =~ /^s/i) {
-	    return -1 ;
+	    return $TAG_SKIP_FILE ;
 	} else {
-	    confirm_usage () ;
+	    confirm_usage ($behaviors) ;
 	    goto ASK_CONFIRM ;
 	}
     }
-    
+
   TAG_IT:
     # tagging command line
     my @system_args ;
     if ($tag_type eq $ogg_type) {
 	@system_args =
-	    ( "vorbiscomment", "-wq",
-	      ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
+	    ( "vorbiscomment", "-wq", ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
 		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
 		) ,
 	      $file
@@ -597,7 +675,7 @@ sub tag_file {
 	      $file
 	      ) ;
 	    }
-    
+
     # show command line and really tag if asked
     if ($dryrun_opt or $verbose_opt) {
 	print "      ". +(join '# #', @system_args) ."\n" ;
@@ -607,5 +685,6 @@ sub tag_file {
 	system @system_args ;
     }
 
-    return 0 ;
-}    
+    return $TAG_SUCCESS_PREFERED if $prefered ;
+    return $TAG_SUCCESS ;
+}
