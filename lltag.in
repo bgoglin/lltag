@@ -15,7 +15,8 @@ my $lltag_format_filename = "formats" ;
 #######################################################
 # format parameters
 # (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year)
-my @field_name = ('artist', 'title ', 'album ', 'number', 'genre ', 'year  ') ;
+my @field_name = ('artist', 'title', 'album', 'number', 'genre', 'year') ;
+my @field_trailing_spaces = ('', ' ', ' ', '', ' ', '  ') ;
 my @field_letter = ('a', 't', 'A', 'n', 'g', 'y') ;
 my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y') ;
 my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE') ;
@@ -23,16 +24,25 @@ my @field_default = (undef, undef, undef, undef, undef, undef) ;
 my $fields = $#field_name + 1 ;
 
 #######################################################
+# version
+my $version = "@VERSION@" ;
+
+sub version() {
+    print "This is lltag version $version.\n" ;
+    exit 0 ;
+}
+
+#######################################################
 # usage
 sub usage() {
-    print $0." is a frontend to tag MP3/OGG files automagically.\n" ;
+    print $0." $version is a frontend to tag MP3/OGG files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
     print "   Available options are:\n" ;
     print "     -F, --format <format>  Try format\n" ;
     print "     -G, --guess            Guess format\n" ;
     print "     -R, --recursive        Recursively search all files in subdirectories\n" ;
     print "     -p, --nopath           Remove the path from filenames when matching\n" ;
-    print map { "     -".$field_letter[$_].", --".$field_name[$_]
+    print map { "     -".$field_letter[$_].", --".$field_name[$_].$field_trailing_spaces[$_]
 		    ." <val>     Set the default value for "
 		    .$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
     print "     --spaces               Allow no or multiple spaces\n" ;
@@ -41,6 +51,8 @@ sub usage() {
     print "     --ask                  Always ask for confirmation before tagging\n" ;
     print "     --mp3/--ogg            Force mp3 or ogg instead of by-extension detection\n" ;
     print "     --dry-run              Do nothing but show what would have been done\n" ;
+    print "     -L, --list             List internal formats\n" ;
+    print "     -V, --version          Show lltag version\n" ;
     print "     -v, --verbose          Verbose messages\n" ;
     print "     -h, --help             Show this help\n" ;
     print "   Format is composed of anything you want with special fields:\n" ;
@@ -65,6 +77,7 @@ my $type_opt = undef ;
 my $verbose_opt = 0 ;
 my $yes_opt = 0 ;
 my $recursive_opt = 0 ;
+my $list_formats_opt = 0 ;
 
 my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
@@ -98,7 +111,9 @@ GetOptions(
 	   'dry-run'      => \$dryrun_opt,
 	   'v|verbose'    => \$verbose_opt,
 	   'h|help'       => sub { usage () ; },
-	   map { $field_letter[$_] => \$field_default[$_] } ( 0 .. $fields-1 )
+	   'V|version'    => sub { version () ; },
+	   'L|list'       => \$list_formats_opt,
+	   map { $field_letter[$_].'|'.$field_name[$_].'=s' => \$field_default[$_], } ( 0 .. $fields-1 )
 	   ) or usage () ;
 
 # yes/ask option status may vary with user confirmation replies
@@ -109,8 +124,107 @@ my $current_ask_opt = $ask_opt ;
 $match_limit = $match_space = $match_spaces if $spaces_opt ;
 
 # if no parsers and no guess
-die "No format to try\n" unless @format_strings or $guess_opt;
+die "No format to try\n" unless @format_strings or $guess_opt or $list_formats_opt;
 # TOFIX: show tags instead of tagging ? add an option to show tags ?
+
+#######################################################
+# internal parsers
+
+my @internal_filename_parsers = () ;
+my @internal_path_parsers = () ;
+
+if ($guess_opt or $list_formats_opt) {
+    # get parsers from configuration files
+    my @format_files = () ;
+    push (@format_files, "$common_lltag_dir/$lltag_format_filename") ;
+    push (@format_files, "$user_lltag_dir/$lltag_format_filename") ;
+    foreach my $file (@format_files) {
+	open FORMAT, $file or next ;
+	print "Reading format files '$file'...\n" if $verbose_opt ;
+	my $type = undef ;
+	my $title = undef ;
+	my $regexp = undef ;
+	my @indice_table = () ;
+	while (<FORMAT>) {
+	    chomp $_ ;
+	    next if /^#/ ;
+	    next if /^$/ ;
+	    if (/^\[(.*)\]$/) {
+		if ($type and $title and $regexp and @indice_table) {
+		    my $parser ;
+		    $parser->{title} = $title ;
+		    $parser->{regexp} = $regexp ;
+		    $parser->{indices} = @indice_table ;
+		    for(my $i = 0; $i < @indice_table; $i++) {
+			$parser->{$i} = $indice_table[$i] ;
+		    }
+		    if ($type eq "filename") {
+			print "  Got filename format '$title'\n" if $verbose_opt ;
+			push (@internal_filename_parsers, $parser) ;
+		    } elsif ($type eq "path") {
+			print "  Got path format '$title'\n" if $verbose_opt ;
+			push (@internal_path_parsers, $parser) ;
+		    }
+		} elsif ($type or $title or $regexp or @indice_table) {
+		    die "Incomplete format at line $. in file '$file'\n" ;
+		}
+		$type = undef ; $regexp = undef ; @indice_table = () ;
+		$title = $1 ;
+		# stocker la ligne ?
+	    } elsif (/^type = (.*)$/) {
+		die "Unsupported format type '$1' at line $. in file '$file'\n"
+		    if $1 ne "filename" and $1 ne "path" ;
+		$type = $1 ;
+	    } elsif (/^regexp = (.*)$/) {
+		$regexp = $1 ;
+		$regexp =~ s/\./\\./g ;
+		$regexp =~ s/\)/\\\)/g ;
+		$regexp =~ s@/@\\/@g ;
+		# do the replacement progressively so that %% and %x and not mixed
+		while ($regexp =~ m/(%(?:P|L|S|N|A|%))/) {
+		    if ($1 eq '%P') {
+			$regexp =~ s/%P/$match_path/ ;
+		    } elsif ($1 eq '%L') {
+			$regexp =~ s/%L/$match_limit/ ;
+		    } elsif ($1 eq '%S') {
+			$regexp =~ s/%S/$match_space/ ;
+		    } elsif ($1 eq '%N') {
+			$regexp =~ s/%N/$match_num/ ;
+		    } elsif ($1 eq '%A') {
+			$regexp =~ s/%A/$match_any/ ;
+		    } elsif ($1 eq '%%') {
+			$regexp =~ s/%%/%/ ;
+		    }
+		}
+	    } elsif (/^indices = (.*)$/) {
+		@indice_table = split (/,/, $1) ;
+		for(my $i = 0; $i < @indice_table; $i++) {
+		    my $indice = ( grep { $field_letter[$_] eq $indice_table[$i] } ( 0 .. $fields-1 ) ) [0] ;
+		    if (not defined $indice) {
+			die "Unrecognized field letter '$indice_table[$i]' on line $. in file '$file'\n"
+			    if $indice_table[$i] ne 'd' ;
+			$indice = -1 ;
+		    }
+		    $indice_table[$i] = $indice ;
+		}
+	    } else {
+		die "Unrecognized line $. in file '$file': '$_'\n" ;
+	    }
+	}
+    close FORMAT ;
+    }
+}
+
+# if -L was passed, show formats and exit
+if ($list_formats_opt) {
+    print "Listing internal parsers:\n" ;
+    foreach my $path_parser (@internal_path_parsers) {
+	foreach my $filename_parser (@internal_filename_parsers) {
+	    print "  $path_parser->{title}/$filename_parser->{title}\n" ;
+	}
+    }
+    exit 0 ;
+}
 
 #######################################################
 # files to process
@@ -139,6 +253,80 @@ while ( @ARGV ) {
 	    print "Skipping the non-file '$file'\n" ;
 	}
     }
+}
+
+#######################################################
+# merge path and filename internal parsers
+sub merge_internal_parsers
+{
+    my $path_parser = shift ;
+    my $filename_parser = shift ;
+    my $parser ;
+    $parser->{title} = "$path_parser->{title}/$filename_parser->{title}" ;
+    $parser->{regexp} = "$path_parser->{regexp}/$filename_parser->{regexp}" ;
+    $parser->{indices} = $path_parser->{indices} + $filename_parser->{indices} ;
+    for(my $i=0; $i < $path_parser->{indices}; $i++) {
+	$parser->{$i} = $path_parser->{$i} ;
+    }
+    for(my $i=0; $i < $filename_parser->{indices}; $i++) {
+	$parser->{$i+$path_parser->{indices}} = $filename_parser->{$i} ;
+    }
+    return $parser ;
+}
+
+# parse
+sub parse_file_with_internal_parsers
+{
+    my $file = shift ;
+    my $filename = shift ;
+    my $tag_type = shift ;
+
+    print "  with internal formats...\n" ;
+
+    # split into path and parts if possible
+    my @parts = split (/\//, $filename) ;
+    $filename = pop @parts ;
+
+    if (!$nopath_opt and @parts) {
+	# try each path parser and each filename parser
+	my $path = join ("/", @parts) ;
+	foreach my $path_parser (@internal_path_parsers) {
+	    if ($path =~ /^$path_parser->{regexp}$/) {
+		foreach my $filename_parser (@internal_filename_parsers) {
+		    # match the whole path+filename to get a clean @_ for tag_file
+		    if ("$path/$filename" =~ m/^$path_parser->{regexp}\/$filename_parser->{regexp}$/) {
+			print "    '$path_parser->{title}/$filename_parser->{title}' matches this file\n" ;
+			my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
+			# try to tag, with confirmation
+			my $res = tag_file ($file, $tag_type, $whole_parser, 1, @_) ;
+			if ($res <= 0) {
+			    return $res ;
+			}
+			# try next path parser if res == 2
+			if ($res == 2) {
+			    goto NEXT_PATH_PARSER;
+			}
+			# else try next parser
+		    }
+		}
+	    }
+	  NEXT_PATH_PARSER:
+	}
+    } else {
+	# no path, only try each filename parser
+	foreach my $filename_parser (@internal_filename_parsers) {
+	    if ($filename =~ /^$filename_parser->{regexp}$/) {
+		print "    '$filename_parser->{title}' matches this file\n" ;
+		# try to tag, with confirmation
+		my $res = tag_file ($file, $tag_type, $filename_parser, 1, @_) ;
+		if ($res <= 0) {
+		    return $res ;
+		}
+	    }
+	}
+    }
+    # no parser was found or used
+    return 1 ;
 }
 
 #######################################################
@@ -261,167 +449,6 @@ sub parse_file_with_user_parsers
 }
 
 #######################################################
-# internal parsers
-
-my @internal_filename_parsers = () ;
-my @internal_path_parsers = () ;
-
-if ($guess_opt) {
-    # get parsers from configuration files
-    my @format_files = () ;
-    push (@format_files, "$common_lltag_dir/$lltag_format_filename") ;
-    push (@format_files, "$user_lltag_dir/$lltag_format_filename") ;
-    foreach my $file (@format_files) {
-	open FORMAT, $file or next ;
-	print "Reading format files '$file'...\n" if $verbose_opt ;
-	my $type = undef ;
-	my $title = undef ;
-	my $regexp = undef ;
-	my @indice_table = () ;
-	while (<FORMAT>) {
-	    chomp $_ ;
-	    next if /^#/ ;
-	    next if /^$/ ;
-	    if (/^\[(.*)\]$/) {
-		if ($type and $title and $regexp and @indice_table) {
-		    my $parser ;
-		    $parser->{title} = $title ;
-		    $parser->{regexp} = $regexp ;
-		    $parser->{indices} = @indice_table ;
-		    for(my $i = 0; $i < @indice_table; $i++) {
-			$parser->{$i} = $indice_table[$i] ;
-		    }
-		    if ($type eq "filename") {
-			print "  Got filename format '$title'\n" if $verbose_opt ;
-			push (@internal_filename_parsers, $parser) ;
-		    } elsif ($type eq "path") {
-			print "  Got path format '$title'\n" if $verbose_opt ;
-			push (@internal_path_parsers, $parser) ;
-		    }
-		} elsif ($type or $title or $regexp or @indice_table) {
-		    die "Incomplete format at line $. in file '$file'\n" ;
-		}
-		$type = undef ; $regexp = undef ; @indice_table = () ;
-		$title = $1 ;
-		# stocker la ligne ?
-	    } elsif (/^type = (.*)$/) {
-		die "Unsupported format type '$1' at line $. in file '$file'\n"
-		    if $1 ne "filename" and $1 ne "path" ;
-		$type = $1 ;
-	    } elsif (/^regexp = (.*)$/) {
-		$regexp = $1 ;
-		$regexp =~ s/\./\\./g ;
-		$regexp =~ s/\)/\\\)/g ;
-		$regexp =~ s@/@\\/@g ;
-		# do the replacement progressively so that %% and %x and not mixed
-		while ($regexp =~ m/(%(?:P|L|S|N|A|%))/) {
-		    if ($1 eq '%P') {
-			$regexp =~ s/%P/$match_path/ ;
-		    } elsif ($1 eq '%L') {
-			$regexp =~ s/%L/$match_limit/ ;
-		    } elsif ($1 eq '%S') {
-			$regexp =~ s/%S/$match_space/ ;
-		    } elsif ($1 eq '%N') {
-			$regexp =~ s/%N/$match_num/ ;
-		    } elsif ($1 eq '%A') {
-			$regexp =~ s/%A/$match_any/ ;
-		    } elsif ($1 eq '%%') {
-			$regexp =~ s/%%/%/ ;
-		    }
-		}
-	    } elsif (/^indices = (.*)$/) {
-		@indice_table = split (/,/, $1) ;
-		for(my $i = 0; $i < @indice_table; $i++) {
-		    my $indice = ( grep { $field_letter[$_] eq $indice_table[$i] } ( 0 .. $fields-1 ) ) [0] ;
-		    if (not defined $indice) {
-			die "Unrecognized field letter '$indice_table[$i]' on line $. in file '$file'\n"
-			    if $indice_table[$i] ne 'd' ;
-			$indice = -1 ;
-		    }
-		    $indice_table[$i] = $indice ;
-		}
-	    } else {
-		die "Unrecognized line $. in file '$file': '$_'\n" ;
-	    }
-	}
-    close FORMAT ;
-    }
-}
-
-# merge path and filename internal parsers
-sub merge_internal_parsers
-{
-    my $path_parser = shift ;
-    my $filename_parser = shift ;
-    my $parser ;
-    $parser->{title} = "$path_parser->{title}/$filename_parser->{title}" ;
-    $parser->{regexp} = "$path_parser->{regexp}/$filename_parser->{regexp}" ;
-    $parser->{indices} = $path_parser->{indices} + $filename_parser->{indices} ;
-    for(my $i=0; $i < $path_parser->{indices}; $i++) {
-	$parser->{$i} = $path_parser->{$i} ;
-    }
-    for(my $i=0; $i < $filename_parser->{indices}; $i++) {
-	$parser->{$i+$path_parser->{indices}} = $filename_parser->{$i} ;
-    }
-    return $parser ;
-}
-
-# parse
-sub parse_file_with_internal_parsers
-{
-    my $file = shift ;
-    my $filename = shift ;
-    my $tag_type = shift ;
-
-    print "  with internal formats...\n" ;
-
-    # split into path and parts if possible
-    my @parts = split (/\//, $filename) ;
-    $filename = pop @parts ;
-
-    if (!$nopath_opt and @parts) {
-	# try each path parser and each filename parser
-	my $path = join ("/", @parts) ;
-	foreach my $path_parser (@internal_path_parsers) {
-	    if ($path =~ /^$path_parser->{regexp}$/) {
-		foreach my $filename_parser (@internal_filename_parsers) {
-		    # match the whole path+filename to get a clean @_ for tag_file
-		    if ("$path/$filename" =~ m/^$path_parser->{regexp}\/$filename_parser->{regexp}$/) {
-			print "    '$path_parser->{title}/$filename_parser->{title}' matches this file\n" ;
-			my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
-			# try to tag, with confirmation
-			my $res = tag_file ($file, $tag_type, $whole_parser, 1, @_) ;
-			if ($res <= 0) {
-			    return $res ;
-			}
-			# try next path parser if res == 2
-			if ($res == 2) {
-			    goto NEXT_PATH_PARSER;
-			}
-			# else try next parser
-		    }
-		}
-	    }
-	  NEXT_PATH_PARSER:
-	}
-    } else {
-	# no path, only try each filename parser
-	foreach my $filename_parser (@internal_filename_parsers) {
-	    if ($filename =~ /^$filename_parser->{regexp}$/) {
-		print "    '$filename_parser->{title}' matches this file\n" ;
-		# try to tag, with confirmation
-		my $res = tag_file ($file, $tag_type, $filename_parser, 1, @_) ;
-		if ($res <= 0) {
-		    return $res ;
-		}
-	    }
-	}
-    }
-    # no parser was found or used
-    return 1 ;
-}
-
-#######################################################
 # process files
 
 while ( @files ) {
@@ -516,6 +543,7 @@ sub tag_file {
 	    $field[$parser->{$i-1}] = $val ;		
 	    if ($verbose_opt or $confirm or $current_ask_opt) {
 		print "      ". ucfirst($field_name[$parser->{$i-1}])
+		    .$field_trailing_spaces[$parser->{$i-1}]
 		    .": ". $val ."\n" ;
 	    }
 	}
