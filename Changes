@@ -1,3 +1,16 @@
+lltag (0.5)
+
+  * Add /etc/lltag/formats file to store formats.
+  * Move all internal formats to /etc/lltag/formats.
+  * Also read $HOME/.lltag/formats.
+  * Support --spaces option for user-specified formats.
+  * Add confirmation to manpage.
+  * Cleanup a few messages.
+  * Cleanup tag_file return values.
+  * A few other cleanups.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 13 Mar 2005 20:24:22 +0100
+
 lltag (0.4.2)
 
   * Add -R|--recursive option.

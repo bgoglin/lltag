@@ -7,6 +7,12 @@ use Getopt::Long ;
 Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 
 #######################################################
+# configuration file location
+my $common_lltag_dir = "/etc/lltag" ;
+my $user_lltag_dir = "$ENV{HOME}/.lltag" ;
+my $lltag_format_filename = "formats" ;
+
+#######################################################
 # format parameters
 # (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year)
 my @field_name = ('artist', 'title ', 'album ', 'number', 'genre ', 'year  ') ;
@@ -29,7 +35,7 @@ sub usage() {
     print map { "     -".$field_letter[$_].", --".$field_name[$_]
 		    ." <val>     Set the default value for "
 		    .$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
-    print "     --spaces               Allow no or multiple spaces when guessing\n" ;
+    print "     --spaces               Allow no or multiple spaces\n" ;
     print "     --sep <char>           Replace <char> with space in tags\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
@@ -47,12 +53,14 @@ sub usage() {
     exit 1;
 }
 
+#######################################################
 # cmdline options
 my $ask_opt = 0 ;
 my $dryrun_opt = 0 ;
 my $guess_opt = 0 ;
 my $nopath_opt = 0 ;
 my $sep_opt = undef ;
+my $spaces_opt = 0 ;
 my $type_opt = undef ;
 my $verbose_opt = 0 ;
 my $yes_opt = 0 ;
@@ -81,7 +89,7 @@ GetOptions(
 	   'G|guess'      => \$guess_opt,
 	   'R|recursive'  => \$recursive_opt,
 	   'p|nopath'     => \$nopath_opt,
-	   'spaces'       => sub { $match_limit = $match_space = $match_spaces ; },
+	   'spaces'       => \$spaces_opt,
 	   'sep=s'        => \$sep_opt,
 	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
 	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
@@ -92,6 +100,20 @@ GetOptions(
 	   'h|help'       => sub { usage () ; },
 	   map { $field_letter[$_] => \$field_default[$_] } ( 0 .. $fields-1 )
 	   ) or usage () ;
+
+# yes/ask option status may vary with user confirmation replies
+my $current_yes_opt = $yes_opt ;
+my $current_ask_opt = $ask_opt ;
+
+# spaces_opt changes matching regexps
+$match_limit = $match_space = $match_spaces if $spaces_opt ;
+
+# if no parsers and no guess
+die "No format to try\n" unless @format_strings or $guess_opt;
+# TOFIX: show tags instead of tagging ? add an option to show tags ?
+
+#######################################################
+# files to process
 
 # process remaining command-line arguments as files
 die "No files specified\n" if !@ARGV ;
@@ -119,29 +141,44 @@ while ( @ARGV ) {
     }
 }
 
-# yes/ask option status may vary with user confirmation replies
-my $current_yes_opt = $yes_opt ;
-my $current_ask_opt = $ask_opt ;
-
 #######################################################
+# user parsers
+
 # change format names into a parsing string
 my $field_letters = (join '|', @field_letter).'|d' ;
 
 # change a format strings into usable infos
-sub study_format {
+sub generate_user_parser {
     my $format_string = shift ;
 
-    print "Studying format '". $format_string ."'...\n" ;
+    print "Generating parser for format '". $format_string ."'...\n" ;
 
     my $parser ;
-    $parser->{format} = $format_string ;
+    $parser->{title} = $format_string ;
 
+    # merge spaces if --spaces was passed
+    if ($spaces_opt) {
+	$format_string =~ s/ +/ /g ;
+    } 
+    
     # create the regexp and store indice fields
     my @array = split(//, $format_string) ;
     my $j = 0 ;
     for(my $i = 0; $i < @array - 1; $i++) {
-	# if that's not a %, keep it
-	next unless $array[$i] eq "%" ;
+	
+	# normal characters
+	if ($array[$i] ne "%") {
+	    if ($array[$i] eq " ") {
+		# replace spaces with general space matching regexp
+		$array[$i] = $match_space ;
+	    } elsif ($array[$i] eq "/") {
+		# replace / with space flexible matching regexp
+		$array[$i] = $match_limit."/".$match_limit ;
+	    }
+	    # if that's not a %, keep it
+	    next ;
+	}
+
 	# remove % and check next char
 	splice (@array, $i, 1) ;
 	# replace the char with the matching
@@ -165,7 +202,11 @@ sub study_format {
     }
     
     # done
-    $parser->{regexp} = join("", @array) ;
+    if ($spaces_opt) {
+	$parser->{regexp} = $match_limit. join("", @array) .$match_limit ;
+    } else {
+	$parser->{regexp} = join("", @array) ;
+    }
     $parser->{indices} = $j ;
 
     # check insolvable regexp
@@ -192,10 +233,8 @@ sub study_format {
     return $parser ;
 }
 
-#######################################################
 # user parsers
-
-my @parsers = map ( study_format($_), @format_strings ) ;
+my @parsers = map ( generate_user_parser ($_), @format_strings ) ;
 
 sub parse_file_with_user_parsers
 {
@@ -205,108 +244,109 @@ sub parse_file_with_user_parsers
 
     # try each format until one works
     foreach my $parser (@parsers) {
-	print "  with format '". $parser->{format} ."'... " ;
+	print "  with format '". $parser->{title} ."'... " ;
 	if ($filename =~ /^$parser->{regexp}$/) {
 	    print "\n" ;
 	    # try to tag, without confirmation
-	    if (tag_file ($file, $tag_type, $parser, 0, @_)) {
-		return 1 ;
+	    my $res = tag_file ($file, $tag_type, $parser, 0, @_) ;
+	    if ($res <= 0) {
+		return $res ;
 	    }
+	    # try next parser
 	} else {
 	    print "Does not match.\n" ;
 	}
     }
-    return 0 ;
+    return 1 ;
 }
 
 #######################################################
 # internal parsers
 
-# internal filename parsers
 my @internal_filename_parsers = () ;
-
-my $internal_filename_parser0 ;
-$internal_filename_parser0->{format} = "%n - %a - %t" ;
-$internal_filename_parser0->{regexp} = $match_limit.$match_num.$match_space."-".$match_space.$match_any.$match_space."-".$match_space.$match_any.$match_limit ;
-$internal_filename_parser0->{indices} = 3 ;
-$internal_filename_parser0->{0} = 3 ;
-$internal_filename_parser0->{1} = 0 ;
-$internal_filename_parser0->{2} = 1 ;
-push (@internal_filename_parsers, $internal_filename_parser0) ;
-
-my $internal_filename_parser1 ;
-$internal_filename_parser1->{format} = "%n - %t" ;
-$internal_filename_parser1->{regexp} = $match_limit.$match_num.$match_space."-".$match_space.$match_any.$match_limit ;
-$internal_filename_parser1->{indices} = 2 ;
-$internal_filename_parser1->{0} = 3 ;
-$internal_filename_parser1->{1} = 1 ;
-push (@internal_filename_parsers, $internal_filename_parser1) ;
-
-my $internal_filename_parser2 ;
-$internal_filename_parser2->{format} = "%n[.)] %t" ;
-$internal_filename_parser2->{regexp} = $match_limit.$match_num.'(?:\)|\.)'.$match_space.$match_any.$match_limit ;
-$internal_filename_parser2->{indices} = 2 ;
-$internal_filename_parser2->{0} = 3 ;
-$internal_filename_parser2->{1} = 1 ;
-push (@internal_filename_parsers, $internal_filename_parser2) ;
-
-my $internal_filename_parser3 ;
-$internal_filename_parser3->{format} = "%a - %n - %t" ;
-$internal_filename_parser3->{regexp} = $match_limit.$match_any.$match_space."-".$match_space.$match_num.$match_space."-".$match_space.$match_any.$match_limit ;
-$internal_filename_parser3->{indices} = 3 ;
-$internal_filename_parser3->{0} = 0 ;
-$internal_filename_parser3->{1} = 3 ;
-$internal_filename_parser3->{2} = 1 ;
-push (@internal_filename_parsers, $internal_filename_parser3) ;
-
-my $internal_filename_parser4 ;
-$internal_filename_parser4->{format} = "%a - %t" ;
-$internal_filename_parser4->{regexp} = $match_limit.$match_any.$match_space."-".$match_space.$match_any.$match_limit ;
-$internal_filename_parser4->{indices} = 2 ;
-$internal_filename_parser4->{0} = 0 ;
-$internal_filename_parser4->{1} = 1 ;
-push (@internal_filename_parsers, $internal_filename_parser4) ;
-
-my $internal_filename_parser5 ;
-$internal_filename_parser5->{format} = "%t" ;
-$internal_filename_parser5->{regexp} = $match_limit.$match_any.$match_limit ;
-$internal_filename_parser5->{indices} = 1 ;
-$internal_filename_parser5->{0} = 1 ;
-push (@internal_filename_parsers, $internal_filename_parser5) ;
-
-# internal path parsers
 my @internal_path_parsers = () ;
 
-my $internal_path_parser0 ;
-$internal_path_parser0->{format} = "%a/%a - %A" ;
-$internal_path_parser0->{regexp} = $match_path.$match_limit.$match_any.$match_limit."/".$match_limit.$match_any.$match_space."-".$match_space.$match_any.$match_limit ;
-$internal_path_parser0->{indices} = 3 ;
-$internal_path_parser0->{0} = 0 ;
-$internal_path_parser0->{1} = 0 ;
-$internal_path_parser0->{2} = 2 ;
-push (@internal_path_parsers, $internal_path_parser0) ;
-
-my $internal_path_parser1 ;
-$internal_path_parser1->{format} = "%a/%A" ;
-$internal_path_parser1->{regexp} = $match_path.$match_limit.$match_any.$match_limit."/".$match_limit.$match_any.$match_limit ;
-$internal_path_parser1->{indices} = 2 ;
-$internal_path_parser1->{0} = 0 ;
-$internal_path_parser1->{1} = 2 ;
-push (@internal_path_parsers, $internal_path_parser1) ;
-
-my $internal_path_parser2 ;
-$internal_path_parser2->{format} = "%a" ;
-$internal_path_parser2->{regexp} = $match_path.$match_limit.$match_any.$match_limit ;
-$internal_path_parser2->{indices} = 1 ;
-$internal_path_parser2->{0} = 0 ;
-push (@internal_path_parsers, $internal_path_parser2) ;
-
-my $internal_path_parser3 ;
-$internal_path_parser3->{format} = "%A" ;
-$internal_path_parser3->{regexp} = $match_path.$match_limit.$match_any.$match_limit ;
-$internal_path_parser3->{indices} = 1 ;
-$internal_path_parser3->{0} = 2 ;
-push (@internal_path_parsers, $internal_path_parser3) ;
+if ($guess_opt) {
+    # get parsers from configuration files
+    my @format_files = () ;
+    push (@format_files, "$common_lltag_dir/$lltag_format_filename") ;
+    push (@format_files, "$user_lltag_dir/$lltag_format_filename") ;
+    foreach my $file (@format_files) {
+	open FORMAT, $file or next ;
+	print "Reading format files '$file'...\n" if $verbose_opt ;
+	my $type = undef ;
+	my $title = undef ;
+	my $regexp = undef ;
+	my @indice_table = () ;
+	while (<FORMAT>) {
+	    chomp $_ ;
+	    next if /^#/ ;
+	    next if /^$/ ;
+	    if (/^\[(.*)\]$/) {
+		if ($type and $title and $regexp and @indice_table) {
+		    my $parser ;
+		    $parser->{title} = $title ;
+		    $parser->{regexp} = $regexp ;
+		    $parser->{indices} = @indice_table ;
+		    for(my $i = 0; $i < @indice_table; $i++) {
+			$parser->{$i} = $indice_table[$i] ;
+		    }
+		    if ($type eq "filename") {
+			print "  Got filename format '$title'\n" if $verbose_opt ;
+			push (@internal_filename_parsers, $parser) ;
+		    } elsif ($type eq "path") {
+			print "  Got path format '$title'\n" if $verbose_opt ;
+			push (@internal_path_parsers, $parser) ;
+		    }
+		} elsif ($type or $title or $regexp or @indice_table) {
+		    die "Incomplete format at line $. in file '$file'\n" ;
+		}
+		$type = undef ; $regexp = undef ; @indice_table = () ;
+		$title = $1 ;
+		# stocker la ligne ?
+	    } elsif (/^type = (.*)$/) {
+		die "Unsupported format type '$1' at line $. in file '$file'\n"
+		    if $1 ne "filename" and $1 ne "path" ;
+		$type = $1 ;
+	    } elsif (/^regexp = (.*)$/) {
+		$regexp = $1 ;
+		$regexp =~ s/\./\\./g ;
+		$regexp =~ s/\)/\\\)/g ;
+		$regexp =~ s@/@\\/@g ;
+		# do the replacement progressively so that %% and %x and not mixed
+		while ($regexp =~ m/(%(?:P|L|S|N|A|%))/) {
+		    if ($1 eq '%P') {
+			$regexp =~ s/%P/$match_path/ ;
+		    } elsif ($1 eq '%L') {
+			$regexp =~ s/%L/$match_limit/ ;
+		    } elsif ($1 eq '%S') {
+			$regexp =~ s/%S/$match_space/ ;
+		    } elsif ($1 eq '%N') {
+			$regexp =~ s/%N/$match_num/ ;
+		    } elsif ($1 eq '%A') {
+			$regexp =~ s/%A/$match_any/ ;
+		    } elsif ($1 eq '%%') {
+			$regexp =~ s/%%/%/ ;
+		    }
+		}
+	    } elsif (/^indices = (.*)$/) {
+		@indice_table = split (/,/, $1) ;
+		for(my $i = 0; $i < @indice_table; $i++) {
+		    my $indice = ( grep { $field_letter[$_] eq $indice_table[$i] } ( 0 .. $fields-1 ) ) [0] ;
+		    if (not defined $indice) {
+			die "Unrecognized field letter '$indice_table[$i]' on line $. in file '$file'\n"
+			    if $indice_table[$i] ne 'd' ;
+			$indice = -1 ;
+		    }
+		    $indice_table[$i] = $indice ;
+		}
+	    } else {
+		die "Unrecognized line $. in file '$file': '$_'\n" ;
+	    }
+	}
+    close FORMAT ;
+    }
+}
 
 # merge path and filename internal parsers
 sub merge_internal_parsers
@@ -314,7 +354,7 @@ sub merge_internal_parsers
     my $path_parser = shift ;
     my $filename_parser = shift ;
     my $parser ;
-    $parser->{format} = "$path_parser->{format}/$filename_parser->{format}" ;
+    $parser->{title} = "$path_parser->{title}/$filename_parser->{title}" ;
     $parser->{regexp} = "$path_parser->{regexp}/$filename_parser->{regexp}" ;
     $parser->{indices} = $path_parser->{indices} + $filename_parser->{indices} ;
     for(my $i=0; $i < $path_parser->{indices}; $i++) {
@@ -346,36 +386,40 @@ sub parse_file_with_internal_parsers
 	    if ($path =~ /^$path_parser->{regexp}$/) {
 		foreach my $filename_parser (@internal_filename_parsers) {
 		    # match the whole path+filename to get a clean @_ for tag_file
-		    if ("$path/$filename" =~ /^$path_parser->{regexp}\/$filename_parser->{regexp}$/) {
-			print "    '$path_parser->{format}/$filename_parser->{format}' matches this file\n" ;
+		    if ("$path/$filename" =~ m/^$path_parser->{regexp}\/$filename_parser->{regexp}$/) {
+			print "    '$path_parser->{title}/$filename_parser->{title}' matches this file\n" ;
 			my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
 			# try to tag, with confirmation
-			if (tag_file ($file, $tag_type, $whole_parser, 1, @_)) {
-			    return 1 ;
+			my $res = tag_file ($file, $tag_type, $whole_parser, 1, @_) ;
+			if ($res <= 0) {
+			    return $res ;
 			}
+			# try next path parser if res == 2
+			if ($res == 2) {
+			    goto NEXT_PATH_PARSER;
+			}
+			# else try next parser
 		    }
 		}
 	    }
+	  NEXT_PATH_PARSER:
 	}
     } else {
 	# no path, only try each filename parser
 	foreach my $filename_parser (@internal_filename_parsers) {
 	    if ($filename =~ /^$filename_parser->{regexp}$/) {
-		print "    '$filename_parser->{format}' matches this file\n" ;
+		print "    '$filename_parser->{title}' matches this file\n" ;
 		# try to tag, with confirmation
-		if (tag_file ($file, $tag_type, $filename_parser, 1, @_)) {
-		    return 1 ;
+		my $res = tag_file ($file, $tag_type, $filename_parser, 1, @_) ;
+		if ($res <= 0) {
+		    return $res ;
 		}
 	    }
 	}
     }
-    return 0 ;
+    # no parser was found or used
+    return 1 ;
 }
-
-#######################################################
-# if no parsers and no guess
-die "No format to try\n" unless @parsers or $guess_opt;
-# TOFIX: afficher ? option pour afficher
 
 #######################################################
 # process files
@@ -411,23 +455,23 @@ while ( @files ) {
 
     if (defined $preferred_parser) {
 	if ($filename =~ /^$preferred_parser->{regexp}$/) {
-	    if (tag_file ($file, $tag_type, $preferred_parser, 0, @_)) {
+	    if (tag_file ($file, $tag_type, $preferred_parser, 0, @_) <= 0) {
 		goto NEXT_FILE ;
 	    }
 	} else {
-	    print "  Preferred parser '$preferred_parser->{format}' does not match this file\n" ;
+	    print "  Preferred parser '$preferred_parser->{title}' does not match this file\n" ;
 	    print "    Returning to original mode\n" ;
 	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
 	}
 	$preferred_parser = undef ;
     }
 
-    if (parse_file_with_user_parsers($file, $filename, $tag_type)) {
+    if (parse_file_with_user_parsers($file, $filename, $tag_type) <= 0) {
 	goto NEXT_FILE ;
     }
 
     if ($guess_opt) {
-	if (parse_file_with_internal_parsers($file, $filename, $tag_type)) {
+	if (parse_file_with_internal_parsers($file, $filename, $tag_type) <= 0) {
 	    goto NEXT_FILE ;
 	}
     }
@@ -440,13 +484,14 @@ while ( @files ) {
 }
 
 #######################################################
-# really tag files
+# effective tagging
 
 sub confirm_usage {
     print "        y => Yes, tag with this format\n" ;
-    print "        n => No, try the next matching format\n" ;
-    print "        a => Always yes, stop asking for a confirmation\n" ;
     print "        u => Use this format for all remaining matching files\n" ;
+    print "        a => Always yes, stop asking for a confirmation\n" ;
+    print "        n => No, try the next matching format\n" ;
+    print "        p => No, try the next path matching format\n" ;
     print "        s => Skip this file, don't tag it\n" ;
     print "        h => Show this help\n" ;
 }
@@ -480,7 +525,7 @@ sub tag_file {
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "      Really tag the file [ynaus,(H)elp] ? " ;
+	print "      Really tag the file [yuanps,(H)elp] ? " ;
 	my $reply = <> ;
 	if ($reply =~ /^y/i) {
 	    goto TAG_IT ;
@@ -492,7 +537,9 @@ sub tag_file {
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
 	    goto TAG_IT ;
 	} elsif ($reply =~ /^n/i) {
-	    return 0 ;
+	    return 1 ;
+	} elsif ($reply =~ /^p/i) {
+	    return 2 ;
 	} elsif ($reply =~ /^s/i) {
 	    return -1 ;
 	} else {
@@ -531,5 +578,5 @@ sub tag_file {
 	system @system_args ;
     }
 
-    return 1 ;
+    return 0 ;
 }    

@@ -59,6 +59,10 @@ Set the default value of the \fIArtist\fR tag.
 Always ask confirmation to the user before tagging.
 By default user-specified format matching is accepted
 while guess format matching is asked for confirmation.
+See
+.SM
+.B CONFIRMATION
+below for details.
 .TP
 .I "\-\-dry\-run"
 Do not really tag files, just show what would have been done.
@@ -138,6 +142,53 @@ to match the title.
 
 .I "%y"
 to match the year.
+
+.SH CONFIRMATION
+When --ask is passed or when guessing, each matching will lead to
+a confirmation message before tagging.
+Available behavior are:
+    
+.B y
+.RS
+Tag current file with current format.
+.RE
+
+.B u
+.RS
+Tag current file with current format.
+Then use current format for all remaining matching files.
+When a non-matching file is reached, stop using this
+preferred format.
+.RE
+
+.B a
+.RS
+Tag current file with current format.
+Then, never asking for a confirmation anymore.
+.RE
+
+.B n
+.RS
+Don't tag current file with this format.
+Try the next matching format on the current file.
+.RE
+
+.B p
+.RS
+When matching is done through combination of a path parser
+and a filename parser, keep the filename parser and try the
+next path parser on the current file.
+.RE
+
+.B s
+.RS
+Skip the current file, don't tag it at all.
+.RE
+
+.B h
+.RS
+Show help about confirmation.
+.RE
 
 .SH AUTHOR
 Brice Goglin, <Brice.Goglin@ens-lyon.org>
