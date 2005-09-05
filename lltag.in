@@ -15,26 +15,37 @@ my $lltag_format_filename = "formats" ;
 #######################################################
 # format parameters
 # (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year)
-my @field_name = ('artist', 'title', 'album', 'number', 'genre', 'year') ;
-my @field_trailing_spaces = ('', ' ', ' ', '', ' ', '  ') ;
-my @field_letter = ('a', 't', 'A', 'n', 'g', 'y') ;
-my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y') ;
-my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE') ;
-my @field_default = (undef, undef, undef, undef, undef, undef) ;
+my @field_name = ('artist', 'title', 'album', 'number', 'genre', 'year', 'comment') ;
+my @field_trailing_spaces = (' ', '  ', '  ', ' ', '  ', '   ', '') ;
+my @field_letter = ('a', 't', 'A', 'n', 'g', 'y', 'c') ;
+my @field_default = (undef, undef, undef, undef, undef, undef, undef) ;
 my $fields = $#field_name + 1 ;
+
+#######################################################
+# mp3info and vorbiscomment specific options
+my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
+my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+
+my @mp3_tagging_cmd = ( 'mp3info' ) ;
+my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
+# append is not supported by id3 tags
+
+my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
+my @ogg_tagging_clear_option = ( '-w' ) ;
+my @ogg_tagging_append_option = ( '-a' ) ;
 
 #######################################################
 # version
 my $version = "@VERSION@" ;
 
-sub version() {
+sub version {
     print "This is lltag version $version.\n" ;
     exit 0 ;
 }
 
 #######################################################
 # usage
-sub usage() {
+sub usage {
     print $0." $version is a frontend to tag MP3/OGG files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
     print "   Available options are:\n" ;
@@ -50,6 +61,8 @@ sub usage() {
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
     print "     --mp3/--ogg            Force mp3 or ogg instead of by-extension detection\n" ;
+    print "     --clear                Clear all id3 tag of mp3 files\n" ;
+    print "     --append               Append instead of clearing ogg tags\n" ;
     print "     --dry-run              Do nothing but show what would have been done\n" ;
     print "     -L, --list             List internal formats\n" ;
     print "     -V, --version          Show lltag version\n" ;
@@ -79,6 +92,8 @@ my $yes_opt = 0 ;
 my $recursive_opt = 0 ;
 my $list_formats_opt = 0 ;
 my $default_opt = 0 ;
+my $clear_opt = 0 ;
+my $append_opt = 0 ;
 
 my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
@@ -109,6 +124,8 @@ GetOptions(
 	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
 	   'mp3'          => sub { $type_opt = $mp3_type ; },
 	   'ogg'          => sub { $type_opt = $ogg_type ; },
+	   'clear'        => \$clear_opt,
+	   'append'       => \$append_opt,
 	   'dry-run'      => \$dryrun_opt,
 	   'v|verbose'    => \$verbose_opt,
 	   'h|help'       => sub { usage () ; },
@@ -127,7 +144,7 @@ my $current_ask_opt = $ask_opt ;
 $match_limit = $match_space = $match_spaces if $spaces_opt ;
 
 # if no parsers and no guess, force guess
-$guess_opt = 1 unless @format_strings or $default_opt or $list_formats_opt;
+$guess_opt = 1 unless @format_strings or $default_opt or $list_formats_opt ;
 
 #######################################################
 # Tagging return values
@@ -672,7 +689,7 @@ sub confirm_and_tag {
 	    my @edit_field = @field ;
 	    $#edit_field = $fields-1 ;
 	  ASK_EDIT:
-	    print "        Edit a field [atAngyec,(h)elp] ? " ;
+	    print "        Edit a field [atAngycEC,(h)elp] ? " ;
 	    my $edit_reply = <> ;
 	    chomp $edit_reply ;
 	    if ($edit_reply =~ /^($field_letters)$/) {
@@ -683,23 +700,31 @@ sub confirm_and_tag {
 		my $val = <> ;
 		chomp $val ;
 		if ($val) {
-			$val = "" if $val eq "CLEAR" ;
+			$val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
 			$edit_field[$i] = $val ;
 		}
 		goto ASK_EDIT ;
-	    } elsif ($edit_reply eq "e") {
+	    } elsif ($edit_reply eq "E") {
 		@field = @edit_field ;
 		goto TAG_IT ;
-	    } elsif ($edit_reply eq "c") {
+	    } elsif ($edit_reply eq "C") {
 		goto ASK_CONFIRM ;
 	    } else {
 		for(my $i = 0; $i < $fields; $i++) {
 		    my $val = $edit_field[$i];
-		    $val = "<unchanged>" if not defined $val ;
-		    print "          ".$field_letter[$i]." => Edit ".ucfirst($field_name[$i]).$field_trailing_spaces[$i]." (='".$val."')\n" ;
+		    if (not defined $val) {
+			$val = "<not defined>" ;
+		    } elsif ($val eq "") {
+			$val = "<CLEAR>" ;
+		    } else {
+			$val = "'".$val."'" ;
+		    }
+		    print "          ".$field_letter[$i]
+			." => Edit ".ucfirst($field_name[$i]).$field_trailing_spaces[$i]
+			." (=".$val.")\n" ;
 		}
-		print "          e => End edition and tag\n" ;
-		print "          c => Cancel edition\n" ;
+		print "          E => End edition and tag\n" ;
+		print "          C => Cancel edition\n" ;
 		goto ASK_EDIT ;
 	    }
 
@@ -713,6 +738,31 @@ sub confirm_and_tag {
     my $res = tag_with_fields ($file, $tag_type, @field) ;
     return $TAG_SUCCESS_PREFERRED if $preferred and $res == $TAG_SUCCESS ;
     return $res ;
+}
+
+# rewrite of system which returns a descriptor of a stream
+# containing both stdout and stderr
+sub system_with_output {
+    pipe (my $pipe_out, my $pipe_in) ;
+    my $pid = fork() ;
+    if ($pid < 0) {
+	# in the father, when fork failed
+	print $pipe_in "Failed to fork to execute command line: ". join (" ", @_) ."\n" ;
+	return (-1, $pipe_out) ;
+    } elsif ($pid > 0) {
+	# in the father, when fork done
+	close $pipe_in ;
+	waitpid($pid, 0);
+	return ($?, $pipe_out) ;
+    } else {
+	# in the child
+	close $pipe_out ;
+	open STDERR, ">&", $pipe_in ;
+	open STDOUT, ">&", $pipe_in ;
+	{ exec @_ } ;
+	print $pipe_in "Failed to execute command line: ". join (" ", @_) ."\n" ;
+	exit -1 ;
+    }
 }
 
 sub tag_with_fields {
@@ -735,14 +785,15 @@ sub tag_with_fields {
     my @system_args ;
     if ($tag_type eq $ogg_type) {
 	@system_args =
-	    ( "vorbiscomment", "-wq", ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
+	    ( @ogg_tagging_cmd , $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
+	      ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
 		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
 		) ,
 	      $file
 	      ) ;
     } elsif ($tag_type eq $mp3_type) {
 	@system_args =
-	    ( "mp3info" ,
+	    ( @mp3_tagging_cmd , $clear_opt ? @mp3_tagging_clear_option : () ,
 	      ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
 		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
 		) ,
@@ -756,7 +807,14 @@ sub tag_with_fields {
 	}
     if (!$dryrun_opt) {
 	print "      Tagging.\n" ;
-	system @system_args ;
+	my ($status, $output) = system_with_output @system_args ;
+	if ($status) {
+	    print "Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
+	    while (my $line = <$output>) {
+		print "# $line" ;
+	    }
+	}
+	close $output ;
     }
 
     return $TAG_SUCCESS ;

@@ -16,9 +16,14 @@ lltag \- tag mp3/ogg music files automagically
 .RB [ \-n\ number ]
 .RB [ \-g\ genre ]
 .RB [ \-y\ year ]
+.RB [ \-c\ comment ]
+.RB [ \-\-spaces ]
+.RB [ \-\-sep\ <s1|s2|...> ]
 .RB [ \-\-yes ]
 .RB [ \-\-ask ]
 .RB [ \-\-mp3/\-\-ogg ]
+.RB [ \-\-clear ]
+.RB [ \-\-append ]
 .RB [ \-\-dry\-run ]
 .RB [ \-L ]
 .RB [ \-V ]
@@ -59,6 +64,13 @@ Set the default value of the \fIAlbum\fR tag.
 .I "\-a, \-\-artist artist"
 Set the default value of the \fIArtist\fR tag.
 .TP
+.I "\-\-append"
+Force appending of ogg tags.
+See
+.SM
+.B CLEARING, REPLACING OR APPENDING
+below for details.
+.TP
 .I "\-\-ask"
 Always ask confirmation to the user before tagging.
 By default user-specified format matching is accepted
@@ -66,6 +78,16 @@ while guess format matching is asked for confirmation.
 See
 .SM
 .B CONFIRMATION
+below for details.
+.TP
+.I "\-c, \-\-comment comment"
+Set the default value of the \fIComment\fR tag.
+.TP
+.I "\-\-clear"
+Force clearing of id3 tags of mp3 files.
+See
+.SM
+.B CLEARING, REPLACING OR APPENDING
 below for details.
 .TP
 .I "\-\-dry\-run"
@@ -156,11 +178,38 @@ to match the title.
 .I "%y"
 to match the year.
 
+.I "%c"
+to match the comment.
+
 .I "%d"
 to match anything and forget it.
 
 .I "%%"
 to match %.
+
+
+.SH CLEARING, REPLACING OR APPENDING
+Id3 tags of mp3 files are a set of 7 independent fields,
+while ogg tags is a unique stream of one field per line.
+That is why mp3 tags may be changed independently while
+ogg tags may be reset or appended.
+
+Thus,
+.IR lltag
+clears ogg tag by default before setting the new ones,
+while it only replaces mp3 tags.
+
+If
+.I \-\-clear   
+is passed, all mp3 tags will be cleared first.
+This does not impact ogg tagging since it clears by default.
+
+If
+.I \-\-append
+is passed, ogg tags are appended to the existing ones.
+This does not impact mp3 tagging since appending is impossible
+(newly-defined existing tags are replaced, others are kept).
+
 
 .SH CONFIRMATION
 When --ask is passed or when guessing, each matching will lead to

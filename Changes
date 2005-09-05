@@ -1,3 +1,20 @@
+lltag (0.7)
+
+  * Add --clear to force emptying of mp3 tags (default for ogg).
+  * Add --append to force appending of ogg tags
+    (default is overwrite, append is impossible for mp3).
+  * Add a section about clearing, replacing or appending in the manpage.
+  * Add 'comment' tag support (with -c or %c).
+  * Add missing options to the command line in the man page.
+  * Cleanup the way current values are shown,
+    show <not defined> and <CLEAR>.
+  * Accept both CLEAR and <CLEAR> when editing fields.
+  * Cleanup system usage when tagging command, get the output
+    and show it in case of error.
+  * Don't add () after sub prototypes.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 16 Aug 2005 00:39:18 +0200
+
 lltag (0.6.2)
 
   * Fix Debian tarball generation.
