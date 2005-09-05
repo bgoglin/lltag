@@ -1,3 +1,9 @@
+lltag (0.7-3) unstable; urgency=low
+
+  * Change section to sound, closes #325925.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 28 Aug 2005 18:02:00 +0200
+
 lltag (0.7-2) unstable; urgency=low
 
   * Change priority from optional to extra since mp3info is extra.

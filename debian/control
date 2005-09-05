@@ -1,5 +1,5 @@
 Source: lltag
-Section: utils
+Section: sound
 Priority: extra
 Maintainer: Brice Goglin <Brice.Goglin@ens-lyon.org>
 Build-Depends-Indep: debhelper (>= 4.0.2)
