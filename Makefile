@@ -1,5 +1,5 @@
 NAME	=	lltag
-VERSION	=	0.5
+VERSION	=	0.5.1
 
 .PHONY: install uninstall tarball
 
