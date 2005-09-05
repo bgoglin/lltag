@@ -1,3 +1,18 @@
+lltag (0.4.1)
+
+  * Add manpage.
+  * Add --sep option to ask replacement of a character by a space in tags.
+  * Do not accept multiple spaces by default.
+  * Add --spaces to accept multiple spaces.
+  * Accept spaces limiting path subpart.
+  * Add message when no format was found.
+  * Add the missing --format option equivalent to -F.
+  * Use GetOpt to handle options properly.
+  * Cleanup field showing.
+  * Cleanup internal structure names.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun,  6 Mar 2005 22:15:45 +0100
+
 lltag (0.4)
 
   * Support guessing formats with -G.

@@ -1,0 +1,140 @@
+.TH LLTAG 1 "March 2005"
+.\"
+.SH NAME
+lltag \- tag mp3/ogg music files automagically
+.br
+.\"
+.SH SYNOPSIS
+.B lltag
+.RB [ \-F\ format ]
+.RB [ \-G ]
+.RB [ \-p ]
+.RB [ \-a\ artist ]
+.RB [ \-t\ title ]
+.RB [ \-A\ album ]
+.RB [ \-n\ number ]
+.RB [ \-g\ genre ]
+.RB [ \-y\ year ]
+.RB [ \-\-yes ]
+.RB [ \-\-ask ]
+.RB [ \-\-mp3/\-\-ogg ]
+.RB [ \-\-dry\-run ]
+.RB [ \-v ]
+.RB [ \-h ]
+.\"
+
+.SH DESCRIPTION
+.B lltag
+is a command-line tool to automagically set tags of
+MP3 or OGG files.
+It parses the filenames according different formats
+to get the tags.
+The formats may be either given by the user or guessed
+by
+.B lltag
+from its internal database.
+
+When called with the
+.B \-F
+option (once or multiple times), it will first try
+the user-specified formats.
+
+Internal formats will be tried later if the
+.B \-G
+option was passed.
+
+\fImp3info\fR is used to tag MP3 files while
+\fIvorbiscomment\fR is used for OGG files.
+
+.SH OPTIONS
+.TP
+.I "\-A, \-\-album album"
+Set the default value of the \fIAlbum\fR tag.
+.TP
+.I "\-a, \-\-artist artist"
+Set the default value of the \fIArtist\fR tag.
+.TP
+.I "\-\-ask"
+Always ask confirmation to the user before tagging.
+By default user-specified format matching is accepted
+while guess format matching is asked for confirmation.
+.TP
+.I "\-\-dry\-run"
+Do not really tag files, just show what would have been done.
+.TP
+.I "\-F, \-\-format format"
+Add the specified format string to the list of user-supplied formats.
+See
+.SM
+.B FORMAT
+below for details.
+.TP
+.I "\-G, \-\-guess"
+Guess format using the internal database if no user-specified format
+worked.
+.TP
+.I "\-g, \-\-genre genre"
+Set the default value of the \fIGenre\fR tag.
+.TP
+.I "\-h, \-\-help"
+Print a usage message and exit.
+.TP
+.I "\-\-mp3"
+Tag all files as MP3 files, using \fImp3info\fR.
+.TP
+.I "\-n, \-\-number number"
+Set the default value of the \fITrack Number\fR tag.
+.TP
+.I "\-\-ogg"
+Tag all files as OGG files, using \fIvorbiscomment\fR.
+.TP
+.I "\-p, \-\-nopath"
+Do not consider the path of files when matching.
+.TP
+.I "\-\-sep char"
+Replace the specified character with space in tags.
+.TP
+.I "\-\-spaces"
+Allow multiple or no space instead of only one when matching.
+Also allow spaces limiting path elements.
+.TP
+.I "\-t, \-\-title title"
+Set the default value of the \fITitle\fR tag.
+.TP
+.I "\-v, \-\-verbose"
+Show verbose messages.
+.TP
+.I "\-y, \-\-year year"
+Set the default value of the \fIYear\fR tag.
+.TP
+.I "\-\-yes"
+Always accept tagging without asking the user.
+By default user-specified format matching is accepted
+while guess format matching is asked for confirmation.
+
+.SH FORMAT
+User-specified formats must be a string composed of any characters
+and the following special codes:
+.RS
+
+.I "%a"
+to match the author.
+
+.I "%A"
+to match the album.
+
+.I "%g"
+to match the genre.
+
+.I "%n"
+to match the track number.
+
+.I "%t"
+to match the title.
+
+.I "%y"
+to match the year.
+
+.SH AUTHOR
+Brice Goglin, <Brice.Goglin@ens-lyon.org>
+.br

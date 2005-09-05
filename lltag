@@ -3,12 +3,14 @@
 use strict ;
 no strict "refs" ;
 
+use Getopt::Long ;
+Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
+
 #######################################################
 # format parameters
 # (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year)
-my @field_name = ('Artist', 'Title', 'Album', 'Track Number', 'Genre', 'Year') ;
-my @field_format_name = ('a', 't', 'A', 'n', 'g', 'y') ;
-my @field_format_long_option_name = ('artist', 'title ', 'album ', 'number' , 'genre ', 'year  ') ;
+my @field_name = ('artist', 'title ', 'album ', 'number', 'genre ', 'year  ') ;
+my @field_letter = ('a', 't', 'A', 'n', 'g', 'y') ;
 my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y') ;
 my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE') ;
 my @field_default = (undef, undef, undef, undef, undef, undef) ;
@@ -17,15 +19,17 @@ my $fields = $#field_name + 1 ;
 #######################################################
 # usage
 sub usage() {
-    print $0." is a frontend to flexibly tag music files.\n" ;
+    print $0." is a frontend to tag MP3/OGG files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
     print "   Available options are:\n" ;
     print "     -F, --format <format>  Try format\n" ;
     print "     -G, --guess            Guess format\n" ;
     print "     -p, --nopath           Remove the path from filenames when matching\n" ;
-    print map { "     -".$field_format_name[$_].", --".$field_format_long_option_name[$_]
+    print map { "     -".$field_letter[$_].", --".$field_name[$_]
 		    ." <val>     Set the default value for "
 		    .$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
+    print "     --spaces               Allow no or multiple spaces when guessing\n" ;
+    print "     --sep <char>           Replace <char> with space in tags\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
     print "     --mp3/--ogg            Force mp3 or ogg instead of by-extension detection\n" ;
@@ -33,7 +37,7 @@ sub usage() {
     print "     -v, --verbose          Verbose messages\n" ;
     print "     -h, --help             Show this help\n" ;
     print "   Format is composed of anything you want with special fields:\n" ;
-    print map { "     %".$field_format_name[$_]." means ".$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
+    print map { "     %".$field_letter[$_]." means ".$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
     print "     %d means Dummy text\n" ;
     print "     %% means %\n" ;
     print "\n" ;
@@ -44,15 +48,24 @@ sub usage() {
 
 # cmdline options
 my $ask_opt = 0 ;
-my $nopath_opt = 0 ;
 my $dryrun_opt = 0 ;
 my $guess_opt = 0 ;
-my $verbose_opt = 0 ;
+my $nopath_opt = 0 ;
+my $sep_opt = undef ;
 my $type_opt = undef ;
+my $verbose_opt = 0 ;
 my $yes_opt = 0 ;
 
 my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
+
+# subregexp
+my $match_path = '(?:.*\/)*' ;
+my $match_any = '((?:[^ ]+ +)*[^ ]+)' ;
+my $match_num = '([0-9]+)' ;
+my $match_space = ' ';
+my $match_spaces = ' *' ;
+my $match_limit = '' ;
 
 # the parser that the user wants to always use
 my $preferred_parser = undef ;
@@ -60,57 +73,38 @@ my $preferred_parser = undef ;
 # parsers
 my @format_strings = () ;
 
-# files
+# parse options
+GetOptions(
+	   'F|format=s'   => \@format_strings,
+	   'G|guess'      => \$guess_opt,
+	   'p|nopath'     => \$nopath_opt,
+	   'spaces'       => sub { $match_limit = $match_space = $match_spaces ; },
+	   'sep=s'        => \$sep_opt,
+	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
+	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
+	   'mp3'          => sub { $type_opt = $mp3_type ; },
+	   'ogg'          => sub { $type_opt = $ogg_type ; },
+	   'dry-run'      => \$dryrun_opt,
+	   'v|verbose'    => \$verbose_opt,
+	   'h|help'       => sub { usage () ; },
+	   map { $field_letter[$_] => \$field_default[$_] } ( 0 .. $fields-1 )
+	   ) or usage () ;
+
+# process remaining command-line arguments as files
+die "No files specified\n" if !@ARGV ;
+
 my @files = () ;
-
-usage() if ($#ARGV == -1) ;
-
-while ($#ARGV >= 0) {
-    my $arg = $ARGV[0] ;
-    my $i ;
-    if ($arg eq "-F") {
-	@format_strings = ( @format_strings, $ARGV[1] ) ;
-	shift ;
-    } elsif ($arg eq "-G" or $arg eq "--guess") {
-	$guess_opt = 1 ;
-    } elsif ($arg eq "-p" or $arg eq "--nopath") {
-	$nopath_opt = 1 ;
-    } elsif ($arg eq "--yes" ) {
-	$yes_opt = 1 ; $ask_opt = 0 ;
-    } elsif ($arg eq "--ask" ) {
-	$ask_opt = 1 ; $yes_opt = 0 ;
-    } elsif ($arg eq "--mp3") {
-	$type_opt = $mp3_type ;
-    } elsif ($arg eq "--ogg") {
-	$type_opt = $ogg_type ;
-    } elsif ($arg eq "--dry-run") {
-	$dryrun_opt = 1 ;
-    } elsif ($arg eq "-v" or $arg eq "--verbose") {
-	$verbose_opt = 1 ;
-    } elsif ($arg eq "-h" or $arg eq "--help") {
-	usage() ;
-    } elsif (defined ($i = (grep { $arg eq "-".$field_format_name[$_] } ( 0 .. $fields-1 )) [0])) {
-	$field_default[$i] = $ARGV[1] ;
-	print "Setting default '$field_name[$i]' to $ARGV[1].\n" if ($verbose_opt) ;
-	shift ;
-    } elsif ($arg =~ /^-/) {
-	die "Unrecognized option '$arg'\n" ;
-    } else {
-	push (@files, $arg) ; 
-    }
-    shift ;
+while ( @ARGV ) {
+    push (@files, shift @ARGV) ;
 }
 
+# yes/ask option status may vary with user confirmation replies
 my $current_yes_opt = $yes_opt ;
 my $current_ask_opt = $ask_opt ;
 
 #######################################################
 # change format names into a parsing string
-my $field_format_names = (join '|', @field_format_name).'|d' ;
-
-# subregexp
-my $match_any = "(.*)" ;
-my $match_num = "([0-9]*)" ;
+my $field_letters = (join '|', @field_letter).'|d' ;
 
 # change a format strings into usable infos
 sub study_format {
@@ -134,7 +128,7 @@ sub study_format {
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$field_format_names/) {
+	} elsif ($array[$i] =~ /$field_letters/) {
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
@@ -143,7 +137,7 @@ sub study_format {
 	if ($char eq "d") {
 	    $parser->{$j} = -1 ;
 	} else {
-	    my @indices = grep { $char eq $field_format_name[$_] } ( 0 .. $fields-1 ) ;
+	    my @indices = grep { $char eq $field_letter[$_] } ( 0 .. $fields-1 ) ;
 	    $parser->{$j} = $indices[0] ;
 	}
 	$j++ ;
@@ -169,7 +163,7 @@ sub study_format {
 	print "  Format string will parse with: ". $parser->{regexp} ."\n" ;
 	print "    Fields are: ". (join ';', 
 				 map ( $parser->{$_} ."(".
-				       ( $parser->{$_} == -1 ? "d" : $field_format_name[$parser->{$_}] )
+				       ( $parser->{$_} == -1 ? "d" : $field_letter[$parser->{$_}] )
 				       .")" , (0..$j-1) )
 				 )."\n" ;
     }
@@ -212,7 +206,7 @@ my @internal_filename_parsers = () ;
 
 my $internal_filename_parser0 ;
 $internal_filename_parser0->{format} = "%n - %a - %t" ;
-$internal_filename_parser0->{regexp} = "([0-9]*)\\s*-\\s*(.*)\\s*-\\s*(.*)" ;
+$internal_filename_parser0->{regexp} = $match_limit.$match_num.$match_space."-".$match_space.$match_any.$match_space."-".$match_space.$match_any.$match_limit ;
 $internal_filename_parser0->{indices} = 3 ;
 $internal_filename_parser0->{0} = 3 ;
 $internal_filename_parser0->{1} = 0 ;
@@ -221,7 +215,7 @@ push (@internal_filename_parsers, $internal_filename_parser0) ;
 
 my $internal_filename_parser1 ;
 $internal_filename_parser1->{format} = "%n - %t" ;
-$internal_filename_parser1->{regexp} = "([0-9]*)\\s*-\\s*(.*)" ;
+$internal_filename_parser1->{regexp} = $match_limit.$match_num.$match_space."-".$match_space.$match_any.$match_limit ;
 $internal_filename_parser1->{indices} = 2 ;
 $internal_filename_parser1->{0} = 3 ;
 $internal_filename_parser1->{1} = 1 ;
@@ -229,7 +223,7 @@ push (@internal_filename_parsers, $internal_filename_parser1) ;
 
 my $internal_filename_parser2 ;
 $internal_filename_parser2->{format} = "%n[.)] %t" ;
-$internal_filename_parser2->{regexp} = "([0-9]*)(?:\\)|\\.)\\s*(.*)" ;
+$internal_filename_parser2->{regexp} = $match_limit.$match_num.'(?:\)|\.)'.$match_space.$match_any.$match_limit ;
 $internal_filename_parser2->{indices} = 2 ;
 $internal_filename_parser2->{0} = 3 ;
 $internal_filename_parser2->{1} = 1 ;
@@ -237,7 +231,7 @@ push (@internal_filename_parsers, $internal_filename_parser2) ;
 
 my $internal_filename_parser3 ;
 $internal_filename_parser3->{format} = "%a - %n - %t" ;
-$internal_filename_parser3->{regexp} = "(.*)\\s*-\\s*([0-9]*)\\s*-\\s*(.*)" ;
+$internal_filename_parser3->{regexp} = $match_limit.$match_any.$match_space."-".$match_space.$match_num.$match_space."-".$match_space.$match_any.$match_limit ;
 $internal_filename_parser3->{indices} = 3 ;
 $internal_filename_parser3->{0} = 0 ;
 $internal_filename_parser3->{1} = 3 ;
@@ -246,7 +240,7 @@ push (@internal_filename_parsers, $internal_filename_parser3) ;
 
 my $internal_filename_parser4 ;
 $internal_filename_parser4->{format} = "%a - %t" ;
-$internal_filename_parser4->{regexp} = "(.*)\\s*-\\s*(.*)" ;
+$internal_filename_parser4->{regexp} = $match_limit.$match_any.$match_space."-".$match_space.$match_any.$match_limit ;
 $internal_filename_parser4->{indices} = 2 ;
 $internal_filename_parser4->{0} = 0 ;
 $internal_filename_parser4->{1} = 1 ;
@@ -254,7 +248,7 @@ push (@internal_filename_parsers, $internal_filename_parser4) ;
 
 my $internal_filename_parser5 ;
 $internal_filename_parser5->{format} = "%t" ;
-$internal_filename_parser5->{regexp} = "(.*)" ;
+$internal_filename_parser5->{regexp} = $match_limit.$match_any.$match_limit ;
 $internal_filename_parser5->{indices} = 1 ;
 $internal_filename_parser5->{0} = 1 ;
 push (@internal_filename_parsers, $internal_filename_parser5) ;
@@ -264,7 +258,7 @@ my @internal_path_parsers = () ;
 
 my $internal_path_parser0 ;
 $internal_path_parser0->{format} = "%a/%a - %A" ;
-$internal_path_parser0->{regexp} = "(?:.*\\/)*(.*)/(.*)\\s*-\\s*(.*)" ;
+$internal_path_parser0->{regexp} = $match_path.$match_limit.$match_any.$match_limit."/".$match_limit.$match_any.$match_space."-".$match_space.$match_any.$match_limit ;
 $internal_path_parser0->{indices} = 3 ;
 $internal_path_parser0->{0} = 0 ;
 $internal_path_parser0->{1} = 0 ;
@@ -273,7 +267,7 @@ push (@internal_path_parsers, $internal_path_parser0) ;
 
 my $internal_path_parser1 ;
 $internal_path_parser1->{format} = "%a/%A" ;
-$internal_path_parser1->{regexp} = "(?:.*\\/)*(.*)/(.*)" ;
+$internal_path_parser1->{regexp} = $match_path.$match_limit.$match_any.$match_limit."/".$match_limit.$match_any.$match_limit ;
 $internal_path_parser1->{indices} = 2 ;
 $internal_path_parser1->{0} = 0 ;
 $internal_path_parser1->{1} = 2 ;
@@ -281,14 +275,14 @@ push (@internal_path_parsers, $internal_path_parser1) ;
 
 my $internal_path_parser2 ;
 $internal_path_parser2->{format} = "%a" ;
-$internal_path_parser2->{regexp} = "(?:.*\\/)*(.*)" ;
+$internal_path_parser2->{regexp} = $match_path.$match_limit.$match_any.$match_limit ;
 $internal_path_parser2->{indices} = 1 ;
 $internal_path_parser2->{0} = 0 ;
 push (@internal_path_parsers, $internal_path_parser2) ;
 
 my $internal_path_parser3 ;
 $internal_path_parser3->{format} = "%A" ;
-$internal_path_parser3->{regexp} = "(?:.*\\/)*(.*)" ;
+$internal_path_parser3->{regexp} = $match_path.$match_limit.$match_any.$match_limit ;
 $internal_path_parser3->{indices} = 1 ;
 $internal_path_parser3->{0} = 2 ;
 push (@internal_path_parsers, $internal_path_parser3) ;
@@ -417,6 +411,7 @@ while ( @files ) {
 	}
     }
 
+    print "  Didn't find any parser!\n" ;
     #TOFIX: ask each field ?
 
   NEXT_FILE:
@@ -448,10 +443,14 @@ sub tag_file {
     my $i = 1 ;
     while ( $i <= $parser->{indices} ) {
 	if ( $parser->{$i-1} >= 0 ) {
-	    $field[$parser->{$i-1}] = ${$i} ;
+	    my $val = ${$i} ;
+	    if (defined $sep_opt) {
+		$val =~ s/$sep_opt/ /g ;
+	    }
+	    $field[$parser->{$i-1}] = $val ;		
 	    if ($verbose_opt or $confirm or $current_ask_opt) {
-		print "      Field '". $field_name[$parser->{$i-1}]
-		    ."' is '". ${$i} ."'\n" ;
+		print "      ". ucfirst($field_name[$parser->{$i-1}])
+		    .": ". $val ."\n" ;
 	    }
 	}
 	$i++ ;
