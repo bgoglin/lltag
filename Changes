@@ -1,3 +1,12 @@
+lltag (0.6.2)
+
+  * Fix Debian tarball generation.
+  * Include COPYING and Changes in the tarball.
+  * Add a README.
+  * Document editing in the manpage (CLEAR and <enter>).
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 12 Aug 2005 22:26:56 +0200
+
 lltag (0.6.1)
 
   * Guess by default.

@@ -1,3 +1,10 @@
+lltag (0.6.2-1) unstable; urgency=low
+
+  * New upstream release.
+  * Add debian/watch.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 12 Aug 2005 22:26:56 +0200
+
 lltag (0.6.1-3) unstable; urgency=low
 
   * First official release, closes: #320637.
