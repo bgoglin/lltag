@@ -1,5 +1,5 @@
 NAME	=	lltag
-VERSION	=	0.4.2
+VERSION	=	0.5
 
 .PHONY: install uninstall tarball
 
@@ -14,19 +14,23 @@ MANDIR	=	$(PREFIX)/man
 TARBALL	=	$(NAME)_$(VERSION).orig
 
 install::
-	install -d -m 0755 $(DESTDIR)$(BINDIR) $(DESTDIR)$(MANDIR)/man1
+	install -d -m 0755 $(DESTDIR)$(BINDIR) $(DESTDIR)$(SYSCONFDIR)/lltag $(DESTDIR)$(MANDIR)/man1
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
+	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag
 	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1
 
 uninstall::
 	rm $(DESTDIR)$(BINDIR)/lltag
+	rm $(DESTDIR)$(SYSCONFDIR)/lltag/format
+	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag
 	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
 
 tarball::
 	mkdir /tmp/$(TARBALL)
 	cp lltag /tmp/$(TARBALL)
-	cp Makefile /tmp/$(TARBALL)
+	cp formats /tmp/$(TARBALL)
 	cp lltag.1 /tmp/$(TARBALL)
+	cp Makefile /tmp/$(TARBALL)
 	cd /tmp && tar cfz $(TARBALL).tar.gz $(TARBALL)
 	rm -rf /tmp/$(TARBALL)
 	mv /tmp/$(TARBALL).tar.gz ..

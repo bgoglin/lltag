@@ -1,0 +1,55 @@
+[%n - %a - %t]
+type = filename
+regexp = %L%N%S-%S%A%S-%S%A%L
+indices = n,a,t
+
+[%n - %t]
+type = filename
+regexp = %L%N%S-%S%A%L
+indices = n,t
+
+[%n. %t]
+type = filename
+regexp = %L%N.%S%A%L
+indices = n,t
+
+[%n) %t]
+type = filename
+regexp = %L%N)%S%A%L
+indices = n,t
+
+[%a - %n - %t]
+type = filename
+regexp = %L%A%S-%S%N%S-%S%A%L
+indices = a,n,t
+
+[%a - %t]
+type = filename
+regexp = %L%A%S-%S%A%L
+indices = a,t
+
+[%t]
+type = filename
+regexp = %L%A%L
+indices = t
+
+[%a/%a - %A]
+type = path
+regexp = %P%L%A%L/%L%A%S-%S%A%L
+indices = a,a,A
+
+[%a/%A]
+type = path
+regexp = %P%L%A%L/%L%A%L
+indices = a,A
+
+[%a]
+type = path
+regexp = %P%L%A%L
+indices = a
+
+[%A]
+type = path
+regexp = %P%L%A%L
+indices = A
+
