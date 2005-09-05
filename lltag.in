@@ -46,7 +46,7 @@ sub usage() {
 		    ." <val>     Set the default value for "
 		    .$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
     print "     --spaces               Allow no or multiple spaces\n" ;
-    print "     --sep <char>           Replace <char> with space in tags\n" ;
+    print "     --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
     print "     --mp3/--ogg            Force mp3 or ogg instead of by-extension detection\n" ;
@@ -461,6 +461,7 @@ sub parse_file_with_user_parsers
     # try each format until one works
     foreach my $parser (@parsers) {
 	print "  with format '". $parser->{title} ."'... " ;
+
 	if ($filename =~ /^$parser->{regexp}$/) {
 	    print "\n" ;
 	    # try to tag, without confirmation
@@ -473,6 +474,7 @@ sub parse_file_with_user_parsers
 	    }
 	    # try next parser
 	    die "Unknown tag return value: $res.\n" if $res != $TAG_SKIP_PARSER ;
+
 	} else {
 	    print "Does not match.\n" ;
 	}
@@ -547,8 +549,11 @@ while ( @files ) {
 	print "  Didn't find any parser!\n" ;
 	#TOFIX: ask each field ?
     }
-    my $res = tag_with_fields ($file, $tag_type, 0, 0, @field) ;
-    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
+    if ( grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
+	# only tag if there's something to actually set
+	my $res = tag_with_fields ($file, $tag_type, 0, 0, @field) ;
+	die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
+    }
 
   NEXT_FILE:
     shift ;
@@ -593,25 +598,39 @@ sub tag_with_parser {
     my @field = @field_default ;
     $#field = $fields-1 ;
 
+    # set to 1 when the field is defined (not by default)
+    my @field_set = () ;
+    $#field_set = $fields-1 ;
+
     # get fields and show them if asked
     my $i = 1 ;
     while ( $i <= $parser->{indices} ) {
-	if ( $parser->{$i-1} >= 0 ) {
+        my $indice = $parser->{$i-1};
+	if ( $indice >= 0 ) {
 	    my $val = ${$i} ;
-	    if (defined $sep_opt) {
-		$val =~ s/$sep_opt/ /g ;
+	    $val =~ s/($sep_opt)/ /g if (defined $sep_opt) ;
+	    if ($field_set[$indice]) {
+		print "      WARNING: $field_name[$indice] already set to '$field[$indice]', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
+		goto NEXT_FIELD ;
 	    }
-	    $field[$parser->{$i-1}] = $val ;
+	    $field[$indice] = $val ;
+	    $field_set[$indice] = 1 ;
 	    if ($verbose_opt or $confirm or $current_ask_opt) {
-		print "      ". ucfirst($field_name[$parser->{$i-1}])
-		    .$field_trailing_spaces[$parser->{$i-1}]
+		print "      ". ucfirst($field_name[$indice])
+		    .$field_trailing_spaces[$indice]
 		    .": ". $val ."\n" ;
 	    }
 	}
+     NEXT_FIELD:
 	$i++ ;
     }
 
-    return tag_with_fields ($file, $tag_type, $confirm, $behaviors, @field) ;
+    if ( grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
+	# only tag if there's something to actually set
+	return tag_with_fields ($file, $tag_type, $confirm, $behaviors, @field) ;
+    } else {
+	return $TAG_SUCCESS ;
+    }
 }
 
 sub tag_with_fields {
