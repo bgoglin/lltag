@@ -1,3 +1,11 @@
+llmp3tag (0.2-1) unstable; urgency=low
+
+  * Rewrite parsing of the format to create indexed regexp to fix some issues.
+  * %n now only matches numbers.
+  * Some cleanup in the code.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 27 Feb 2005 02:14:50 +0100
+
 llmp3tag (0.1-1) unstable; urgency=low
 
   * Initial release.
