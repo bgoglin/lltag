@@ -3,81 +3,108 @@
 use strict ;
 no strict "refs" ;
 
+#######################################################
 # format parameters
 # (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year)
 my @field_name = ('Artist', 'Title', 'Album', 'Track Number', 'Genre', 'Year') ;
 my @field_format_name = ('a', 't', 'A', 'n', 'g', 'y') ;
+my @field_format_long_option_name = ('artist', 'title ', 'album ', 'number' , 'genre ', 'year  ') ;
 my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y') ;
 my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE') ;
 my @field_default = (undef, undef, undef, undef, undef, undef) ;
 my $fields = $#field_name + 1 ;
 
+#######################################################
 # usage
 sub usage() {
-    print STDERR $0." is a frontend to flexibly tag music files.\n" ;
-    print STDERR "Usage: ".$0." [options] files...\n" ;
-    print STDERR "   available options are:\n" ;
-    print STDERR "     -F <format>  Try format\n" ;
-    print STDERR "     --mp3/--ogg  Force mp3 or ogg tagging instead of by-extension detection" ;
-    print STDERR "     --dry-run    Do nothing but show what would have been done\n" ;
-    print STDERR "     -v           Verbose\n" ;
-    print STDERR "     -b           Remove the path from filenames when matching the format\n" ;
-    print STDERR (map { "     -".$field_format_name[$_]." <val>     Set the default value for "
-			    .$field_name[$_]."\n" } ( 0 .. $fields-1 )) ;
-    print STDERR "     -h           Show this help\n" ;
-    print STDERR "   format is composed of anything you want with special fields:\n" ;
-    print STDERR (map { "     %".$field_format_name[$_]." means ".$field_name[$_]."\n" } ( 0 .. $fields-1 )) ;
-    print STDERR "     %d means Dummy text\n" ;
-    print STDERR "     %% means %\n" ;
-    print STDERR "\n" ;
-    print STDERR "Author:    Brice Goglin <Brice.Goglin\@ens-lyon.org>\n" ;
-    print STDERR "Homepage:  http://bgoglin.free.fr/lltag\n" ;
+    print $0." is a frontend to flexibly tag music files.\n" ;
+    print "Usage: ".$0." [options] files...\n" ;
+    print "   Available options are:\n" ;
+    print "     -F, --format <format>  Try format\n" ;
+    print "     -G, --guess            Guess format\n" ;
+    print "     -p, --nopath           Remove the path from filenames when matching\n" ;
+    print map { "     -".$field_format_name[$_].", --".$field_format_long_option_name[$_]
+		    ." <val>     Set the default value for "
+		    .$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
+    print "     --yes                  Tag without asking for confirmation when guessing\n" ;
+    print "     --ask                  Always ask for confirmation before tagging\n" ;
+    print "     --mp3/--ogg            Force mp3 or ogg instead of by-extension detection\n" ;
+    print "     --dry-run              Do nothing but show what would have been done\n" ;
+    print "     -v, --verbose          Verbose messages\n" ;
+    print "     -h, --help             Show this help\n" ;
+    print "   Format is composed of anything you want with special fields:\n" ;
+    print map { "     %".$field_format_name[$_]." means ".$field_name[$_]."\n" } ( 0 .. $fields-1 ) ;
+    print "     %d means Dummy text\n" ;
+    print "     %% means %\n" ;
+    print "\n" ;
+    print "Author:    Brice Goglin <Brice.Goglin\@ens-lyon.org>\n" ;
+    print "Homepage:  http://bgoglin.free.fr/lltag\n" ;
     exit 1;
 }
 
 # cmdline options
-my $basename_opt = 0 ;
+my $ask_opt = 0 ;
+my $nopath_opt = 0 ;
 my $dryrun_opt = 0 ;
+my $guess_opt = 0 ;
 my $verbose_opt = 0 ;
 my $type_opt = undef ;
+my $yes_opt = 0 ;
 
 my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
 
+# the parser that the user wants to always use
+my $preferred_parser = undef ;
+
 # parsers
 my @format_strings = () ;
 
+# files
+my @files = () ;
+
 usage() if ($#ARGV == -1) ;
 
-while (1) {
+while ($#ARGV >= 0) {
     my $arg = $ARGV[0] ;
-    last if !($arg =~ /^-/) ;
+    my $i ;
     if ($arg eq "-F") {
 	@format_strings = ( @format_strings, $ARGV[1] ) ;
 	shift ;
+    } elsif ($arg eq "-G" or $arg eq "--guess") {
+	$guess_opt = 1 ;
+    } elsif ($arg eq "-p" or $arg eq "--nopath") {
+	$nopath_opt = 1 ;
+    } elsif ($arg eq "--yes" ) {
+	$yes_opt = 1 ; $ask_opt = 0 ;
+    } elsif ($arg eq "--ask" ) {
+	$ask_opt = 1 ; $yes_opt = 0 ;
     } elsif ($arg eq "--mp3") {
 	$type_opt = $mp3_type ;
     } elsif ($arg eq "--ogg") {
 	$type_opt = $ogg_type ;
-    } elsif ($arg eq "-b") {
-	$basename_opt = 1 ;
     } elsif ($arg eq "--dry-run") {
 	$dryrun_opt = 1 ;
-    } elsif ($arg eq "-v") {
+    } elsif ($arg eq "-v" or $arg eq "--verbose") {
 	$verbose_opt = 1 ;
-    } elsif ($arg eq "-h") {
+    } elsif ($arg eq "-h" or $arg eq "--help") {
 	usage() ;
+    } elsif (defined ($i = (grep { $arg eq "-".$field_format_name[$_] } ( 0 .. $fields-1 )) [0])) {
+	$field_default[$i] = $ARGV[1] ;
+	print "Setting default '$field_name[$i]' to $ARGV[1].\n" if ($verbose_opt) ;
+	shift ;
+    } elsif ($arg =~ /^-/) {
+	die "Unrecognized option '$arg'\n" ;
     } else {
-	# default field value
-	my $i = (grep { $arg eq "-".$field_format_name[$_] } ( 0 .. $fields-1 )) [0] ;
-	if (defined $i) {
-	    $field_default[$i] = $ARGV[1] ;
-	    shift ;
-	}
+	push (@files, $arg) ; 
     }
     shift ;
 }
 
+my $current_yes_opt = $yes_opt ;
+my $current_ask_opt = $ask_opt ;
+
+#######################################################
 # change format names into a parsing string
 my $field_format_names = (join '|', @field_format_name).'|d' ;
 
@@ -117,7 +144,7 @@ sub study_format {
 	    $parser->{$j} = -1 ;
 	} else {
 	    my @indices = grep { $char eq $field_format_name[$_] } ( 0 .. $fields-1 ) ;
-	    $parser->{$j} = $indices[0] ;	
+	    $parser->{$j} = $indices[0] ;
 	}
 	$j++ ;
     }
@@ -150,27 +177,211 @@ sub study_format {
     return $parser ;
 }
 
-# get the parsers
+#######################################################
+# user parsers
+
 my @parsers = map ( study_format($_), @format_strings ) ;
 
-die "No format to try\n" unless @parsers ;
+sub parse_file_with_user_parsers
+{
+    my $file = shift ;
+    my $filename = shift ;
+    my $tag_type = shift ;
 
-# parse remaining arguments (they are supposed to be filenames)
-while ( defined $ARGV[0] ) {
-    my $file = $ARGV[0] ;
-    print "Tagging file \"".$file."\"...\n" ;
+    # try each format until one works
+    foreach my $parser (@parsers) {
+	print "  with format '". $parser->{format} ."'... " ;
+	if ($filename =~ /^$parser->{regexp}$/) {
+	    print "\n" ;
+	    # try to tag, without confirmation
+	    if (tag_file ($file, $tag_type, $parser, 0, @_)) {
+		return 1 ;
+	    }
+	} else {
+	    print "Does not match.\n" ;
+	}
+    }
+    return 0 ;
+}
 
-    # removing path if asked
-    if ($basename_opt && $file =~ /\//) {
-	$file =~ s/.*\/([^\/]+)/$1/ ;
+#######################################################
+# internal parsers
+
+# internal filename parsers
+my @internal_filename_parsers = () ;
+
+my $internal_filename_parser0 ;
+$internal_filename_parser0->{format} = "%n - %a - %t" ;
+$internal_filename_parser0->{regexp} = "([0-9]*)\\s*-\\s*(.*)\\s*-\\s*(.*)" ;
+$internal_filename_parser0->{indices} = 3 ;
+$internal_filename_parser0->{0} = 3 ;
+$internal_filename_parser0->{1} = 0 ;
+$internal_filename_parser0->{2} = 1 ;
+push (@internal_filename_parsers, $internal_filename_parser0) ;
+
+my $internal_filename_parser1 ;
+$internal_filename_parser1->{format} = "%n - %t" ;
+$internal_filename_parser1->{regexp} = "([0-9]*)\\s*-\\s*(.*)" ;
+$internal_filename_parser1->{indices} = 2 ;
+$internal_filename_parser1->{0} = 3 ;
+$internal_filename_parser1->{1} = 1 ;
+push (@internal_filename_parsers, $internal_filename_parser1) ;
+
+my $internal_filename_parser2 ;
+$internal_filename_parser2->{format} = "%n[.)] %t" ;
+$internal_filename_parser2->{regexp} = "([0-9]*)(?:\\)|\\.)\\s*(.*)" ;
+$internal_filename_parser2->{indices} = 2 ;
+$internal_filename_parser2->{0} = 3 ;
+$internal_filename_parser2->{1} = 1 ;
+push (@internal_filename_parsers, $internal_filename_parser2) ;
+
+my $internal_filename_parser3 ;
+$internal_filename_parser3->{format} = "%a - %n - %t" ;
+$internal_filename_parser3->{regexp} = "(.*)\\s*-\\s*([0-9]*)\\s*-\\s*(.*)" ;
+$internal_filename_parser3->{indices} = 3 ;
+$internal_filename_parser3->{0} = 0 ;
+$internal_filename_parser3->{1} = 3 ;
+$internal_filename_parser3->{2} = 1 ;
+push (@internal_filename_parsers, $internal_filename_parser3) ;
+
+my $internal_filename_parser4 ;
+$internal_filename_parser4->{format} = "%a - %t" ;
+$internal_filename_parser4->{regexp} = "(.*)\\s*-\\s*(.*)" ;
+$internal_filename_parser4->{indices} = 2 ;
+$internal_filename_parser4->{0} = 0 ;
+$internal_filename_parser4->{1} = 1 ;
+push (@internal_filename_parsers, $internal_filename_parser4) ;
+
+my $internal_filename_parser5 ;
+$internal_filename_parser5->{format} = "%t" ;
+$internal_filename_parser5->{regexp} = "(.*)" ;
+$internal_filename_parser5->{indices} = 1 ;
+$internal_filename_parser5->{0} = 1 ;
+push (@internal_filename_parsers, $internal_filename_parser5) ;
+
+# internal path parsers
+my @internal_path_parsers = () ;
+
+my $internal_path_parser0 ;
+$internal_path_parser0->{format} = "%a/%a - %A" ;
+$internal_path_parser0->{regexp} = "(?:.*\\/)*(.*)/(.*)\\s*-\\s*(.*)" ;
+$internal_path_parser0->{indices} = 3 ;
+$internal_path_parser0->{0} = 0 ;
+$internal_path_parser0->{1} = 0 ;
+$internal_path_parser0->{2} = 2 ;
+push (@internal_path_parsers, $internal_path_parser0) ;
+
+my $internal_path_parser1 ;
+$internal_path_parser1->{format} = "%a/%A" ;
+$internal_path_parser1->{regexp} = "(?:.*\\/)*(.*)/(.*)" ;
+$internal_path_parser1->{indices} = 2 ;
+$internal_path_parser1->{0} = 0 ;
+$internal_path_parser1->{1} = 2 ;
+push (@internal_path_parsers, $internal_path_parser1) ;
+
+my $internal_path_parser2 ;
+$internal_path_parser2->{format} = "%a" ;
+$internal_path_parser2->{regexp} = "(?:.*\\/)*(.*)" ;
+$internal_path_parser2->{indices} = 1 ;
+$internal_path_parser2->{0} = 0 ;
+push (@internal_path_parsers, $internal_path_parser2) ;
+
+my $internal_path_parser3 ;
+$internal_path_parser3->{format} = "%A" ;
+$internal_path_parser3->{regexp} = "(?:.*\\/)*(.*)" ;
+$internal_path_parser3->{indices} = 1 ;
+$internal_path_parser3->{0} = 2 ;
+push (@internal_path_parsers, $internal_path_parser3) ;
+
+# merge path and filename internal parsers
+sub merge_internal_parsers
+{
+    my $path_parser = shift ;
+    my $filename_parser = shift ;
+    my $parser ;
+    $parser->{format} = "$path_parser->{format}/$filename_parser->{format}" ;
+    $parser->{regexp} = "$path_parser->{regexp}/$filename_parser->{regexp}" ;
+    $parser->{indices} = $path_parser->{indices} + $filename_parser->{indices} ;
+    for(my $i=0; $i < $path_parser->{indices}; $i++) {
+	$parser->{$i} = $path_parser->{$i} ;
+    }
+    for(my $i=0; $i < $filename_parser->{indices}; $i++) {
+	$parser->{$i+$path_parser->{indices}} = $filename_parser->{$i} ;
+    }
+    return $parser ;
+}
+
+# parse
+sub parse_file_with_internal_parsers
+{
+    my $file = shift ;
+    my $filename = shift ;
+    my $tag_type = shift ;
+
+    print "  with internal formats...\n" ;
+
+    # split into path and parts if possible
+    my @parts = split (/\//, $filename) ;
+    $filename = pop @parts ;
+
+    if (!$nopath_opt and @parts) {
+	# try each path parser and each filename parser
+	my $path = join ("/", @parts) ;
+	foreach my $path_parser (@internal_path_parsers) {
+	    if ($path =~ /^$path_parser->{regexp}$/) {
+		foreach my $filename_parser (@internal_filename_parsers) {
+		    # match the whole path+filename to get a clean @_ for tag_file
+		    if ("$path/$filename" =~ /^$path_parser->{regexp}\/$filename_parser->{regexp}$/) {
+			print "    '$path_parser->{format}/$filename_parser->{format}' matches this file\n" ;
+			my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
+			# try to tag, with confirmation
+			if (tag_file ($file, $tag_type, $whole_parser, 1, @_)) {
+			    return 1 ;
+			}
+		    }
+		}
+	    }
+	}
+    } else {
+	# no path, only try each filename parser
+	foreach my $filename_parser (@internal_filename_parsers) {
+	    if ($filename =~ /^$filename_parser->{regexp}$/) {
+		print "    '$filename_parser->{format}' matches this file\n" ;
+		# try to tag, with confirmation
+		if (tag_file ($file, $tag_type, $filename_parser, 1, @_)) {
+		    return 1 ;
+		}
+	    }
+	}
+    }
+    return 0 ;
+}
+
+#######################################################
+# if no parsers and no guess
+die "No format to try\n" unless @parsers or $guess_opt;
+# TOFIX: afficher ? option pour afficher
+
+#######################################################
+# process files
+
+while ( @files ) {
+    my $file = shift @files ;
+
+    print "Processing file \"".$file."\"...\n" ;
+
+    # removing path if asked, only in $filename, keep $file complete
+    my $filename = $file ;
+    if ($nopath_opt && $filename =~ /\//) {
+	$filename =~ s/.*\/([^\/]+)/$1/ ;
     }
     
     # split into filename and extension
-    my @parts = split (/\./, $file) ;
+    my @parts = split (/\./, $filename) ;
     my $extension = pop @parts ;
-    my $filename = join (".", @parts) ;
+    $filename = join (".", @parts) ;
     
-    # type of tagging
+    # split into filename and extension
     my $tag_type = $type_opt ;
     if (not defined $tag_type) {
 	if ($extension eq "ogg") {
@@ -178,62 +389,127 @@ while ( defined $ARGV[0] ) {
 	} elsif ($extension eq "mp3") {
 	    $tag_type = $mp3_type ;
 	} else {
-	    print STDERR "  ERROR: Don't know what type is file '$file'\n" ;
-	    goto NEXT_FILE;
+	    print "  Skipping this unknown-type file '$file'\n" ;
+	    goto NEXT_FILE ;
 	}
     }
 
-    # getting fields
-    my @field = @field_default ;
-    $#field = $fields ;
-
-    # try each format until one works
-    foreach my $parser (@parsers) {
-	print "  with format '". $parser->{format} ."'...\n" ;
-	if ($filename =~ $parser->{regexp}) {
-	    my $i = 1 ;
-	    while ( $i <= $parser->{indices} ) {
-		if ( $parser->{$i-1} >= 0 ) {
-		    $field[$parser->{$i-1}] = ${$i} ;
-		    if ($verbose_opt) {
-			print "    Field '". $field_name[$parser->{$i-1}]
-			    ."' is '". ${$i} ."'\n" ;
-		    }
-		}
-		$i++ ;
-	    }
-	    
-	    # tagging command line
-	    my @system_args ;
-	    if ($tag_type eq $ogg_type) {
-		@system_args =
-		    ( "vorbiscomment", "-wq",
-		      ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
-			( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-			) ,
-		      $file
-		      ) ;
-	    } elsif ($tag_type eq $mp3_type) {
-		@system_args =
-		    ( "mp3info" ,
-		      ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
-			( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-			) ,
-		      $file
-		      ) ;
-	    }
-
-	    # tag
-	    if ($dryrun_opt) {
-		print "    ". +(join '#', @system_args) ."\n" ;
-	    } else {
-		system @system_args ;
+    if (defined $preferred_parser) {
+	if ($filename =~ /^$preferred_parser->{regexp}$/) {
+	    if (tag_file ($file, $tag_type, $preferred_parser, 0, @_)) {
 		goto NEXT_FILE ;
 	    }
 	} else {
-	    print STDERR "    ERROR: Filename '". $file ."' does not match format '". $parser->{format} ."'.\n" ;
+	    print "  Preferred parser '$preferred_parser->{format}' does not match this file\n" ;
+	    print "    Returning to original mode\n" ;
+	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
+	}
+	$preferred_parser = undef ;
+    }
+
+    if (parse_file_with_user_parsers($file, $filename, $tag_type)) {
+	goto NEXT_FILE ;
+    }
+
+    if ($guess_opt) {
+	if (parse_file_with_internal_parsers($file, $filename, $tag_type)) {
+	    goto NEXT_FILE ;
 	}
     }
+
+    #TOFIX: ask each field ?
+
   NEXT_FILE:
     shift ;
 }
+
+#######################################################
+# really tag files
+
+sub confirm_usage {
+    print "        y => Yes, tag with this format\n" ;
+    print "        n => No, try the next matching format\n" ;
+    print "        a => Always yes, stop asking for a confirmation\n" ;
+    print "        u => Use this format for all remaining matching files\n" ;
+    print "        s => Skip this file, don't tag it\n" ;
+    print "        h => Show this help\n" ;
+}
+
+sub tag_file {
+    my $file = shift ;
+    my $tag_type = shift ;
+    my $parser = shift ;
+    my $confirm = shift ;
+
+    my @field = @field_default ;
+    $#field = $fields ;
+
+    # get fields and show them if asked
+    my $i = 1 ;
+    while ( $i <= $parser->{indices} ) {
+	if ( $parser->{$i-1} >= 0 ) {
+	    $field[$parser->{$i-1}] = ${$i} ;
+	    if ($verbose_opt or $confirm or $current_ask_opt) {
+		print "      Field '". $field_name[$parser->{$i-1}]
+		    ."' is '". ${$i} ."'\n" ;
+	    }
+	}
+	$i++ ;
+    }
+
+    # confirm if required
+    if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
+      ASK_CONFIRM:
+	print "      Really tag the file [ynaus,(H)elp] ? " ;
+	my $reply = <> ;
+	if ($reply =~ /^y/i) {
+	    goto TAG_IT ;
+	} elsif ($reply =~ /^a/i) {
+	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
+	    goto TAG_IT ;
+	} elsif ($reply =~ /^u/i) {
+	    $preferred_parser = $parser ;
+	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
+	    goto TAG_IT ;
+	} elsif ($reply =~ /^n/i) {
+	    return 0 ;
+	} elsif ($reply =~ /^s/i) {
+	    return -1 ;
+	} else {
+	    confirm_usage () ;
+	    goto ASK_CONFIRM ;
+	}
+    }
+    
+  TAG_IT:
+    # tagging command line
+    my @system_args ;
+    if ($tag_type eq $ogg_type) {
+	@system_args =
+	    ( "vorbiscomment", "-wq",
+	      ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
+		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+		) ,
+	      $file
+	      ) ;
+    } elsif ($tag_type eq $mp3_type) {
+	@system_args =
+	    ( "mp3info" ,
+	      ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
+		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+		) ,
+	      $file
+	      ) ;
+	    }
+    
+    # show command line and really tag if asked
+    if ($dryrun_opt or $verbose_opt) {
+	print "      ". +(join '# #', @system_args) ."\n" ;
+	}
+    if (!$dryrun_opt) {
+	print "      Tagging.\n" ;
+	system @system_args ;
+    }
+
+    return 1 ;
+}    

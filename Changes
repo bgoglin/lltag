@@ -1,3 +1,27 @@
+lltag (0.4)
+
+  * Support guessing formats with -G.
+    - Internal filename parsers are (with variable whitespaces)
+      "%n - %a - %t", "%n - %t", "%n[.)] %t"
+      "%a - %n - %t", "%a - %t", "%t"
+    - Internal path parsers are (with variable whitespaces and 
+      forgotten first directories)
+      "%a/%a - %A", "%a/%A", "%a", "%A"
+  * Add --yes to force tagging without confirmation when guessing.
+  * Add --ask to force confirmation when not guessing.
+  * Add an equivalent long option for each short option.
+  * Support mixing options and files on the command line.
+  * Add verbose message when setting default values.
+  * Show command line in verbose mode even if --dry-run wasn't passed.
+  * Cleanup command line showing.
+  * Cleanup wrong option detection.
+  * Fix format string matching to ensure the whole filename will be used.
+  * Change several ERROR messages into less noisy messages.
+  * Show usage on stdout instead of stderr.
+  * Fix usage.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun,  6 Mar 2005 15:33:42 +0100
+
 lltag (0.3.1)
 
   * Add author and homepage to usage.

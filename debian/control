@@ -3,7 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Brice Goglin <Brice.Goglin@ens-lyon.org>
 Build-Depends-Indep: debhelper (>= 4.0.2)
-Standards-Version: 3.6.1
+Standards-Version: 3.6.1.1
 
 Package: lltag
 Provides: llmp3tag
@@ -11,9 +11,10 @@ Replaces: llmp3tag
 Conflicts: llmp3tag
 Architecture: all
 Depends: ${perl:Depends}, mp3info, vorbis-tools
-Description: Loulous music file tagger
- lltag sets ID3 tags of mp3 files and Ogg tag using
- command line formats matching filenames.
- It can be used to handle multiple files at once using
- different formats. It will try each format until one
- matches.
+Description: Loulous massive and magic mp3/ogg file tagger
+ lltag is a command-line tool to set ID3 tags of mp3 files
+ and Ogg tags. It may be used to tag multiples files at
+ once by comparing their filename or pathname with
+ different formats.
+ Formats may be either passed on command-line or guess
+ by the program automagically.
