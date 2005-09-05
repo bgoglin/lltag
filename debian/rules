@@ -3,7 +3,7 @@
 # GNU copyright 1997 to 1999 by Joey Hess.
 
 #export DH_VERBOSE=1
-export DH_COMPAT=3
+#export DH_COMPAT=3
 
 #configure: configure-stamp
 #configure-stamp:
@@ -21,6 +21,7 @@ clean:
 	dh_testroot
 	rm -f build-stamp
 	dh_clean
+	make clean DESTDIR=$(CURDIR)/debian/lltag PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
 
 install: build
 	dh_testdir

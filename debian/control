@@ -6,9 +6,6 @@ Build-Depends-Indep: debhelper (>= 4.0.2)
 Standards-Version: 3.6.2.1
 
 Package: lltag
-Provides: llmp3tag
-Replaces: llmp3tag
-Conflicts: llmp3tag
 Architecture: all
 Depends: ${perl:Depends}, mp3info, vorbis-tools
 Description: Automatic command-line mp3/ogg file tagger

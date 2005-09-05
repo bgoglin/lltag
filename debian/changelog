@@ -1,3 +1,9 @@
+lltag (0.6.1-3) unstable; urgency=low
+
+  * First official release, closes: #320637.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon,  1 Aug 2005 19:36:47 +0200
+
 lltag (0.6.1-2) unstable; urgency=low
 
   * Fix the description.
