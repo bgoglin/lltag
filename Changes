@@ -1,3 +1,13 @@
+lltag (0.5.3)
+
+  * Fix short and long option processing to set default field values.
+  * Add --list and -L to list internal formats.
+  * Add --version and -V to show version.
+  * Show version in usage.
+  * Automatically set version in the binary during install.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Thu, 12 May 2005 21:27:15 +0200
+
 lltag (0.5.2)
 
   * "" means "yes" when confirming tagging.
