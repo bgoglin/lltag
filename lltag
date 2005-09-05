@@ -29,6 +29,9 @@ sub usage() {
     print STDERR (map { "     %".$field_format_name[$_]." means ".$field_name[$_]."\n" } ( 0 .. $fields-1 )) ;
     print STDERR "     %d means Dummy text\n" ;
     print STDERR "     %% means %\n" ;
+    print STDERR "\n" ;
+    print STDERR "Author:    Brice Goglin <Brice.Goglin\@ens-lyon.org>\n" ;
+    print STDERR "Homepage:  http://bgoglin.free.fr/lltag\n" ;
     exit 1;
 }
 

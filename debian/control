@@ -11,7 +11,7 @@ Replaces: llmp3tag
 Conflicts: llmp3tag
 Architecture: all
 Depends: ${perl:Depends}, mp3info, vorbis-tools
-Description: Loulous backup
+Description: Loulous music file tagger
  lltag sets ID3 tags of mp3 files and Ogg tag using
  command line formats matching filenames.
  It can be used to handle multiple files at once using
