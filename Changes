@@ -1,3 +1,14 @@
+lltag (0.5.5)
+
+  * Allow to pass multiple |-separated chars or strings to --sep.
+  * When a field appears multiple times in the format, lltag does not print all matched values.
+    It check that they are identical, print a warning if not, and keeps the first one.
+  * Do not tag when there's nothing to tag (fix bogus mp3info/vorbiscomment invocation).
+  * Add comments at the begining of formats.
+  * Fix matching in man page.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sat, 30 Jul 2005 13:26:54 +0200
+
 lltag (0.5.4)
 
   * Allow to only set default values (no user formats given, no guess).

@@ -1,3 +1,25 @@
+# lltag internal format database
+# each entry is composed of:
+#   [natural format]
+#	format will be shown when matching
+#   type = filename or path
+#	does this format apply to the wall path or only the filename ?
+#   regexp = 
+#	internal regexp with	%L for limiting space
+#				%S for a space
+#				%N for a numeric string
+#				%A for an alphanumeric string without /
+#				%P for any path (alphanumeric string with /)
+#				%% for %
+#				any other character will remain unchanged
+#   indices = list of comma-separed letter indicated what %N or %A means
+#	      in the regexp:	a for author
+#				A for album
+#				g for genre
+#				n for track number
+#				t for title
+#				y for year
+
 [%n - %a - %t]
 type = filename
 regexp = %L%N%S-%S%A%S-%S%A%L

@@ -106,8 +106,9 @@ Do not consider the path of files when matching.
 .I "\-R, \-\-recursive"
 Recursively search for files in subdirectories.
 .TP
-.I "\-\-sep char"
-Replace the specified character with space in tags.
+.I "\-\-sep string|string"
+Replace the specified characters or strings with space in tags.
+They have to be |-separated.
 .TP
 .I "\-\-spaces"
 Allow multiple or no space instead of only one when matching.
@@ -154,6 +155,11 @@ to match the title.
 .I "%y"
 to match the year.
 
+.I "%d"
+to match anything and forget it.
+
+.I "%%"
+to match %.
 
 .SH CONFIRMATION
 When --ask is passed or when guessing, each matching will lead to
