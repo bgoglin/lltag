@@ -1,3 +1,12 @@
+lltag (0.6)
+
+  * Allow to edit fields with 'e' during confirmation.
+  * Allow to see what would be done with 'v' during confirmation.
+  * Fix a few missing capitalization.
+  * Print "Nothing to do" when no field has to be tagged.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sat, 30 Jul 2005 21:36:27 +0200
+
 lltag (0.5.5)
 
   * Allow to pass multiple |-separated chars or strings to --sep.
