@@ -1,5 +1,12 @@
+lltag (0.4.1-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun,  6 Mar 2005 22:15:45 +0100
+
 lltag (0.4) unstable; urgency=low
 
+  * New upstream release.
   * Add homepage to debian/copyright.
   * Update description in debian/changelog.
 
