@@ -24,6 +24,7 @@ lltag \- tag mp3/ogg music files automagically
 .RB [ \-h ]
 .\"
 
+
 .SH DESCRIPTION
 .B lltag
 is a command-line tool to automagically set tags of
@@ -46,6 +47,7 @@ option was passed.
 
 \fImp3info\fR is used to tag MP3 files while
 \fIvorbiscomment\fR is used for OGG files.
+
 
 .SH OPTIONS
 .TP
@@ -120,6 +122,7 @@ Always accept tagging without asking the user.
 By default user-specified format matching is accepted
 while guess format matching is asked for confirmation.
 
+
 .SH FORMAT
 User-specified formats must be a string composed of any characters
 and the following special codes:
@@ -142,6 +145,7 @@ to match the title.
 
 .I "%y"
 to match the year.
+
 
 .SH CONFIRMATION
 When --ask is passed or when guessing, each matching will lead to
@@ -189,6 +193,47 @@ Skip the current file, don't tag it at all.
 .RS
 Show help about confirmation.
 .RE
+
+
+.SH INTERNAL FORMATS
+The internal format database is usually stored in
+.IR "/etc/lltag/format" .
+It contains entries composed of :
+
+.RE
+.I [%n - %a - %t]
+.RS
+A title between bracket
+.RE
+.I type = filename
+.RS
+The type is either
+.IR filename
+or
+.IR "path"
+.RE
+.I regexp = %L%N%S-%S%A%S-%S%A%L
+.RS
+A format composed of %L for limiting space, %N for numbers, %S for a space,
+%A for anything (except /), %P for any path and %% for %.
+.RE
+.I indices = n,a,t
+.RS
+A list of format letters corresponding to %N or %A field in the previous format
+(See
+.SM
+.B FORMAT
+for a list of these letters).
+
+
+.SH FILES
+.RE
+.I /etc/lltag/format
+.RS
+System-wide internal format database. See
+.SM
+.B INTERNAL FORMATS
+for details.
 
 .SH AUTHOR
 Brice Goglin, <Brice.Goglin@ens-lyon.org>

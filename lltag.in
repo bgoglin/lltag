@@ -8,7 +8,7 @@ Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 
 #######################################################
 # configuration file location
-my $common_lltag_dir = "/etc/lltag" ;
+my $common_lltag_dir = "@SYSCONFDIR@/lltag" ;
 my $user_lltag_dir = "$ENV{HOME}/.lltag" ;
 my $lltag_format_filename = "formats" ;
 
@@ -487,7 +487,7 @@ while ( @files ) {
 # effective tagging
 
 sub confirm_usage {
-    print "        y => Yes, tag with this format\n" ;
+    print "        y => Yes, tag with this format (default)\n" ;
     print "        u => Use this format for all remaining matching files\n" ;
     print "        a => Always yes, stop asking for a confirmation\n" ;
     print "        n => No, try the next matching format\n" ;
@@ -525,9 +525,10 @@ sub tag_file {
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "      Really tag the file [yuanps,(H)elp] ? " ;
+	print "      Really tag the file [Yuanps,(h)elp] ? " ;
 	my $reply = <> ;
-	if ($reply =~ /^y/i) {
+	chomp $reply ;
+	if ($reply eq "" or $reply =~ /^y/i) {
 	    goto TAG_IT ;
 	} elsif ($reply =~ /^a/i) {
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;

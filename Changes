@@ -1,3 +1,12 @@
+lltag (0.5.2)
+
+  * "" means "yes" when confirming tagging.
+  * Use lltag.in to replace /etc/ directories during install.
+  * Add format file description to the manpage.
+  * Generate Gentoo tarball in the Makefile (thanks to David Baelde for the ebuild).
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 10 Apr 2005 00:41:08 +0200
+
 lltag (0.5.1)
 
   * Fix -G option for directory containing spaces.
