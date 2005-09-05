@@ -1,3 +1,7 @@
+
+  * Update contact address to gna.org and add it to README.
+
+
 lltag (0.7)
 
   * Add --clear to force emptying of mp3 tags (default for ogg).

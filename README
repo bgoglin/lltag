@@ -20,3 +20,8 @@ lltag requirements
 lltag requires perl, vorbis-tools and mp3info.
 These dependencies are automatically installed when installing
 Debian or Gentoo prepackaged versions.
+
+
+If you experience any problem,
+please see http://bgoglin.free.fr/lltag
+or report to <lltag-devel AT gna.org>.

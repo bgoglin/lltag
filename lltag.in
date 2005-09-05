@@ -73,8 +73,9 @@ sub usage {
     print "     %d means Dummy text\n" ;
     print "     %% means %\n" ;
     print "\n" ;
-    print "Author:    Brice Goglin <Brice.Goglin\@ens-lyon.org>\n" ;
+    print "Author:    Brice Goglin\n" ;
     print "Homepage:  http://bgoglin.free.fr/lltag\n" ;
+    print "Report bugs to:  <lltag-devel AT gna.org>\n" ;
     exit 1;
 }
 
