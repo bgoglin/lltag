@@ -1,3 +1,9 @@
+lltag (0.7-2) unstable; urgency=low
+
+  * Change priority from optional to extra since mp3info is extra.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 16 Aug 2005 23:18:29 +0200
+
 lltag (0.7-1) unstable; urgency=low
 
   * New upstream release.

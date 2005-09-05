@@ -1,6 +1,6 @@
 Source: lltag
 Section: utils
-Priority: optional
+Priority: extra
 Maintainer: Brice Goglin <Brice.Goglin@ens-lyon.org>
 Build-Depends-Indep: debhelper (>= 4.0.2)
 Standards-Version: 3.6.2.1
