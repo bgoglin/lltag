@@ -1,4 +1,5 @@
 
+  * Add a warning (with reference to README) when system fails with ENOENT or EPERM.
   * Cleanup system usage.
   * Update contact address to gna.org and add it to README.
 

@@ -768,6 +768,8 @@ sub system_with_output {
 	open STDOUT, ">&", $pipe_in ;
 	{ exec @_ } ;
 	print $pipe_in "Failed to execute command line: ". join (" ", @_) ."\n" ;
+	print $pipe_in "Please install $_[0] properly (see README).\n"
+	    if $!{ENOENT} or $!{EPERM} ;
 	close $pipe_in ;
 	exit -1 ;
     }
