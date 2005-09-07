@@ -1,3 +1,11 @@
+lltag (0.7.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Do not depend on mp3info and vorbis-tools, just recommends.
+  * Add README.Debian to detail recommended packages.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Wed,  7 Sep 2005 18:00:06 +0200
+
 lltag (0.7-3) unstable; urgency=low
 
   * Change section to sound, closes #325925.

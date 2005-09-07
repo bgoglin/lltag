@@ -73,8 +73,9 @@ sub usage {
     print "     %d means Dummy text\n" ;
     print "     %% means %\n" ;
     print "\n" ;
-    print "Author:    Brice Goglin <Brice.Goglin\@ens-lyon.org>\n" ;
+    print "Author:    Brice Goglin\n" ;
     print "Homepage:  http://bgoglin.free.fr/lltag\n" ;
+    print "Report bugs to:  <lltag-devel AT gna.org>\n" ;
     exit 1;
 }
 
@@ -747,13 +748,19 @@ sub system_with_output {
     my $pid = fork() ;
     if ($pid < 0) {
 	# in the father, when fork failed
-	print $pipe_in "Failed to fork to execute command line: ". join (" ", @_) ."\n" ;
-	return (-1, $pipe_out) ;
+	close $pipe_in ;
+	close $pipe_out ;
+	return (-1, "Failed to fork to execute command line: ". join (" ", @_) ."\n") ;
     } elsif ($pid > 0) {
 	# in the father, when fork done
 	close $pipe_in ;
 	waitpid($pid, 0);
-	return ($?, $pipe_out) ;
+	my $status = $? >> 8 ;
+	$status = -1
+	    if $status == 255 ;
+	my @lines = <$pipe_out> ;
+	close $pipe_out ;
+	return ( $status , @lines ) ;
     } else {
 	# in the child
 	close $pipe_out ;
@@ -761,6 +768,9 @@ sub system_with_output {
 	open STDOUT, ">&", $pipe_in ;
 	{ exec @_ } ;
 	print $pipe_in "Failed to execute command line: ". join (" ", @_) ."\n" ;
+	print $pipe_in "Please install $_[0] properly (see README).\n"
+	    if $!{ENOENT} or $!{EPERM} ;
+	close $pipe_in ;
 	exit -1 ;
     }
 }
@@ -807,14 +817,13 @@ sub tag_with_fields {
 	}
     if (!$dryrun_opt) {
 	print "      Tagging.\n" ;
-	my ($status, $output) = system_with_output @system_args ;
+	my ($status, @output) = system_with_output @system_args ;
 	if ($status) {
 	    print "Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
-	    while (my $line = <$output>) {
+	    while (my $line = shift @output) {
 		print "# $line" ;
 	    }
 	}
-	close $output ;
     }
 
     return $TAG_SUCCESS ;
