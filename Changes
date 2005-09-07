@@ -1,8 +1,10 @@
+lltag (0.7.1)
 
   * Add a warning (with reference to README) when system fails with ENOENT or EPERM.
   * Cleanup system usage.
   * Update contact address to gna.org and add it to README.
 
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  7 Aug 2005 17:57:18 +0200
 
 lltag (0.7)
 
