@@ -1,35 +1,13 @@
 lltag (0.7.1-1) unstable; urgency=low
 
   * New upstream release.
+  * Change section to sound, closes: #325925.
+  * Change priority from optional to extra since mp3info is extra.
   * Do not depend on mp3info and vorbis-tools, just recommends.
   * Add README.Debian to detail recommended packages.
-
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Wed,  7 Sep 2005 18:00:06 +0200
-
-lltag (0.7-3) unstable; urgency=low
-
-  * Change section to sound, closes #325925.
-
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 28 Aug 2005 18:02:00 +0200
-
-lltag (0.7-2) unstable; urgency=low
-
-  * Change priority from optional to extra since mp3info is extra.
-
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 16 Aug 2005 23:18:29 +0200
-
-lltag (0.7-1) unstable; urgency=low
-
-  * New upstream release.
-
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 16 Aug 2005 00:39:18 +0200
-
-lltag (0.6.2-1) unstable; urgency=low
-
-  * New upstream release.
   * Add debian/watch.
 
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 12 Aug 2005 22:26:56 +0200
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Wed,  7 Sep 2005 18:00:06 +0200
 
 lltag (0.6.1-3) unstable; urgency=low
 
