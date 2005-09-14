@@ -1,3 +1,7 @@
+
+  * Fix compilation and installation when DESTDIR is overriden.
+
+
 lltag (0.7.1)
 
   * Add a warning (with reference to README) when system fails with ENOENT or EPERM.
