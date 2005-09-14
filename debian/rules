@@ -14,6 +14,7 @@
 build: build-stamp
 build-stamp:
 	dh_testdir
+	make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
 	touch build-stamp
 
 clean:
@@ -21,7 +22,7 @@ clean:
 	dh_testroot
 	rm -f build-stamp
 	dh_clean
-	make clean DESTDIR=$(CURDIR)/debian/lltag PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
+	make clean PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
 
 install: build
 	dh_testdir
