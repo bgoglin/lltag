@@ -1,5 +1,6 @@
 
   * Fix compilation and installation when DESTDIR is overriden.
+  * Fix make uninstall.
 
 
 lltag (0.7.1)

@@ -28,7 +28,7 @@ install::
 
 uninstall::
 	rm $(DESTDIR)$(BINDIR)/lltag
-	rm $(DESTDIR)$(SYSCONFDIR)/lltag/format
+	rm $(DESTDIR)$(SYSCONFDIR)/lltag/formats
 	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag/
 	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
 
