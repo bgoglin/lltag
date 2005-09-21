@@ -1,6 +1,8 @@
 
   * Fix compilation and installation when DESTDIR is overriden.
   * Fix make uninstall.
+  * Update all contact addresses and URLs since the project is
+    now hosted by Gna!.
 
 
 lltag (0.7.1)
