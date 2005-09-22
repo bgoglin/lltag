@@ -1,5 +1,5 @@
 NAME	=	lltag
-VERSION	=	0.7.1
+VERSION	=	$(shell cat VERSION)
 
 .PHONY: lltag clean install uninstall tarball
 

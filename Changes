@@ -1,6 +1,7 @@
 
   * Fix compilation and installation when DESTDIR is overriden.
   * Fix make uninstall.
+  * Add a VERSION file.
   * Update all contact addresses and URLs since the project is
     now hosted by Gna!.
 
