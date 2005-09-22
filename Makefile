@@ -1,5 +1,5 @@
 NAME	=	lltag
-VERSION	=	0.7.1
+VERSION	=	$(shell cat VERSION)
 
 .PHONY: lltag clean install uninstall tarball
 
@@ -15,21 +15,21 @@ TARBALL	=	$(NAME)-$(VERSION)
 DEBIAN_TARBALL	=	$(NAME)_$(VERSION).orig
 
 lltag::
-	sed -e 's!@SYSCONFDIR@!$(SYSCONFDIR)!g' -e 's!@VERSION@!$(VERSION)!g' < lltag.in > lltag
+	sed -e 's!@SYSCONFDIR@!$(DESTDIR)$(SYSCONFDIR)!g' -e 's!@VERSION@!$(DESTDIR)$(VERSION)!g' < lltag.in > lltag
 
 clean::
 	rm -f lltag
 
-install:: lltag
-	install -d -m 0755 $(DESTDIR)$(BINDIR) $(DESTDIR)$(SYSCONFDIR)/lltag $(DESTDIR)$(MANDIR)/man1
+install::
+	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/ $(DESTDIR)$(MANDIR)/man1/
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
-	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag
-	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1
+	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag/
+	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
 
 uninstall::
 	rm $(DESTDIR)$(BINDIR)/lltag
-	rm $(DESTDIR)$(SYSCONFDIR)/lltag/format
-	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag
+	rm $(DESTDIR)$(SYSCONFDIR)/lltag/formats
+	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag/
 	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
 
 tarball::
