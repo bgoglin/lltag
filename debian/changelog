@@ -1,3 +1,9 @@
+lltag (0.7.2) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Thu, 22 Sep 2005 10:41:28 +0200
+
 lltag (0.7.1-1) unstable; urgency=low
 
   * New upstream release.
