@@ -22,19 +22,6 @@ my @field_default = (undef, undef, undef, undef, undef, undef, undef) ;
 my $fields = $#field_name + 1 ;
 
 #######################################################
-# mp3info and vorbiscomment specific options
-my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
-my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
-
-my @mp3_tagging_cmd = ( 'mp3info' ) ;
-my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
-# append is not supported by id3 tags
-
-my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
-my @ogg_tagging_clear_option = ( '-w' ) ;
-my @ogg_tagging_append_option = ( '-a' ) ;
-
-#######################################################
 # version
 my $version = "@VERSION@" ;
 
@@ -96,8 +83,8 @@ my $default_opt = 0 ;
 my $clear_opt = 0 ;
 my $append_opt = 0 ;
 
-my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
+my $ogg_type = "ogg" ;
 
 # subregexp
 my $match_path = '(?:[^/]*\/)*' ;
@@ -523,10 +510,10 @@ while ( @files ) {
     # split into filename and extension
     my $tag_type = $type_opt ;
     if (not defined $tag_type) {
-	if ($extension eq "ogg") {
-	    $tag_type = $ogg_type ;
-	} elsif ($extension eq "mp3") {
+	if ($extension eq "mp3") {
 	    $tag_type = $mp3_type ;
+	} elsif ($extension eq "ogg") {
+	    $tag_type = $ogg_type ;
 	} else {
 	    print "  Skipping this unknown-type file '$file'\n" ;
 	    goto NEXT_FILE ;
@@ -570,6 +557,39 @@ while ( @files ) {
 
   NEXT_FILE:
     shift ;
+}
+
+#######################################################
+# mp3info and vorbiscomment specific options
+
+sub mp3_system_args {
+    my @field = @_ ;
+    my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
+    my @mp3_tagging_cmd = ( 'mp3info' ) ;
+    my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
+    # append is not supported by id3 tags
+
+    return ( @mp3_tagging_cmd ,
+	     $clear_opt ? @mp3_tagging_clear_option : () ,
+	     ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
+	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	       ) ,
+	     ) ;
+}
+
+sub ogg_system_args {
+    my @field = @_ ;
+    my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
+    my @ogg_tagging_clear_option = ( '-w' ) ;
+    my @ogg_tagging_append_option = ( '-a' ) ;
+
+    return ( @ogg_tagging_cmd ,
+	     $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
+	     ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
+	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	       ) ,
+	     ) ;
 }
 
 #######################################################
@@ -793,23 +813,11 @@ sub tag_with_fields {
 
     # tagging command line
     my @system_args ;
-    if ($tag_type eq $ogg_type) {
-	@system_args =
-	    ( @ogg_tagging_cmd , $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
-	      ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
-		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-		) ,
-	      $file
-	      ) ;
-    } elsif ($tag_type eq $mp3_type) {
-	@system_args =
-	    ( @mp3_tagging_cmd , $clear_opt ? @mp3_tagging_clear_option : () ,
-	      ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
-		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-		) ,
-	      $file
-	      ) ;
-	    }
+    if ($tag_type eq $mp3_type) {
+	@system_args = ( (mp3_system_args @field), $file) ;
+    } elsif ($tag_type eq $ogg_type) {
+	@system_args = ( (ogg_system_args @field), $file) ;
+    }
 
     # show command line and really tag if asked
     if ($dryrun_opt or $verbose_opt) {
