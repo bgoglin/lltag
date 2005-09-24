@@ -33,7 +33,7 @@ sub version {
 #######################################################
 # usage
 sub usage {
-    print $0." $version is a frontend to tag MP3/OGG files automagically.\n" ;
+    print $0." $version is a frontend to tag MP3/OGG/FLAC files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
     print "   Available options are:\n" ;
     print "     -F, --format <format>  Try format (multiple instances allowed)\n" ;
@@ -47,9 +47,9 @@ sub usage {
     print "     --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
-    print "     --mp3/--ogg            Force mp3 or ogg instead of by-extension detection\n" ;
-    print "     --clear                Clear all id3 tag of mp3 files\n" ;
-    print "     --append               Append instead of clearing ogg tags\n" ;
+    print "     --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
+    print "     --clear                Clear all tags of audio files when possible\n" ;
+    print "     --append               Append tags only instead of replacing old ones when possible\n" ;
     print "     --dry-run              Do nothing but show what would have been done\n" ;
     print "     -L, --list             List internal formats\n" ;
     print "     -V, --version          Show lltag version\n" ;
@@ -85,6 +85,7 @@ my $append_opt = 0 ;
 
 my $mp3_type = "mp3" ;
 my $ogg_type = "ogg" ;
+my $flac_type = "flac" ;
 
 # subregexp
 my $match_path = '(?:[^/]*\/)*' ;
@@ -112,6 +113,7 @@ GetOptions(
 	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
 	   'mp3'          => sub { $type_opt = $mp3_type ; },
 	   'ogg'          => sub { $type_opt = $ogg_type ; },
+	   'flac'         => sub { $type_opt = $flac_type ; },
 	   'clear'        => \$clear_opt,
 	   'append'       => \$append_opt,
 	   'dry-run'      => \$dryrun_opt,
@@ -514,6 +516,8 @@ while ( @files ) {
 	    $tag_type = $mp3_type ;
 	} elsif ($extension eq "ogg") {
 	    $tag_type = $ogg_type ;
+	} elsif ($extension eq "flac") {
+	    $tag_type = $flac_type ;
 	} else {
 	    print "  Skipping this unknown-type file '$file'\n" ;
 	    goto NEXT_FILE ;
@@ -590,6 +594,22 @@ sub ogg_system_args {
 	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
 	       ) ,
 	     ) ;
+}
+
+sub flac_system_args {
+    my @field = @_ ;
+    my @field_metaflac_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my @flac_tagging_cmd = ( 'metaflac' ) ;
+    my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
+
+    return (@flac_tagging_cmd ,
+	    $clear_opt ? @flac_tagging_clear_option : () ,
+	    !$append_opt ? ( map { ( "--remove-tag", $field_metaflac_option[$_] ) }
+			     ( grep { defined $field[$_] } ( 0 .. $fields-1 ) ) ) : () ,
+	    ( map { ( "--set-tag", $field_metaflac_option[$_]."=".$field[$_] ) }
+	      ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	      ) ,
+	    ) ;
 }
 
 #######################################################
@@ -817,6 +837,8 @@ sub tag_with_fields {
 	@system_args = ( (mp3_system_args @field), $file) ;
     } elsif ($tag_type eq $ogg_type) {
 	@system_args = ( (ogg_system_args @field), $file) ;
+    } elsif ($tag_type eq $flac_type) {
+	@system_args = ( (flac_system_args @field), $file) ;
     }
 
     # show command line and really tag if asked
