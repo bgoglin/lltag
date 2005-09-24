@@ -1,9 +1,9 @@
 Debian README for lltag package
 ===============================
 
-lltag recommends mp3info and vorbis-tools Debian packages.
+lltag recommends mp3info, vorbis-tools and flac Debian packages.
 It does not _depend_ on these packages since you might want
-to tag mp3 files without having to install vorbis-tools.
+to tag mp3 files without having to install vorbis-tools or flac.
 
-If tagging fails saying that mp3info or vorbiscomment command
-does not exist, you should install the required package.
+If tagging fails saying that mp3info, vorbiscomment or metaflac
+command does not exist, you should install the required package.
