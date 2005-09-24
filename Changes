@@ -1,3 +1,7 @@
+
+  * Add FLAC support.
+
+
 lltag (0.7.2)
 
   * Fix compilation and installation when DESTDIR is overriden.
