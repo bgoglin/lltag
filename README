@@ -17,7 +17,7 @@ Note that 'make uninstall' (with same options) allows to uninstall.
 lltag requirements
 ==================
 
-lltag requires perl, vorbis-tools and mp3info.
+lltag requires perl, mp3info, vorbiscomment and metaflac.
 These dependencies are automatically installed when installing
 Debian or Gentoo prepackaged versions.
 

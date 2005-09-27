@@ -1,3 +1,10 @@
+lltag (0.8)
+
+  * Add FLAC support (requested by Stephane Gimenez).
+  * Add --maj to upcase first letters in tags (requested by Stephane Gimenez).
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 27 Sep 2005 23:03:00 +0200
+
 lltag (0.7.2)
 
   * Fix compilation and installation when DESTDIR is overriden.

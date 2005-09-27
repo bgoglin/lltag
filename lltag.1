@@ -1,7 +1,7 @@
 .TH LLTAG 1 "March 2005"
 .\"
 .SH NAME
-lltag \- tag mp3/ogg music files automagically
+lltag \- tag mp3/ogg/flac music files automagically
 .br
 .\"
 .SH SYNOPSIS
@@ -18,10 +18,11 @@ lltag \- tag mp3/ogg music files automagically
 .RB [ \-y\ year ]
 .RB [ \-c\ comment ]
 .RB [ \-\-spaces ]
+.RB [ \-\-maj ]
 .RB [ \-\-sep\ <s1|s2|...> ]
 .RB [ \-\-yes ]
 .RB [ \-\-ask ]
-.RB [ \-\-mp3/\-\-ogg ]
+.RB [ \-\-mp3/\-\-ogg/\-\-flac ]
 .RB [ \-\-clear ]
 .RB [ \-\-append ]
 .RB [ \-\-dry\-run ]
@@ -35,7 +36,7 @@ lltag \- tag mp3/ogg music files automagically
 .SH DESCRIPTION
 .B lltag
 is a command-line tool to automagically set tags of
-MP3 or OGG files.
+MP3, OGG or FLAC files.
 It parses the filenames according different formats
 to get the tags.
 The formats may be either given by the user or guessed
@@ -52,8 +53,9 @@ Internal formats will be tried later if the
 .B \-G
 option was passed.
 
-\fImp3info\fR is used to tag MP3 files while
-\fIvorbiscomment\fR is used for OGG files.
+\fImp3info\fR is used to tag MP3 files
+while \fIvorbiscomment\fR is used for OGG files,
+and \fImetaflac\fR is used for FLAC files.
 
 
 .SH OPTIONS
@@ -65,7 +67,7 @@ Set the default value of the \fIAlbum\fR tag.
 Set the default value of the \fIArtist\fR tag.
 .TP
 .I "\-\-append"
-Force appending of ogg tags.
+Force appending of ogg/flac tags.
 See
 .SM
 .B CLEARING, REPLACING OR APPENDING
@@ -84,7 +86,7 @@ below for details.
 Set the default value of the \fIComment\fR tag.
 .TP
 .I "\-\-clear"
-Force clearing of id3 tags of mp3 files.
+Force clearing of id3 tags of mp3 files or flac tags.
 See
 .SM
 .B CLEARING, REPLACING OR APPENDING
@@ -101,6 +103,9 @@ See
 .B FORMAT
 below for details.
 .TP
+.I "\-\-flac"
+Tag all files as FLAC files, using \fImetaflac\fR.
+.TP
 .I "\-G, \-\-guess"
 Guess format using the internal database if no user-specified format
 worked (default behavior).
@@ -113,6 +118,9 @@ Print a usage message and exit.
 .TP
 .I "\-L, \-\-list"
 List internal formats.
+.TP
+.I "\-\-maj"
+Upcase the first letter of each word in tags.
 .TP
 .I "\-\-mp3"
 Tag all files as MP3 files, using \fImp3info\fR.
@@ -190,23 +198,28 @@ to match %.
 
 .SH CLEARING, REPLACING OR APPENDING
 Id3 tags of mp3 files are a set of 7 independent fields,
-while ogg tags is a unique stream of one field per line.
+while ogg/flac tags is a unique stream of one field per line.
 That is why mp3 tags may be changed independently while
-ogg tags may be reset or appended.
+ogg/flac tags may be reset or appended.
 
 Thus,
 .IR lltag
 clears ogg tag by default before setting the new ones,
 while it only replaces mp3 tags.
 
+.IR lltag
+may either replace (by default), append or reset flac tags since
+.I metaflac
+is flexible enough to do so.
+
 If
 .I \-\-clear   
-is passed, all mp3 tags will be cleared first.
+is passed, all mp3/flac tags will be cleared first.
 This does not impact ogg tagging since it clears by default.
 
 If
 .I \-\-append
-is passed, ogg tags are appended to the existing ones.
+is passed, ogg/flac tags are appended to the existing ones.
 This does not impact mp3 tagging since appending is impossible
 (newly-defined existing tags are replaced, others are kept).
 

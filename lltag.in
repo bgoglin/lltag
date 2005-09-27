@@ -22,19 +22,6 @@ my @field_default = (undef, undef, undef, undef, undef, undef, undef) ;
 my $fields = $#field_name + 1 ;
 
 #######################################################
-# mp3info and vorbiscomment specific options
-my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
-my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
-
-my @mp3_tagging_cmd = ( 'mp3info' ) ;
-my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
-# append is not supported by id3 tags
-
-my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
-my @ogg_tagging_clear_option = ( '-w' ) ;
-my @ogg_tagging_append_option = ( '-a' ) ;
-
-#######################################################
 # version
 my $version = "@VERSION@" ;
 
@@ -46,7 +33,7 @@ sub version {
 #######################################################
 # usage
 sub usage {
-    print $0." $version is a frontend to tag MP3/OGG files automagically.\n" ;
+    print $0." $version is a frontend to tag MP3/OGG/FLAC files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
     print "   Available options are:\n" ;
     print "     -F, --format <format>  Try format (multiple instances allowed)\n" ;
@@ -57,12 +44,13 @@ sub usage {
 		    ." <val>     Set the default value for "
 		    .ucfirst($field_name[$_])."\n" } ( 0 .. $fields-1 ) ;
     print "     --spaces               Allow no or multiple spaces\n" ;
+    print "     --maj                  Upcase first letters of words in tags\n" ;
     print "     --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
-    print "     --mp3/--ogg            Force mp3 or ogg instead of by-extension detection\n" ;
-    print "     --clear                Clear all id3 tag of mp3 files\n" ;
-    print "     --append               Append instead of clearing ogg tags\n" ;
+    print "     --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
+    print "     --clear                Clear all tags of audio files when possible\n" ;
+    print "     --append               Append tags only instead of replacing old ones when possible\n" ;
     print "     --dry-run              Do nothing but show what would have been done\n" ;
     print "     -L, --list             List internal formats\n" ;
     print "     -V, --version          Show lltag version\n" ;
@@ -85,6 +73,7 @@ my $ask_opt = 0 ;
 my $dryrun_opt = 0 ;
 my $guess_opt = 0 ;
 my $nopath_opt = 0 ;
+my $maj_opt = 0 ;
 my $sep_opt = undef ;
 my $spaces_opt = 0 ;
 my $type_opt = undef ;
@@ -96,8 +85,9 @@ my $default_opt = 0 ;
 my $clear_opt = 0 ;
 my $append_opt = 0 ;
 
-my $ogg_type = "ogg" ;
 my $mp3_type = "mp3" ;
+my $ogg_type = "ogg" ;
+my $flac_type = "flac" ;
 
 # subregexp
 my $match_path = '(?:[^/]*\/)*' ;
@@ -120,11 +110,13 @@ GetOptions(
 	   'R|recursive'  => \$recursive_opt,
 	   'p|nopath'     => \$nopath_opt,
 	   'spaces'       => \$spaces_opt,
+	   'maj'          => \$maj_opt,
 	   'sep=s'        => \$sep_opt,
 	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
 	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
 	   'mp3'          => sub { $type_opt = $mp3_type ; },
 	   'ogg'          => sub { $type_opt = $ogg_type ; },
+	   'flac'         => sub { $type_opt = $flac_type ; },
 	   'clear'        => \$clear_opt,
 	   'append'       => \$append_opt,
 	   'dry-run'      => \$dryrun_opt,
@@ -523,10 +515,12 @@ while ( @files ) {
     # split into filename and extension
     my $tag_type = $type_opt ;
     if (not defined $tag_type) {
-	if ($extension eq "ogg") {
-	    $tag_type = $ogg_type ;
-	} elsif ($extension eq "mp3") {
+	if ($extension eq "mp3") {
 	    $tag_type = $mp3_type ;
+	} elsif ($extension eq "ogg") {
+	    $tag_type = $ogg_type ;
+	} elsif ($extension eq "flac") {
+	    $tag_type = $flac_type ;
 	} else {
 	    print "  Skipping this unknown-type file '$file'\n" ;
 	    goto NEXT_FILE ;
@@ -570,6 +564,55 @@ while ( @files ) {
 
   NEXT_FILE:
     shift ;
+}
+
+#######################################################
+# mp3info and vorbiscomment specific options
+
+sub mp3_system_args {
+    my @field = @_ ;
+    my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
+    my @mp3_tagging_cmd = ( 'mp3info' ) ;
+    my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
+    # append is not supported by id3 tags
+
+    return ( @mp3_tagging_cmd ,
+	     $clear_opt ? @mp3_tagging_clear_option : () ,
+	     ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
+	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	       ) ,
+	     ) ;
+}
+
+sub ogg_system_args {
+    my @field = @_ ;
+    my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
+    my @ogg_tagging_clear_option = ( '-w' ) ;
+    my @ogg_tagging_append_option = ( '-a' ) ;
+
+    return ( @ogg_tagging_cmd ,
+	     $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
+	     ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
+	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	       ) ,
+	     ) ;
+}
+
+sub flac_system_args {
+    my @field = @_ ;
+    my @field_metaflac_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my @flac_tagging_cmd = ( 'metaflac' ) ;
+    my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
+
+    return (@flac_tagging_cmd ,
+	    $clear_opt ? @flac_tagging_clear_option : () ,
+	    !$append_opt ? ( map { ( "--remove-tag", $field_metaflac_option[$_] ) }
+			     ( grep { defined $field[$_] } ( 0 .. $fields-1 ) ) ) : () ,
+	    ( map { ( "--set-tag", $field_metaflac_option[$_]."=".$field[$_] ) }
+	      ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	      ) ,
+	    ) ;
 }
 
 #######################################################
@@ -623,7 +666,8 @@ sub tag_with_parser {
         my $indice = $parser->{$i-1};
 	if ( $indice >= 0 ) {
 	    my $val = ${$i} ;
-	    $val =~ s/($sep_opt)/ /g if (defined $sep_opt) ;
+	    $val =~ s/\b(.)/uc $1/eg if $maj_opt ;
+	    $val =~ s/($sep_opt)/ /g if defined $sep_opt ;
 	    if ($field_set[$indice]) {
 		print "      WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
 		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
@@ -793,23 +837,13 @@ sub tag_with_fields {
 
     # tagging command line
     my @system_args ;
-    if ($tag_type eq $ogg_type) {
-	@system_args =
-	    ( @ogg_tagging_cmd , $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
-	      ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
-		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-		) ,
-	      $file
-	      ) ;
-    } elsif ($tag_type eq $mp3_type) {
-	@system_args =
-	    ( @mp3_tagging_cmd , $clear_opt ? @mp3_tagging_clear_option : () ,
-	      ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
-		( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-		) ,
-	      $file
-	      ) ;
-	    }
+    if ($tag_type eq $mp3_type) {
+	@system_args = ( (mp3_system_args @field), $file) ;
+    } elsif ($tag_type eq $ogg_type) {
+	@system_args = ( (ogg_system_args @field), $file) ;
+    } elsif ($tag_type eq $flac_type) {
+	@system_args = ( (flac_system_args @field), $file) ;
+    }
 
     # show command line and really tag if asked
     if ($dryrun_opt or $verbose_opt) {
