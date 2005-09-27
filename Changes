@@ -1,5 +1,6 @@
 
-  * Add FLAC support.
+  * Add FLAC support (requested by Stephane Gimenez).
+  * Add --maj to upcase first letters in tags (requested by Stephane Gimenez).
 
 
 lltag (0.7.2)

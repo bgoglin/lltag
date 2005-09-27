@@ -44,6 +44,7 @@ sub usage {
 		    ." <val>     Set the default value for "
 		    .ucfirst($field_name[$_])."\n" } ( 0 .. $fields-1 ) ;
     print "     --spaces               Allow no or multiple spaces\n" ;
+    print "     --maj                  Upcase first letters of words in tags\n" ;
     print "     --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
@@ -72,6 +73,7 @@ my $ask_opt = 0 ;
 my $dryrun_opt = 0 ;
 my $guess_opt = 0 ;
 my $nopath_opt = 0 ;
+my $maj_opt = 0 ;
 my $sep_opt = undef ;
 my $spaces_opt = 0 ;
 my $type_opt = undef ;
@@ -108,6 +110,7 @@ GetOptions(
 	   'R|recursive'  => \$recursive_opt,
 	   'p|nopath'     => \$nopath_opt,
 	   'spaces'       => \$spaces_opt,
+	   'maj'          => \$maj_opt,
 	   'sep=s'        => \$sep_opt,
 	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
 	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
@@ -663,7 +666,8 @@ sub tag_with_parser {
         my $indice = $parser->{$i-1};
 	if ( $indice >= 0 ) {
 	    my $val = ${$i} ;
-	    $val =~ s/($sep_opt)/ /g if (defined $sep_opt) ;
+	    $val =~ s/\b(.)/uc $1/eg if $maj_opt ;
+	    $val =~ s/($sep_opt)/ /g if defined $sep_opt ;
 	    if ($field_set[$indice]) {
 		print "      WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
 		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
