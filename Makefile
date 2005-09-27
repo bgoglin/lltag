@@ -40,6 +40,7 @@ tarball::
 	cp Makefile /tmp/$(TARBALL)
 	cp COPYING /tmp/$(TARBALL)
 	cp README /tmp/$(TARBALL)
+	cp VERSION /tmp/$(TARBALL)
 	cp Changes /tmp/$(TARBALL)
 	cd /tmp && tar cfz $(DEBIAN_TARBALL).tar.gz $(TARBALL)
 	cd /tmp && tar cfj $(TARBALL).tar.bz2 $(TARBALL)
