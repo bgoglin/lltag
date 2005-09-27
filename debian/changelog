@@ -2,14 +2,9 @@ lltag (0.8-1) unstable; urgency=low
 
   * New upstream release.
   * FLAC support added, now suggests flac.
+  * Updated homepage and contact address that are now hosted by Gna!.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 27 Sep 2005 23:23:17 +0200
-
-lltag (0.7.2-1) unstable; urgency=low
-
-  * New upstream release.
-
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Thu, 22 Sep 2005 10:41:28 +0200
 
 lltag (0.7.1-1) unstable; urgency=low
 
