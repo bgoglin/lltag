@@ -51,6 +51,9 @@ sub usage {
     print "     --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
     print "     --clear                Clear all tags of audio files when possible\n" ;
     print "     --append               Append tags only instead of replacing old ones when possible\n" ;
+    print "     --rename <format>      Rename file according to format\n" ;
+    print "     --renmin               Lowcase tags before renaming\n" ;
+    print "     --rensep <s>           Replace space with s in tags before renaming\n" ;
     print "     --dry-run              Do nothing but show what would have been done\n" ;
     print "     -L, --list             List internal formats\n" ;
     print "     -V, --version          Show lltag version\n" ;
@@ -84,6 +87,10 @@ my $list_formats_opt = 0 ;
 my $default_opt = 0 ;
 my $clear_opt = 0 ;
 my $append_opt = 0 ;
+
+my $rename_opt = undef ;
+my $rename_min_opt = 0 ;
+my $rename_sep_opt = " " ;
 
 my $mp3_type = "mp3" ;
 my $ogg_type = "ogg" ;
@@ -119,6 +126,9 @@ GetOptions(
 	   'flac'         => sub { $type_opt = $flac_type ; },
 	   'clear'        => \$clear_opt,
 	   'append'       => \$append_opt,
+	   'rename=s'     => \$rename_opt,
+	   'renmin'       => \$rename_min_opt,
+	   'rensep=s'     => \$rename_sep_opt,
 	   'dry-run'      => \$dryrun_opt,
 	   'v|verbose'    => \$verbose_opt,
 	   'h|help'       => sub { usage () ; },
@@ -832,7 +842,7 @@ sub tag_with_fields {
     # is there actually something to do ?
     if ( ! grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
 	print "      Nothing to do.\n" ;
-	return $TAG_SUCCESS ;
+	goto SUCCESS ;
     }
 
     # tagging command line
@@ -860,5 +870,60 @@ sub tag_with_fields {
 	}
     }
 
+  SUCCESS:
+    if (defined $rename_opt) {
+	rename_with_tags ($file, $tag_type, @field) ;
+    }
+
     return $TAG_SUCCESS ;
+}
+
+sub rename_with_tags {
+    my $file = shift ;
+    my $tag_type = shift ;
+
+    print "      Renaming with format '$rename_opt'...\n" ;
+    # remaining args are fields
+    my @field ;
+    for(my $i = 0; $i < $fields; $i++) {
+	my $val = shift ;
+	if (defined $val) {
+	    $val = lc ($val)
+		if $rename_min_opt ;
+	    $val =~ s/ /$rename_sep_opt/g
+		if $rename_sep_opt ;
+	}
+	$field[$i] = $val ;
+    }
+
+    my $format_string = $rename_opt ;
+    my @array = split(//, $format_string) ;
+    for(my $i = 0; $i < @array - 1; $i++) {
+
+	# normal characters
+	next if $array[$i] ne "%" ;
+
+	# remove % and check next char
+	splice (@array, $i, 1) ;
+	# replace the char with the matching
+	my $char = $array[$i] ;
+	next if $char eq "%" ;
+	if ($char =~ /$field_letters/) {
+	    my $letter = $array[$i] ;
+	    my @indices = grep { $char eq $field_letter[$_] } ( 0 .. $fields-1 ) ;
+	    my $val = $field[$indices[0]] ;
+	    if (not defined $val) {
+		print "        WARNING: Undefined field ".$field_name[$indices[0]]."\n" ;
+		$val = "" ;
+	    }
+	    $array[$i] = $val ;
+	} else {
+	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	}
+    }
+
+    my $new_name = join ("", @array) .".". $tag_type ;
+    print "        New filename is '$new_name'\n" ;
+# TODO rename
+# TODO mkdir
 }
