@@ -1,8 +1,8 @@
 
   * Add rename support with --rename (requested by Stephane Gimenez):
-    + Add --renmin to lowcase tags before renaming.
-    + Add --rensep to replace spaces before renaming.
-    + Add --renext to assume the extension in provided in the rename format.
+    + Add --rename-min to lowcase tags before renaming.
+    + Add --rename-sep to replace spaces before renaming.
+    + Add --rename-ext to assume the extension in provided in the rename format.
   * When compiling from SVN, add a +svn suffix to the version.
   * Reorder usage in a comprehensible way.
 
