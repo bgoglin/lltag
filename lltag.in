@@ -930,6 +930,9 @@ sub rename_with_tags {
 	if !$rename_opt ;
     print "        New filename is '$new_name'\n" ;
 
+    return
+	if $dryrun_opt ;
+
     my $remain = $new_name ;
     my $path = '' ;
     while ($remain =~ /^([^\/]*\/+)(.*)$/) {
