@@ -3,6 +3,7 @@
     + Add --rename-min to lowcase tags before renaming.
     + Add --rename-sep to replace spaces before renaming.
     + Add --rename-ext to assume the extension in provided in the rename format.
+    + Add --no-tagging to rename file without actually tagging them.
   * When compiling from SVN, add a +svn suffix to the version.
   * Reorder usage in a comprehensible way.
   * Do not be case-sensitive when looking at file extensions to guess their type.

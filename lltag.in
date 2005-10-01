@@ -48,6 +48,7 @@ sub usage {
     print "     --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
     print "     --clear                Clear all tags of audio files when possible\n" ;
     print "     --append               Append tags only instead of replacing old ones when possible\n" ;
+    print "     --no-tagging           Do not actually tag files\n" ;
     print "   Renaming options:\n" ;
     print "     --rename <format>      Rename file according to format\n" ;
     print "     --rename-min           Lowcase tags before renaming\n" ;
@@ -76,18 +77,20 @@ sub usage {
 
 #######################################################
 # cmdline options
-my $ask_opt = 0 ;
 my $dryrun_opt = 0 ;
+my $verbose_opt = 0 ;
+my $recursive_opt = 0 ;
+my $list_formats_opt = 0 ;
+my $no_tagging_opt = 0 ;
+
+my $ask_opt = 0 ;
 my $guess_opt = 0 ;
 my $nopath_opt = 0 ;
 my $maj_opt = 0 ;
 my $sep_opt = undef ;
 my $spaces_opt = 0 ;
 my $type_opt = undef ;
-my $verbose_opt = 0 ;
 my $yes_opt = 0 ;
-my $recursive_opt = 0 ;
-my $list_formats_opt = 0 ;
 my $default_opt = 0 ;
 my $clear_opt = 0 ;
 my $append_opt = 0 ;
@@ -139,6 +142,7 @@ GetOptions(
 	   'rename-min'   => \$rename_min_opt,
 	   'rename-sep=s' => \$rename_sep_opt,
 	   'rename-ext'   => \$rename_ext_opt,
+	   'no-tagging'   => \$no_tagging_opt,
 	   'dry-run'      => \$dryrun_opt,
 	   'v|verbose'    => \$verbose_opt,
 	   'h|help'       => sub { usage () ; },
@@ -848,6 +852,10 @@ sub tag_with_fields {
     for(my $i = 0; $i < $fields; $i++) {
 	$field[$i] = shift;
     }
+
+    # do we have to tag ?
+    goto SUCCESS
+	if $no_tagging_opt ;
 
     # is there actually something to do ?
     if ( ! grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {

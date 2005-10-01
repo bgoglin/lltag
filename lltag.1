@@ -29,6 +29,7 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-rename\-ext ]
 .RB [ \-\-rename\-min ]
 .RB [ \-\-rename\-sep sep ]
+.RB [ \-\-no-tagging ]
 .RB [ \-\-dry\-run ]
 .RB [ \-L ]
 .RB [ \-V ]
@@ -135,6 +136,10 @@ Tag all files as MP3 files, using \fImp3info\fR.
 .TP
 .I "\-n, \-\-number number"
 Set the default value of the \fITrack Number\fR tag.
+.TP
+.I "\-\-no\-tagging"
+Do not actually tag files. This might be used to rename files
+without tagging.
 .TP
 .I "\-\-ogg"
 Tag all files as OGG files, using \fIvorbiscomment\fR.
