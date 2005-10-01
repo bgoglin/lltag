@@ -4,6 +4,7 @@
     + Add --rensep to replace spaces before renaming.
     + Add --renext to assume the extension in provided in the rename format.
   * When compiling from SVN, add a +svn suffix to the version.
+  * Reorder usage in a comprehensible way.
 
 
 lltag (0.8)
