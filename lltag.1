@@ -27,6 +27,7 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-append ]
 .RB [ \-\-rename format ]
 .RB [ \-\-rensep sep ]
+.RB [ \-\-renext ]
 .RB [ \-\-renmin ]
 .RB [ \-\-dry\-run ]
 .RB [ \-L ]
@@ -142,6 +143,11 @@ Recursively search for files in subdirectories.
 .TP
 .I "\-\-rename format"
 After tagging, rename the file according to the format.
+.TP
+.I "\-\-renext"
+Assume that the file extension is provided by the rename format
+instead of automatically adding the extension corresponding to
+the file type.
 .TP
 .I "\-\-renmin"
 Lowcase all tags before renaming.
