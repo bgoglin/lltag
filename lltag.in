@@ -97,6 +97,10 @@ my $rename_min_opt = 0 ;
 my $rename_sep_opt = " " ;
 my $rename_ext_opt = 0 ;
 
+my $mp3_ext = "mp3" ;
+my $ogg_ext = "ogg" ;
+my $flac_ext = "flac" ;
+
 my $mp3_type = "mp3" ;
 my $ogg_type = "ogg" ;
 my $flac_type = "flac" ;
@@ -531,11 +535,11 @@ while ( @files ) {
     # split into filename and extension
     my $tag_type = $type_opt ;
     if (not defined $tag_type) {
-	if ($extension eq "mp3") {
+	if ($extension =~ /$mp3_ext/i) {
 	    $tag_type = $mp3_type ;
-	} elsif ($extension eq "ogg") {
+	} elsif ($extension =~ /$ogg_ext/i) {
 	    $tag_type = $ogg_type ;
-	} elsif ($extension eq "flac") {
+	} elsif ($extension =~ /$flac_ext/i) {
 	    $tag_type = $flac_type ;
 	} else {
 	    print "  Skipping this unknown-type file '$file'\n" ;
@@ -929,8 +933,16 @@ sub rename_with_tags {
     }
 
     my $new_name = join ("", @array) ;
-    $new_name .= ".". $tag_type
-	if !$rename_opt ;
+    if (!$rename_opt) {
+	if ($tag_type = $mp3_type) {
+	    $new_name .= ".". $mp3_ext ;
+	} elsif ($tag_type = $ogg_type) {
+	    $new_name .= ".". $ogg_ext ;
+	} elsif ($tag_type = $flac_type) {
+	    $new_name .= ".". $flac_ext ;
+	}
+    }
+
     print "        New filename is '$new_name'\n" ;
 
     return
