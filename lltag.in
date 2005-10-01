@@ -918,12 +918,27 @@ sub rename_with_tags {
 	    }
 	    $array[$i] = $val ;
 	} else {
-	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	    die "        ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
 	}
     }
 
     my $new_name = join ("", @array) .".". $tag_type ;
     print "        New filename is '$new_name'\n" ;
-# TODO rename
-# TODO mkdir
+
+    my $remain = $new_name ;
+    my $path = '' ;
+    while ($remain =~ /^([^\/]*\/+)(.*)$/) {
+        $path .= $1 ;
+	$remain = $2 ;
+	if (!-d $path) {
+	    print "          Creating directory '$path'\n" ;
+	    if (!mkdir $path) {
+		print "          ERROR: Failed to create directory ($!)\n" ;
+		return ;
+	    }
+	}
+    }
+
+    rename $file, $new_name
+	or print "        ERROR: Failed to rename ($!)\n" ;
 }

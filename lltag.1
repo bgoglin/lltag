@@ -25,6 +25,9 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-mp3/\-\-ogg/\-\-flac ]
 .RB [ \-\-clear ]
 .RB [ \-\-append ]
+.RB [ \-\-rename format ]
+.RB [ \-\-rensep sep ]
+.RB [ \-\-renmin ]
 .RB [ \-\-dry\-run ]
 .RB [ \-L ]
 .RB [ \-V ]
@@ -136,6 +139,15 @@ Do not consider the path of files when matching.
 .TP
 .I "\-R, \-\-recursive"
 Recursively search for files in subdirectories.
+.TP
+.I "\-\-rename format"
+After tagging, rename the file according to the format.
+.TP
+.I "\-\-renmin"
+Lowcase all tags before renaming.
+.TP
+.I "\-\-rensep sep"
+Replace spaces with sep when renaming.
 .TP
 .I "\-\-sep string|string"
 Replace the specified characters or strings with space in tags.
