@@ -35,10 +35,9 @@ sub version {
 sub usage {
     print $0." $version is a frontend to tag MP3/OGG/FLAC files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
-    print "   Available options are:\n" ;
+    print "   Tagging options:\n" ;
     print "     -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "     -G, --guess            Guess format (default)\n" ;
-    print "     -R, --recursive        Recursively search all files in subdirectories\n" ;
     print "     -p, --nopath           Remove the path from filenames when matching\n" ;
     print map { "     -".$field_letter[$_].", --".$field_name[$_].$field_trailing_spaces[$_]
 		    ." <val>     Set the default value for "
@@ -46,15 +45,24 @@ sub usage {
     print "     --spaces               Allow no or multiple spaces\n" ;
     print "     --maj                  Upcase first letters of words in tags\n" ;
     print "     --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
-    print "     --yes                  Tag without asking for confirmation when guessing\n" ;
-    print "     --ask                  Always ask for confirmation before tagging\n" ;
     print "     --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
     print "     --clear                Clear all tags of audio files when possible\n" ;
     print "     --append               Append tags only instead of replacing old ones when possible\n" ;
+    print "     --no-tagging           Do not actually tag files\n" ;
+    print "   Renaming options:\n" ;
+    print "     --rename <format>      Rename file according to format\n" ;
+    print "     --rename-min           Lowcase tags before renaming\n" ;
+    print "     --rename-sep <s>       Replace space with s in tags before renaming\n" ;
+    print "     --rename-ext           Assume the rename format provides an extension\n" ;
+    print "   General options:\n" ;
     print "     --dry-run              Do nothing but show what would have been done\n" ;
+    print "     --yes                  Tag without asking for confirmation when guessing\n" ;
+    print "     --ask                  Always ask for confirmation before tagging\n" ;
+    print "     -R, --recursive        Recursively search all files in subdirectories\n" ;
+    print "     -v, --verbose          Verbose messages\n" ;
+    print "   Behavior options:\n" ;
     print "     -L, --list             List internal formats\n" ;
     print "     -V, --version          Show lltag version\n" ;
-    print "     -v, --verbose          Verbose messages\n" ;
     print "     -h, --help             Show this help\n" ;
     print "   Format is composed of anything you want with special fields:\n" ;
     print map { "     %".$field_letter[$_]." means ".ucfirst($field_name[$_])."\n" } ( 0 .. $fields-1 ) ;
@@ -69,21 +77,32 @@ sub usage {
 
 #######################################################
 # cmdline options
-my $ask_opt = 0 ;
 my $dryrun_opt = 0 ;
+my $verbose_opt = 0 ;
+my $recursive_opt = 0 ;
+my $list_formats_opt = 0 ;
+my $no_tagging_opt = 0 ;
+
+my $ask_opt = 0 ;
 my $guess_opt = 0 ;
 my $nopath_opt = 0 ;
 my $maj_opt = 0 ;
 my $sep_opt = undef ;
 my $spaces_opt = 0 ;
 my $type_opt = undef ;
-my $verbose_opt = 0 ;
 my $yes_opt = 0 ;
-my $recursive_opt = 0 ;
-my $list_formats_opt = 0 ;
 my $default_opt = 0 ;
 my $clear_opt = 0 ;
 my $append_opt = 0 ;
+
+my $rename_opt = undef ;
+my $rename_min_opt = 0 ;
+my $rename_sep_opt = " " ;
+my $rename_ext_opt = 0 ;
+
+my $mp3_ext = "mp3" ;
+my $ogg_ext = "ogg" ;
+my $flac_ext = "flac" ;
 
 my $mp3_type = "mp3" ;
 my $ogg_type = "ogg" ;
@@ -119,6 +138,11 @@ GetOptions(
 	   'flac'         => sub { $type_opt = $flac_type ; },
 	   'clear'        => \$clear_opt,
 	   'append'       => \$append_opt,
+	   'rename=s'     => \$rename_opt,
+	   'rename-min'   => \$rename_min_opt,
+	   'rename-sep=s' => \$rename_sep_opt,
+	   'rename-ext'   => \$rename_ext_opt,
+	   'no-tagging'   => \$no_tagging_opt,
 	   'dry-run'      => \$dryrun_opt,
 	   'v|verbose'    => \$verbose_opt,
 	   'h|help'       => sub { usage () ; },
@@ -515,11 +539,11 @@ while ( @files ) {
     # split into filename and extension
     my $tag_type = $type_opt ;
     if (not defined $tag_type) {
-	if ($extension eq "mp3") {
+	if ($extension =~ /$mp3_ext/i) {
 	    $tag_type = $mp3_type ;
-	} elsif ($extension eq "ogg") {
+	} elsif ($extension =~ /$ogg_ext/i) {
 	    $tag_type = $ogg_type ;
-	} elsif ($extension eq "flac") {
+	} elsif ($extension =~ /$flac_ext/i) {
 	    $tag_type = $flac_type ;
 	} else {
 	    print "  Skipping this unknown-type file '$file'\n" ;
@@ -829,10 +853,14 @@ sub tag_with_fields {
 	$field[$i] = shift;
     }
 
+    # do we have to tag ?
+    goto SUCCESS
+	if $no_tagging_opt ;
+
     # is there actually something to do ?
     if ( ! grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
 	print "      Nothing to do.\n" ;
-	return $TAG_SUCCESS ;
+	goto SUCCESS ;
     }
 
     # tagging command line
@@ -860,5 +888,92 @@ sub tag_with_fields {
 	}
     }
 
+  SUCCESS:
+    if (defined $rename_opt) {
+	rename_with_tags ($file, $tag_type, @field) ;
+    }
+
     return $TAG_SUCCESS ;
+}
+
+sub rename_with_tags {
+    my $file = shift ;
+    my $tag_type = shift ;
+
+    print "      Renaming with format '$rename_opt'...\n" ;
+    # remaining args are fields
+    my @field ;
+    for(my $i = 0; $i < $fields; $i++) {
+	my $val = shift ;
+	if (defined $val) {
+	    $val = lc ($val)
+		if $rename_min_opt ;
+	    $val =~ s/ /$rename_sep_opt/g
+		if $rename_sep_opt ;
+	}
+	$field[$i] = $val ;
+    }
+
+    my $format_string = $rename_opt ;
+    my @array = split(//, $format_string) ;
+    for(my $i = 0; $i < @array - 1; $i++) {
+
+	# normal characters
+	next if $array[$i] ne "%" ;
+
+	# remove % and check next char
+	splice (@array, $i, 1) ;
+	# replace the char with the matching
+	my $char = $array[$i] ;
+	next if $char eq "%" ;
+	if ($char =~ /$field_letters/) {
+	    my $letter = $array[$i] ;
+	    my @indices = grep { $char eq $field_letter[$_] } ( 0 .. $fields-1 ) ;
+	    my $val = $field[$indices[0]] ;
+	    if (not defined $val) {
+		print "        WARNING: Undefined field ".$field_name[$indices[0]]."\n" ;
+		$val = "" ;
+	    }
+	    $array[$i] = $val ;
+	} else {
+	    die "        ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	}
+    }
+
+    my $new_name = join ("", @array) ;
+    if (!$rename_ext_opt) {
+	if ($tag_type eq $mp3_type) {
+	    $new_name .= ".". $mp3_ext ;
+	} elsif ($tag_type eq $ogg_type) {
+	    $new_name .= ".". $ogg_ext ;
+	} elsif ($tag_type eq $flac_type) {
+	    $new_name .= ".". $flac_ext ;
+	}
+    }
+
+    if ($new_name eq $file) {
+	print "        Filename would not change, not renaming\n" ;
+	return ;
+    }
+    print "        New filename is '$new_name'\n" ;
+
+    return
+	if $dryrun_opt ;
+
+    my $remain = $new_name ;
+    my $path = '' ;
+    while ($remain =~ /^([^\/]*\/+)(.*)$/) {
+        $path .= $1 ;
+	$remain = $2 ;
+	if (!-d $path) {
+	    print "          Creating directory '$path'\n" ;
+	    if (!mkdir $path) {
+		print "          ERROR: Failed to create directory ($!)\n" ;
+		return ;
+	    }
+	}
+    }
+
+    rename $file, $new_name
+	or print "        ERROR: Failed to rename ($!)\n" ;
 }

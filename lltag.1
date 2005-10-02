@@ -25,6 +25,11 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-mp3/\-\-ogg/\-\-flac ]
 .RB [ \-\-clear ]
 .RB [ \-\-append ]
+.RB [ \-\-rename format ]
+.RB [ \-\-rename\-ext ]
+.RB [ \-\-rename\-min ]
+.RB [ \-\-rename\-sep sep ]
+.RB [ \-\-no-tagging ]
 .RB [ \-\-dry\-run ]
 .RB [ \-L ]
 .RB [ \-V ]
@@ -56,6 +61,10 @@ option was passed.
 \fImp3info\fR is used to tag MP3 files
 while \fIvorbiscomment\fR is used for OGG files,
 and \fImetaflac\fR is used for FLAC files.
+
+When called with
+.B \-\-rename
+the target file will also be renamed.
 
 
 .SH OPTIONS
@@ -128,6 +137,10 @@ Tag all files as MP3 files, using \fImp3info\fR.
 .I "\-n, \-\-number number"
 Set the default value of the \fITrack Number\fR tag.
 .TP
+.I "\-\-no\-tagging"
+Do not actually tag files. This might be used to rename files
+without tagging.
+.TP
 .I "\-\-ogg"
 Tag all files as OGG files, using \fIvorbiscomment\fR.
 .TP
@@ -136,6 +149,20 @@ Do not consider the path of files when matching.
 .TP
 .I "\-R, \-\-recursive"
 Recursively search for files in subdirectories.
+.TP
+.I "\-\-rename format"
+After tagging, rename the file according to the format.
+.TP
+.I "\-\-rename\-ext"
+Assume that the file extension is provided by the rename format
+instead of automatically adding the extension corresponding to
+the file type.
+.TP
+.I "\-\-rename\-min"
+Lowcase all tags before renaming.
+.TP
+.I "\-\-rename\-sep sep"
+Replace spaces with sep when renaming.
 .TP
 .I "\-\-sep string|string"
 Replace the specified characters or strings with space in tags.
