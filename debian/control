@@ -9,7 +9,7 @@ Package: lltag
 Architecture: all
 Depends: ${perl:Depends}
 Recommends: mp3info, vorbis-tools, flac
-Description: Automatic command-line mp3/ogg file tagger
+Description: Automatic command-line mp3/ogg/flac file tagger
  lltag is a command-line tool to set MP3 ID3, OGG or FLAC tags.
  It may be used to tag multiples files at once by comparing their filename
  or pathname against a configurable list of formats.
