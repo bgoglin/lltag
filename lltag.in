@@ -157,6 +157,9 @@ GetOptions(
 my $current_yes_opt = $yes_opt ;
 my $current_ask_opt = $ask_opt ;
 
+# confirmation when renaming
+my $current_rename_yes_opt = $yes_opt ;
+
 # spaces_opt changes matching regexps
 $match_limit = $match_space = $match_spaces if $spaces_opt ;
 
@@ -653,7 +656,7 @@ sub confirm_letters {
     return $string ;
 }
 
-sub confirm_usage {
+sub confirm_tag_usage {
     my $behaviors = shift ;
     print "        y => Yes, tag with this format (default)\n" ;
     print "        v => View which fields would be set\n" ;
@@ -798,7 +801,7 @@ sub confirm_and_tag {
 	    }
 
 	} else {
-	    confirm_usage ($behaviors) ;
+	    confirm_tag_usage ($behaviors) ;
 	    goto ASK_CONFIRM ;
 	}
     }
@@ -896,9 +899,22 @@ sub tag_with_fields {
     return $TAG_SUCCESS ;
 }
 
+#############################################
+# renaming
+
+sub confirm_rename_usage {
+    my $behaviors = shift ;
+    print "        y => Yes, rename this file (default)\n" ;
+    print "        a => Always rename without asking\n" ;
+    print "        e => Edit the filename before tagging\n" ;
+    print "        n => No, don't rename this file\n" ;
+    print "        h => Show this help\n" ;
+}
+
 sub rename_with_tags {
     my $file = shift ;
     my $tag_type = shift ;
+    my $undefined = 0 ;
 
     print "      Renaming with format '$rename_opt'...\n" ;
     # remaining args are fields
@@ -931,6 +947,7 @@ sub rename_with_tags {
 	    my @indices = grep { $char eq $field_letter[$_] } ( 0 .. $fields-1 ) ;
 	    my $val = $field[$indices[0]] ;
 	    if (not defined $val) {
+		$undefined++ ;
 		print "        WARNING: Undefined field ".$field_name[$indices[0]]."\n" ;
 		$val = "" ;
 	    }
@@ -951,11 +968,37 @@ sub rename_with_tags {
 	}
     }
 
+    print "        New filename is '$new_name'\n" ;
+
+    # confirm if required or if any field undefined
+    if ($undefined or !$current_rename_yes_opt) {
+      ASK_CONFIRM:
+	print "        Really rename the file [Yaen,(h)elp] ? " ;
+	my $reply = <> ;
+	chomp $reply ;
+        if ($reply eq "" or $reply =~ /^y/i) {
+            goto RENAME_IT ;
+	} elsif ($reply =~ /^a/i) {
+	    $current_rename_yes_opt = 1 ;
+            goto RENAME_IT ;
+	} elsif ($reply =~ /^n/i) {
+	    return ;
+	} elsif ($reply =~ /^e/i) {
+	    print "Enter new filename: " ;
+	    $new_name = <> ;
+	    chomp $new_name ;
+	    goto ASK_CONFIRM ;
+	} else {
+	    confirm_rename_usage ;
+	    goto ASK_CONFIRM ;
+	}
+    }
+
+  RENAME_IT:
     if ($new_name eq $file) {
 	print "        Filename would not change, not renaming\n" ;
 	return ;
     }
-    print "        New filename is '$new_name'\n" ;
 
     return
 	if $dryrun_opt ;
