@@ -1017,6 +1017,7 @@ sub rename_with_tags {
 	}
     }
 
+    print "    Renaming.\n" ;
     rename $file, $new_name
 	or print "    ERROR: Failed to rename ($!)\n" ;
 }
