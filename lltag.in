@@ -941,12 +941,12 @@ sub rename_with_tags {
     }
 
     my $new_name = join ("", @array) ;
-    if (!$rename_opt) {
-	if ($tag_type = $mp3_type) {
+    if (!$rename_ext_opt) {
+	if ($tag_type eq $mp3_type) {
 	    $new_name .= ".". $mp3_ext ;
-	} elsif ($tag_type = $ogg_type) {
+	} elsif ($tag_type eq $ogg_type) {
 	    $new_name .= ".". $ogg_ext ;
-	} elsif ($tag_type = $flac_type) {
+	} elsif ($tag_type eq $flac_type) {
 	    $new_name .= ".". $flac_ext ;
 	}
     }
