@@ -57,6 +57,7 @@ sub usage {
     print "   General options:\n" ;
     print "     --dry-run              Do nothing but show what would have been done\n" ;
     print "     --yes                  Tag without asking for confirmation when guessing\n" ;
+    print "                            Rename without asking for confirmation\n" ;
     print "     --ask                  Always ask for confirmation before tagging\n" ;
     print "     -R, --recursive        Recursively search all files in subdirectories\n" ;
     print "     -v, --verbose          Verbose messages\n" ;
