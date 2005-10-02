@@ -658,18 +658,18 @@ sub confirm_letters {
 
 sub confirm_tag_usage {
     my $behaviors = shift ;
-    print "        y => Yes, tag with this format (default)\n" ;
-    print "        v => View which fields would be set\n" ;
-    print "        u => Use this format for all files until one does not match\n"
+    print "    y => Yes, tag with this format (default)\n" ;
+    print "    v => View which fields would be set\n" ;
+    print "    u => Use this format for all files until one does not match\n"
 	if $behaviors & $TAG_MAY_PREFER ;
-    print "        a => Always yes, stop asking for a confirmation\n" ;
-    print "        e => Edit these fields before tagging\n" ;
-    print "        n => No, try the next matching format\n"
+    print "    a => Always yes, stop asking for a confirmation\n" ;
+    print "    e => Edit these fields before tagging\n" ;
+    print "    n => No, try the next matching format\n"
 	if $behaviors & $TAG_MAY_SKIP_PARSER ;
-    print "        p => No, try the next path matching format\n"
+    print "    p => No, try the next path matching format\n"
 	if $behaviors & $TAG_MAY_SKIP_PATH_PARSER ;
-    print "        s => Skip this file, don't tag it\n" ;
-    print "        h => Show this help\n" ;
+    print "    s => Skip this file, don't tag it\n" ;
+    print "    h => Show this help\n" ;
 }
 
 sub tag_with_parser {
@@ -696,14 +696,14 @@ sub tag_with_parser {
 	    $val =~ s/\b(.)/uc $1/eg if $maj_opt ;
 	    $val =~ s/($sep_opt)/ /g if defined $sep_opt ;
 	    if ($field_set[$indice]) {
-		print "      WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
+		print "    WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
 		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
 		goto NEXT_FIELD ;
 	    }
 	    $field[$indice] = $val ;
 	    $field_set[$indice] = 1 ;
 	    if ($verbose_opt or $confirm or $current_ask_opt) {
-		print "      ". ucfirst($field_name[$indice])
+		print "    ". ucfirst($field_name[$indice])
 		    .$field_trailing_spaces[$indice]
 		    .": ". $val ."\n" ;
 	    }
@@ -733,7 +733,7 @@ sub confirm_and_tag {
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "      Really tag the file ".(confirm_letters ($behaviors))." ? " ;
+	print "  Really tag the file ".(confirm_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
@@ -761,19 +761,19 @@ sub confirm_and_tag {
 	    my @edit_field = @field ;
 	    $#edit_field = $fields-1 ;
 	  ASK_EDIT:
-	    print "        Edit a field [atAngycEC,(h)elp] ? " ;
+	    print "    Edit a field [atAngycEC,(h)elp] ? " ;
 	    my $edit_reply = <> ;
 	    chomp $edit_reply ;
 	    if ($edit_reply =~ /^($field_letters)$/) {
 		my $i = ( grep { $edit_reply eq $field_letter[$_] } ( 0 .. $fields-1 ) ) [0] ;
-		print "          Enter ".ucfirst($field_name[$i])." field (" ;
+		print "      Enter ".ucfirst($field_name[$i])." field (" ;
 		print "<enter> to keep '".$edit_field[$i]."', " if defined $edit_field[$i] ;
 		print "CLEAR to clear): " ;
 		my $val = <> ;
 		chomp $val ;
 		if ($val) {
-			$val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
-			$edit_field[$i] = $val ;
+		    $val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
+		    $edit_field[$i] = $val ;
 		}
 		goto ASK_EDIT ;
 	    } elsif ($edit_reply eq "E") {
@@ -791,12 +791,12 @@ sub confirm_and_tag {
 		    } else {
 			$val = "'".$val."'" ;
 		    }
-		    print "          ".$field_letter[$i]
+		    print "      ".$field_letter[$i]
 			." => Edit ".ucfirst($field_name[$i]).$field_trailing_spaces[$i]
 			." (=".$val.")\n" ;
 		}
-		print "          E => End edition and tag\n" ;
-		print "          C => Cancel edition\n" ;
+		print "      E => End edition and tag\n" ;
+		print "      C => Cancel edition\n" ;
 		goto ASK_EDIT ;
 	    }
 
@@ -862,7 +862,7 @@ sub tag_with_fields {
 
     # is there actually something to do ?
     if ( ! grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
-	print "      Nothing to do.\n" ;
+	print "    Nothing to do.\n" ;
 	goto SUCCESS ;
     }
 
@@ -881,10 +881,10 @@ sub tag_with_fields {
 	print "      ". +(join '# #', @system_args) ."\n" ;
 	}
     if (!$dryrun_opt) {
-	print "      Tagging.\n" ;
+	print "    Tagging.\n" ;
 	my ($status, @output) = system_with_output @system_args ;
 	if ($status) {
-	    print "Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
+	    print "      Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
 	    while (my $line = shift @output) {
 		print "# $line" ;
 	    }
@@ -904,11 +904,11 @@ sub tag_with_fields {
 
 sub confirm_rename_usage {
     my $behaviors = shift ;
-    print "        y => Yes, rename this file (default)\n" ;
-    print "        a => Always rename without asking\n" ;
-    print "        e => Edit the filename before tagging\n" ;
-    print "        n => No, don't rename this file\n" ;
-    print "        h => Show this help\n" ;
+    print "      y => Yes, rename this file (default)\n" ;
+    print "      a => Always rename without asking\n" ;
+    print "      e => Edit the filename before tagging\n" ;
+    print "      n => No, don't rename this file\n" ;
+    print "      h => Show this help\n" ;
 }
 
 sub rename_with_tags {
@@ -916,7 +916,7 @@ sub rename_with_tags {
     my $tag_type = shift ;
     my $undefined = 0 ;
 
-    print "      Renaming with format '$rename_opt'...\n" ;
+    print "  Renaming with format '$rename_opt'...\n" ;
     # remaining args are fields
     my @field ;
     for(my $i = 0; $i < $fields; $i++) {
@@ -948,12 +948,12 @@ sub rename_with_tags {
 	    my $val = $field[$indices[0]] ;
 	    if (not defined $val) {
 		$undefined++ ;
-		print "        WARNING: Undefined field ".$field_name[$indices[0]]."\n" ;
+		print "    WARNING: Undefined field ".$field_name[$indices[0]]."\n" ;
 		$val = "" ;
 	    }
 	    $array[$i] = $val ;
 	} else {
-	    die "        ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	    die "    ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
 	}
     }
 
@@ -968,12 +968,12 @@ sub rename_with_tags {
 	}
     }
 
-    print "        New filename is '$new_name'\n" ;
+    print "    New filename is '$new_name'\n" ;
 
     # confirm if required or if any field undefined
     if ($undefined or !$current_rename_yes_opt) {
       ASK_CONFIRM:
-	print "        Really rename the file [Yaen,(h)elp] ? " ;
+	print "    Really rename the file [Yaen,(h)elp] ? " ;
 	my $reply = <> ;
 	chomp $reply ;
         if ($reply eq "" or $reply =~ /^y/i) {
@@ -984,7 +984,7 @@ sub rename_with_tags {
 	} elsif ($reply =~ /^n/i) {
 	    return ;
 	} elsif ($reply =~ /^e/i) {
-	    print "Enter new filename: " ;
+	    print "      Enter new filename: " ;
 	    $new_name = <> ;
 	    chomp $new_name ;
 	    goto ASK_CONFIRM ;
@@ -996,7 +996,7 @@ sub rename_with_tags {
 
   RENAME_IT:
     if ($new_name eq $file) {
-	print "        Filename would not change, not renaming\n" ;
+	print "    Filename would not change, not renaming\n" ;
 	return ;
     }
 
@@ -1009,14 +1009,14 @@ sub rename_with_tags {
         $path .= $1 ;
 	$remain = $2 ;
 	if (!-d $path) {
-	    print "          Creating directory '$path'\n" ;
+	    print "      Creating directory '$path'\n" ;
 	    if (!mkdir $path) {
-		print "          ERROR: Failed to create directory ($!)\n" ;
+		print "      ERROR: Failed to create directory ($!)\n" ;
 		return ;
 	    }
 	}
     }
 
     rename $file, $new_name
-	or print "        ERROR: Failed to rename ($!)\n" ;
+	or print "    ERROR: Failed to rename ($!)\n" ;
 }
