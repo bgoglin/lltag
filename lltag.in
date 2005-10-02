@@ -951,6 +951,10 @@ sub rename_with_tags {
 	}
     }
 
+    if ($new_name eq $file) {
+	print "        Filename would not change, not renaming\n" ;
+	return ;
+    }
     print "        New filename is '$new_name'\n" ;
 
     return
