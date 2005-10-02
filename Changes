@@ -1,3 +1,4 @@
+lltag (0.9)
 
   * Add rename support with --rename (requested by Stephane Gimenez):
     + Add --rename-min to lowcase tags before renaming.
@@ -8,6 +9,7 @@
   * Reorder usage in a comprehensible way.
   * Do not be case-sensitive when looking at file extensions to guess their type.
 
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun,  2 Oct 2005 19:06:00 +0200
 
 lltag (0.8)
 
