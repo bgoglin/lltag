@@ -1,3 +1,7 @@
+
+  * Fix formats file parsing (last format was omitted).
+
+
 lltag (0.9)
 
   * Add rename support with --rename (requested by Stephane Gimenez):

@@ -266,7 +266,27 @@ if ($guess_opt or $list_formats_opt) {
 		die "Unrecognized line $. in file '$file': '$_'\n" ;
 	    }
 	}
-    close FORMAT ;
+	close FORMAT ;
+
+	# save the last format
+	if ($type and $title and $regexp and @indice_table) {
+	    my $parser ;
+	    $parser->{title} = $title ;
+	    $parser->{regexp} = $regexp ;
+	    $parser->{indices} = @indice_table ;
+	    for(my $i = 0; $i < @indice_table; $i++) {
+		$parser->{$i} = $indice_table[$i] ;
+	    }
+	    if ($type eq "filename") {
+		print "  Got filename format '$title'\n" if $verbose_opt ;
+		push (@internal_filename_parsers, $parser) ;
+	    } elsif ($type eq "path") {
+		print "  Got path format '$title'\n" if $verbose_opt ;
+		push (@internal_path_parsers, $parser) ;
+	    }
+	} elsif ($type or $title or $regexp or @indice_table) {
+	    die "Incomplete format at line $. in file '$file'\n" ;
+	}
     }
 }
 
