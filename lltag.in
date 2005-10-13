@@ -100,7 +100,7 @@ my $preferred_parser = undef ;
 #######################################################
 # options
 
-my $dryrun_opt = 0 ;
+my $dry_run_opt = 0 ;
 my $verbose_opt = 0 ;
 my $recursive_opt = 0 ;
 my $list_formats_opt = 0 ;
@@ -194,7 +194,7 @@ sub process_option {
     } elsif (/^rename_ext\s*=\s*(.+)$/) {
 	$rename_ext_opt = $1 ;
     } elsif (/^dry_run\s*=\s*(.+)$/) {
-	$dryrun_opt = $1 ;
+	$dry_run_opt = $1 ;
     } elsif (/^yes\s*=\s*(.+)$/) {
 	$yes_opt = $1 ;
 	$ask_opt = 0 if $1 ;
@@ -259,7 +259,7 @@ GetOptions(
 	   'rename-min'   => \$rename_min_opt,
 	   'rename-sep=s' => \$rename_sep_opt,
 	   'rename-ext'   => \$rename_ext_opt,
-	   'dry-run'      => \$dryrun_opt,
+	   'dry-run'      => \$dry_run_opt,
 	   'R|recursive'  => \$recursive_opt,
 	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
 	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
@@ -1021,10 +1021,10 @@ sub tag_with_fields {
     }
 
     # show command line and really tag if asked
-    if ($dryrun_opt or $verbose_opt) {
+    if ($dry_run_opt or $verbose_opt) {
 	print "      ". +(join '# #', @system_args) ."\n" ;
 	}
-    if (!$dryrun_opt) {
+    if (!$dry_run_opt) {
 	print "    Tagging.\n" ;
 	my ($status, @output) = system_with_output @system_args ;
 	if ($status) {
@@ -1145,7 +1145,7 @@ sub rename_with_tags {
     }
 
     return
-	if $dryrun_opt ;
+	if $dry_run_opt ;
 
     my $remain = $new_name ;
     my $path = '' ;
@@ -1205,7 +1205,7 @@ sub generate_config {
 	print NEWCFG "rename_ext = $rename_ext_opt\n" ;
     }
 
-    print NEWCFG "dry_run = $dryrun_opt\n" ;
+    print NEWCFG "dry_run = $dry_run_opt\n" ;
     print NEWCFG "yes = $yes_opt\n" ;
     print NEWCFG "ask = $ask_opt\n" ;
     print NEWCFG "recursive = $recursive_opt\n" ;
