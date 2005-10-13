@@ -3,6 +3,7 @@
     + Fix formats file parsing (last format was omitted).
     + If $HOME/.lltag/formats exists, /etc/lltag/formats is ignored.
     + Fix documentation.
+  * Do not warn when no file is passed.
 
 
 lltag (0.9)
