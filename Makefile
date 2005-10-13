@@ -28,11 +28,13 @@ install::
 	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/ $(DESTDIR)$(MANDIR)/man1/
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
 	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag/
+	install -m 0644 config $(DESTDIR)$(SYSCONFDIR)/lltag/
 	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
 
 uninstall::
 	rm $(DESTDIR)$(BINDIR)/lltag
 	rm $(DESTDIR)$(SYSCONFDIR)/lltag/formats
+	rm $(DESTDIR)$(SYSCONFDIR)/lltag/config
 	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag/
 	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
 
@@ -40,6 +42,7 @@ tarball::
 	mkdir /tmp/$(TARBALL)
 	cp lltag.in /tmp/$(TARBALL)
 	cp formats /tmp/$(TARBALL)
+	cp config /tmp/$(TARBALL)
 	cp lltag.1 /tmp/$(TARBALL)
 	cp Makefile /tmp/$(TARBALL)
 	cp COPYING /tmp/$(TARBALL)

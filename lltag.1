@@ -1,9 +1,15 @@
 .TH LLTAG 1 "March 2005"
 .\"
+
+
+
 .SH NAME
 lltag \- tag mp3/ogg/flac music files automagically
 .br
 .\"
+
+
+
 .SH SYNOPSIS
 .B lltag
 .RB [ \-F\ <format> ]
@@ -32,10 +38,13 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-ask ]
 .RB [ \-R ]
 .RB [ \-v ]
+.RB [ \-\-config <file> ]
+.RB [ \-\-gencfg <file> ]
 .RB [ \-L ]
 .RB [ \-V ]
 .RB [ \-h ]
 .\"
+
 
 
 .SH DESCRIPTION
@@ -65,6 +74,7 @@ and \fImetaflac\fR is used for FLAC files.
 When called with
 .B \-\-rename
 the target file will also be renamed.
+
 
 
 .SH OPTIONS
@@ -108,6 +118,14 @@ See
 below for details.
 
 .TP
+.I "\-\-config <file>"
+Parse additional configuration file.
+See
+.SM
+.B CONFIGURATION FILES
+below for details.
+
+.TP
 .I "\-\-dry\-run"
 Do not really tag files, just show what would have been done.
 
@@ -132,6 +150,14 @@ worked (default behavior).
 .TP
 .I "\-g, \-\-genre <genre>"
 Set the default value of the \fIGenre\fR tag.
+
+.TP
+.I "\-\-gencfg <file>"
+Generate configuration file.
+See
+.SM
+.B CONFIGURATION FILES
+below for details.
 
 .TP
 .I "\-h, \-\-help"
@@ -228,6 +254,7 @@ while guess format matching is asked for confirmation.
 Also always accept renaming without asking the user.
 
 
+
 .SH FORMAT
 User-specified formats must be a string composed of any characters
 and the following special codes:
@@ -261,6 +288,7 @@ to match anything and forget it.
 to match %.
 
 
+
 .SH CLEARING, REPLACING OR APPENDING
 Id3 tags of mp3 files are a set of 7 independent fields,
 while ogg/flac tags is a unique stream of one field per line.
@@ -287,6 +315,7 @@ If
 is passed, ogg/flac tags are appended to the existing ones.
 This does not impact mp3 tagging since appending is impossible
 (newly-defined existing tags are replaced, others are kept).
+
 
 
 .SH TAGGING CONFIRMATION
@@ -356,6 +385,7 @@ Skip the current file, don't tag it at all.
 .RS
 Show help about confirmation.
 .RE
+
 
 
 .SH RENAMING CONFIRMATION
@@ -432,11 +462,33 @@ A list of format letters corresponding to %N or %A field in the previous format
 for a list of these letters).
 
 
+
+.SH CONFIGURATION FILES
+.IR lltag
+reads some configuration files before parsing command line options.
+The system-wide configuration file is defined in
+.I /etc/lltag/config
+where all options are documented.
+
+It also reads
+.I $HOME/.lltag/config
+if it exists.
+
+The user may also add another configurable file with
+.I --config .
+
+.IR lltag
+may also generate a configuration with
+.I --gencfg .
+
+
+
 .SH FILES
 .RE
 .I /etc/lltag/formats
 .RS
-System-wide internal format database. See
+System-wide internal format database.
+See
 .SM
 .B INTERNAL FORMATS
 for details.
@@ -444,6 +496,20 @@ for details.
 .I $HOME/.lltag/formats
 .RS
 User internal format database. If it exists, the system-wide one is ignored.
+.RE
+.I /etc/lltag/config
+.RS
+System-wide configuration file, with documentation.
+See
+.SM
+.B CONFIGURATION FILES
+for details.
+.RE
+.I $HOME/.lltag/config
+.RS
+User configuration file.
+
+
 
 .SH AUTHOR
 Brice Goglin

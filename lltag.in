@@ -11,6 +11,7 @@ Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 my $common_lltag_dir = "@SYSCONFDIR@/lltag" ;
 my $user_lltag_dir = "$ENV{HOME}/.lltag" ;
 my $lltag_format_filename = "formats" ;
+my $lltag_config_filename = "config" ;
 
 #######################################################
 # format parameters
@@ -61,6 +62,8 @@ sub usage {
     print "     --ask                  Always ask for confirmation before tagging\n" ;
     print "     -R, --recursive        Recursively search all files in subdirectories\n" ;
     print "     -v, --verbose          Verbose messages\n" ;
+    print "     --config <file>        Read additional configuration file\n" ;
+    print "     --gencfg <file>        Generate additional configuration file\n" ;
     print "   Behavior options:\n" ;
     print "     -L, --list             List internal formats\n" ;
     print "     -V, --version          Show lltag version\n" ;
@@ -77,7 +80,26 @@ sub usage {
 }
 
 #######################################################
-# cmdline options
+# globals
+
+my $mp3_type = "mp3" ;
+my $ogg_type = "ogg" ;
+my $flac_type = "flac" ;
+
+# subregexp
+my $match_path = '(?:[^/]*\/)*' ;
+my $match_any = '((?:[^ /]+ +)*[^ /]+)' ;
+my $match_num = '([0-9]+)' ;
+my $match_space = ' ';
+my $match_spaces = ' *' ;
+my $match_limit = '' ;
+
+# the parser that the user wants to always use
+my $preferred_parser = undef ;
+
+#######################################################
+# options
+
 my $dryrun_opt = 0 ;
 my $verbose_opt = 0 ;
 my $recursive_opt = 0 ;
@@ -105,47 +127,144 @@ my $mp3_ext = "mp3" ;
 my $ogg_ext = "ogg" ;
 my $flac_ext = "flac" ;
 
-my $mp3_type = "mp3" ;
-my $ogg_type = "ogg" ;
-my $flac_type = "flac" ;
-
-# subregexp
-my $match_path = '(?:[^/]*\/)*' ;
-my $match_any = '((?:[^ /]+ +)*[^ /]+)' ;
-my $match_num = '([0-9]+)' ;
-my $match_space = ' ';
-my $match_spaces = ' *' ;
-my $match_limit = '' ;
-
-# the parser that the user wants to always use
-my $preferred_parser = undef ;
+my $gencfg_file = undef ;
 
 # parsers
 my @format_strings = () ;
+
+#######################################################
+# parse config files first
+
+my @additional_config_files = () ;
+
+# process these options but kept other options in @ARGV for later
+Getopt::Long::Configure('passthrough') ;
+GetOptions(
+	   'config=s'     => \@additional_config_files,
+        ) ;
+
+# restore default behavior: process all options and warn on error
+Getopt::Long::Configure('nopassthrough') ;
+
+sub process_option {
+    $_ = shift ;
+    chomp $_ ;
+    if (/^format\s*=\s*"(.+)"$/) {
+	push (@format_strings, $1) ;
+    } elsif (/^guess\s*=\s*(.+)$/) {
+	$guess_opt = $1 ;
+    } elsif (/^nopath\s*=\s*(.+)$/) {
+	$nopath_opt = $1 ;
+    } elsif (/^default_(.*)\s*=\s*"(.*)"$/) {
+	my @indices = grep { $field_name[$_] eq $1 } ( 0 .. $fields-1 ) ;
+        die "Unrecognized option line #$.: \"$_\"\n"
+	    if ! @indices ;
+	my $indice = $indices[0] ;
+	$field_default[$indice]	= $2 ;
+    } elsif (/^spaces\s*=\s*(.+)$/) {
+	$spaces_opt = $1 ;
+    } elsif (/^maj\s*=\s*(.+)$/) {
+	$maj_opt = $1 ;
+    } elsif (/^sep\s*=\s*"(.*)"$/) {
+	$sep_opt = $1 ;
+    } elsif (/^type\s*=\s*(.+)$/) {
+	if ($1 eq "none") {
+	    $type_opt = undef ;
+	} elsif ($1 ne $mp3_type and $1 ne $ogg_type and $1 ne $flac_type) {
+	    die "Unrecognized type '$1' line #$\n" ;
+	} else {
+	    $type_opt = $1 ;
+	}
+    } elsif (/^clear_tags\s*=\s*(.+)$/) {
+	$clear_opt = $1 ;
+    } elsif (/^append_tags\s*=\s*(.+)$/) {
+	$append_opt = $1 ;
+    } elsif (/^no_tagging\s*=\s*(.+)$/) {
+	$no_tagging_opt = $1 ;
+    } elsif (/^rename_format\s*=\s*"(.*)"$/) {
+	if ($rename_opt eq "") {
+	    $rename_opt = undef ;
+	} else {
+	    $rename_opt = $1 ;
+	}
+    } elsif (/^rename_min\s*=\s*(.+)$/) {
+	$rename_min_opt = $1 ;
+    } elsif (/^rename_sep\s*=\s*"(.*)"$/) {
+	$rename_sep_opt = $1 ;
+    } elsif (/^rename_ext\s*=\s*(.+)$/) {
+	$rename_ext_opt = $1 ;
+    } elsif (/^dry_run\s*=\s*(.+)$/) {
+	$dryrun_opt = $1 ;
+    } elsif (/^yes\s*=\s*(.+)$/) {
+	$yes_opt = $1 ;
+	$ask_opt = 0 if $1 ;
+    } elsif (/^ask\s*=\s*(.+)$/) {
+	$ask_opt = $1 ;
+	$yes_opt = 0 if $1 ;
+    } elsif (/^recursive\s*=\s*(.+)$/) {
+	$recursive_opt = $1 ;
+    } elsif (/^verbose\s*=\s*(.+)$/) {
+	$verbose_opt = $1 ;
+# Error
+    } elsif (/^[^#]/ && !/^(\s*)$/) {
+        die "Unrecognized option line #$.: \"$_\"\n" ;
+    }
+}
+
+sub parse_generic_config_file {
+    my $file = shift ;
+    open CONF, $file
+        or return ;
+    while (<CONF>) {
+        process_option $_ ;
+    }
+   close CONF ;
+}
+
+parse_generic_config_file "$common_lltag_dir/$lltag_config_filename" ;
+parse_generic_config_file "$user_lltag_dir/$lltag_config_filename" ;
+
+sub parse_additional_config_file {
+    my $file = shift ;
+    open CONF, $file
+        or die "Failed to open additional configuration file '$file' ($!).\n" ;
+    while (<CONF>) {
+        process_option $_ ;
+    }
+   close CONF ;
+}
+
+foreach my $file (@additional_config_files) {
+    parse_additional_config_file $file ;
+}
+
+#######################################################
+# parse cmdline options
 
 # parse options
 GetOptions(
 	   'F|format=s'   => \@format_strings,
 	   'G|guess'      => \$guess_opt,
-	   'R|recursive'  => \$recursive_opt,
 	   'p|nopath'     => \$nopath_opt,
 	   'spaces'       => \$spaces_opt,
 	   'maj'          => \$maj_opt,
 	   'sep=s'        => \$sep_opt,
-	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
-	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
 	   'mp3'          => sub { $type_opt = $mp3_type ; },
 	   'ogg'          => sub { $type_opt = $ogg_type ; },
 	   'flac'         => sub { $type_opt = $flac_type ; },
 	   'clear'        => \$clear_opt,
 	   'append'       => \$append_opt,
+	   'no-tagging'   => \$no_tagging_opt,
 	   'rename=s'     => \$rename_opt,
 	   'rename-min'   => \$rename_min_opt,
 	   'rename-sep=s' => \$rename_sep_opt,
 	   'rename-ext'   => \$rename_ext_opt,
-	   'no-tagging'   => \$no_tagging_opt,
 	   'dry-run'      => \$dryrun_opt,
+	   'R|recursive'  => \$recursive_opt,
+	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
+	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
 	   'v|verbose'    => \$verbose_opt,
+	   'gencfg=s'     => \$gencfg_file,
 	   'h|help'       => sub { usage () ; },
 	   'V|version'    => sub { version () ; },
 	   'L|list'       => \$list_formats_opt,
@@ -1046,3 +1165,54 @@ sub rename_with_tags {
     rename $file, $new_name
 	or print "    ERROR: Failed to rename ($!)\n" ;
 }
+
+#############################################
+# generate configuration file
+
+sub generate_config {
+    my $file = shift ;
+    die "Cannot generate $file which already exists."
+        if -e "$file" ;
+    open NEWCFG, ">$file"
+        or die "Cannot open $file ($!).\n" ;
+
+    print NEWCFG "# This is a lltag configuration file.\n" ;
+    print NEWCFG "# It was automatically generated.\n" ;
+    print NEWCFG "# You may modify and reuse it as you want.\n" ;
+    print NEWCFG "\n" ;
+
+    map { print NEWCFG "format = $_\n" ; } @format_strings ;
+
+    print NEWCFG "guess = $guess_opt\n" ;
+    print NEWCFG "nopath = $nopath_opt\n" ;
+
+    map { print NEWCFG "default_$field_name[$_] = $field_default[$_]\n" ; }
+	(grep { defined $field_default[$_] } (0 .. $fields-1 )) ;
+
+    print NEWCFG "spaces = $spaces_opt\n" ;
+    print NEWCFG "maj = $maj_opt\n" ;
+    print NEWCFG "sep = \"$sep_opt\"\n"
+	if defined $sep_opt ;
+    print NEWCFG "type = ". (defined $type_opt?$type_opt:"none") ."\n" ;
+    print NEWCFG "clear_tags = $clear_opt\n" ;
+    print NEWCFG "append_tags = $append_opt\n" ;
+    print NEWCFG "no_tagging = $no_tagging_opt\n" ;
+    
+    if (defined $rename_opt) {
+	print NEWCFG "rename_format = \"$rename_opt\"\n" ;
+	print NEWCFG "rename_min = $rename_min_opt\n" ;
+	print NEWCFG "rename_sep = \"$rename_sep_opt\"\n" ;
+	print NEWCFG "rename_ext = $rename_ext_opt\n" ;
+    }
+
+    print NEWCFG "dry_run = $dryrun_opt\n" ;
+    print NEWCFG "yes = $yes_opt\n" ;
+    print NEWCFG "ask = $ask_opt\n" ;
+    print NEWCFG "recursive = $recursive_opt\n" ;
+    print NEWCFG "verbose = $verbose_opt\n" ;
+
+    close NEWCFG ;
+}
+
+generate_config $gencfg_file
+    if defined $gencfg_file ;

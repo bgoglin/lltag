@@ -3,6 +3,8 @@
     + Fix formats file parsing (last format was omitted).
     + If $HOME/.lltag/formats exists, /etc/lltag/formats is ignored.
     + Fix documentation.
+  * Add --config, --gencfg and /etc/lltag/config to configure lltag behavior
+    (requested by Stephane Gimenez).
   * Do not warn when no file is passed.
 
 
