@@ -399,8 +399,12 @@ Show help about confirmation.
 
 .SH INTERNAL FORMATS
 The internal format database is usually stored in
-.IR "/etc/lltag/format" .
-It contains entries composed of :
+.IR "/etc/lltag/formats" .
+The user may override this file by defining a
+.IR "$HOME/.lltag/formats" .
+If this file exists, the system-wide one is ignored.
+
+These files contain entries composed of :
 
 .RE
 .I [%n - %a - %t]
@@ -430,12 +434,16 @@ for a list of these letters).
 
 .SH FILES
 .RE
-.I /etc/lltag/format
+.I /etc/lltag/formats
 .RS
 System-wide internal format database. See
 .SM
 .B INTERNAL FORMATS
 for details.
+.RE
+.I $HOME/.lltag/formats
+.RS
+User internal format database. If it exists, the system-wide one is ignored.
 
 .SH AUTHOR
 Brice Goglin

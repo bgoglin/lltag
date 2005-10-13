@@ -190,12 +190,17 @@ my @internal_path_parsers = () ;
 
 if ($guess_opt or $list_formats_opt) {
     # get parsers from configuration files
-    my @format_files = () ;
-    push (@format_files, "$common_lltag_dir/$lltag_format_filename") ;
-    push (@format_files, "$user_lltag_dir/$lltag_format_filename") ;
-    foreach my $file (@format_files) {
-	open FORMAT, $file or next ;
-	print "Reading format files '$file'...\n" if $verbose_opt ;
+    my $file ;
+    if (open FORMAT, "$user_lltag_dir/$lltag_format_filename") {
+	$file = "$user_lltag_dir/$lltag_format_filename" ;
+    } elsif (open FORMAT, "$common_lltag_dir/$lltag_format_filename") {
+	$file = "$common_lltag_dir/$lltag_format_filename" ;
+    } else {
+	print "Did not find any format files\n" if $verbose_opt ;
+	return ;
+    }
+    print "Reading format files '$file'...\n" if $verbose_opt ;
+
 	my $type = undef ;
 	my $title = undef ;
 	my $regexp = undef ;
@@ -287,7 +292,6 @@ if ($guess_opt or $list_formats_opt) {
 	} elsif ($type or $title or $regexp or @indice_table) {
 	    die "Incomplete format at line $. in file '$file'\n" ;
 	}
-    }
 }
 
 # if -L was passed, show formats and exit
