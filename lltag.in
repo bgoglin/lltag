@@ -196,102 +196,103 @@ if ($guess_opt or $list_formats_opt) {
     } elsif (open FORMAT, "$common_lltag_dir/$lltag_format_filename") {
 	$file = "$common_lltag_dir/$lltag_format_filename" ;
     } else {
-	print "Did not find any format files\n" if $verbose_opt ;
+	print "Did not find any format file\n" ;
 	return ;
     }
-    print "Reading format files '$file'...\n" if $verbose_opt ;
+    print "Reading format file '$file'...\n" if $verbose_opt ;
 
-	my $type = undef ;
-	my $title = undef ;
-	my $regexp = undef ;
-	my @indice_table = () ;
-	while (<FORMAT>) {
-	    chomp $_ ;
-	    next if /^#/ ;
-	    next if /^$/ ;
-	    if (/^\[(.*)\]$/) {
-		if ($type and $title and $regexp and @indice_table) {
-		    my $parser ;
-		    $parser->{title} = $title ;
-		    $parser->{regexp} = $regexp ;
-		    $parser->{indices} = @indice_table ;
-		    for(my $i = 0; $i < @indice_table; $i++) {
-			$parser->{$i} = $indice_table[$i] ;
-		    }
-		    if ($type eq "filename") {
-			print "  Got filename format '$title'\n" if $verbose_opt ;
-			push (@internal_filename_parsers, $parser) ;
-		    } elsif ($type eq "path") {
-			print "  Got path format '$title'\n" if $verbose_opt ;
-			push (@internal_path_parsers, $parser) ;
-		    }
-		} elsif ($type or $title or $regexp or @indice_table) {
-		    die "Incomplete format at line $. in file '$file'\n" ;
-		}
-		$type = undef ; $regexp = undef ; @indice_table = () ;
-		$title = $1 ;
-		# stocker la ligne ?
-	    } elsif (/^type = (.*)$/) {
-		die "Unsupported format type '$1' at line $. in file '$file'\n"
-		    if $1 ne "filename" and $1 ne "path" ;
-		$type = $1 ;
-	    } elsif (/^regexp = (.*)$/) {
-		$regexp = $1 ;
-		$regexp =~ s/\./\\./g ;
-		$regexp =~ s/\)/\\\)/g ;
-		$regexp =~ s@/@\\/@g ;
-		# do the replacement progressively so that %% and %x and not mixed
-		while ($regexp =~ m/(%(?:P|L|S|N|A|%))/) {
-		    if ($1 eq '%P') {
-			$regexp =~ s/%P/$match_path/ ;
-		    } elsif ($1 eq '%L') {
-			$regexp =~ s/%L/$match_limit/ ;
-		    } elsif ($1 eq '%S') {
-			$regexp =~ s/%S/$match_space/ ;
-		    } elsif ($1 eq '%N') {
-			$regexp =~ s/%N/$match_num/ ;
-		    } elsif ($1 eq '%A') {
-			$regexp =~ s/%A/$match_any/ ;
-		    } elsif ($1 eq '%%') {
-			$regexp =~ s/%%/%/ ;
-		    }
-		}
-	    } elsif (/^indices = (.*)$/) {
-		@indice_table = split (/,/, $1) ;
+    my $type = undef ;
+    my $title = undef ;
+    my $regexp = undef ;
+    my @indice_table = () ;
+
+    while (<FORMAT>) {
+	chomp $_ ;
+	next if /^#/ ;
+	next if /^$/ ;
+	if (/^\[(.*)\]$/) {
+	    if ($type and $title and $regexp and @indice_table) {
+		my $parser ;
+		$parser->{title} = $title ;
+		$parser->{regexp} = $regexp ;
+		$parser->{indices} = @indice_table ;
 		for(my $i = 0; $i < @indice_table; $i++) {
-		    my $indice = ( grep { $field_letter[$_] eq $indice_table[$i] } ( 0 .. $fields-1 ) ) [0] ;
-		    if (not defined $indice) {
-			die "Unrecognized field letter '$indice_table[$i]' on line $. in file '$file'\n"
-			    if $indice_table[$i] ne 'd' ;
-			$indice = -1 ;
-		    }
-		    $indice_table[$i] = $indice ;
+		    $parser->{$i} = $indice_table[$i] ;
 		}
-	    } else {
-		die "Unrecognized line $. in file '$file': '$_'\n" ;
+		if ($type eq "filename") {
+		    print "  Got filename format '$title'\n" if $verbose_opt ;
+		    push (@internal_filename_parsers, $parser) ;
+		} elsif ($type eq "path") {
+		    print "  Got path format '$title'\n" if $verbose_opt ;
+		    push (@internal_path_parsers, $parser) ;
+		}
+	    } elsif ($type or $title or $regexp or @indice_table) {
+		die "Incomplete format at line $. in file '$file'\n" ;
 	    }
-	}
-	close FORMAT ;
-
-	# save the last format
-	if ($type and $title and $regexp and @indice_table) {
-	    my $parser ;
-	    $parser->{title} = $title ;
-	    $parser->{regexp} = $regexp ;
-	    $parser->{indices} = @indice_table ;
+	    $type = undef ; $regexp = undef ; @indice_table = () ;
+	    $title = $1 ;
+	    # stocker la ligne ?
+	} elsif (/^type = (.*)$/) {
+	    die "Unsupported format type '$1' at line $. in file '$file'\n"
+		if $1 ne "filename" and $1 ne "path" ;
+	    $type = $1 ;
+	} elsif (/^regexp = (.*)$/) {
+	    $regexp = $1 ;
+	    $regexp =~ s/\./\\./g ;
+	    $regexp =~ s/\)/\\\)/g ;
+	    $regexp =~ s@/@\\/@g ;
+	    # do the replacement progressively so that %% and %x and not mixed
+	    while ($regexp =~ m/(%(?:P|L|S|N|A|%))/) {
+		if ($1 eq '%P') {
+		    $regexp =~ s/%P/$match_path/ ;
+		} elsif ($1 eq '%L') {
+		    $regexp =~ s/%L/$match_limit/ ;
+		} elsif ($1 eq '%S') {
+		    $regexp =~ s/%S/$match_space/ ;
+		} elsif ($1 eq '%N') {
+		    $regexp =~ s/%N/$match_num/ ;
+		} elsif ($1 eq '%A') {
+		    $regexp =~ s/%A/$match_any/ ;
+		} elsif ($1 eq '%%') {
+		    $regexp =~ s/%%/%/ ;
+		}
+	    }
+	} elsif (/^indices = (.*)$/) {
+	    @indice_table = split (/,/, $1) ;
 	    for(my $i = 0; $i < @indice_table; $i++) {
-		$parser->{$i} = $indice_table[$i] ;
+		my $indice = ( grep { $field_letter[$_] eq $indice_table[$i] } ( 0 .. $fields-1 ) ) [0] ;
+		if (not defined $indice) {
+		    die "Unrecognized field letter '$indice_table[$i]' on line $. in file '$file'\n"
+			if $indice_table[$i] ne 'd' ;
+		    $indice = -1 ;
+		}
+		$indice_table[$i] = $indice ;
 	    }
-	    if ($type eq "filename") {
-		print "  Got filename format '$title'\n" if $verbose_opt ;
-		push (@internal_filename_parsers, $parser) ;
-	    } elsif ($type eq "path") {
-		print "  Got path format '$title'\n" if $verbose_opt ;
-		push (@internal_path_parsers, $parser) ;
-	    }
-	} elsif ($type or $title or $regexp or @indice_table) {
-	    die "Incomplete format at line $. in file '$file'\n" ;
+	} else {
+	    die "Unrecognized line $. in file '$file': '$_'\n" ;
 	}
+    }
+    close FORMAT ;
+
+    # save the last format
+    if ($type and $title and $regexp and @indice_table) {
+	my $parser ;
+	$parser->{title} = $title ;
+	$parser->{regexp} = $regexp ;
+	$parser->{indices} = @indice_table ;
+	for(my $i = 0; $i < @indice_table; $i++) {
+	    $parser->{$i} = $indice_table[$i] ;
+	}
+	if ($type eq "filename") {
+	    print "  Got filename format '$title'\n" if $verbose_opt ;
+	    push (@internal_filename_parsers, $parser) ;
+	} elsif ($type eq "path") {
+	    print "  Got path format '$title'\n" if $verbose_opt ;
+	    push (@internal_path_parsers, $parser) ;
+	}
+    } elsif ($type or $title or $regexp or @indice_table) {
+	die "Incomplete format at line $. in file '$file'\n" ;
+    }
 }
 
 # if -L was passed, show formats and exit
