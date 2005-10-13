@@ -1,5 +1,8 @@
 
-  * Fix formats file parsing (last format was omitted).
+  * Large fix internal database format files processing:
+    + Fix formats file parsing (last format was omitted).
+    + If $HOME/.lltag/formats exists, /etc/lltag/formats is ignored.
+    + Fix documentation.
 
 
 lltag (0.9)
