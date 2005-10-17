@@ -1,3 +1,15 @@
+lltag (0.9.1)
+
+  * Large fix of internal database format files processing:
+    + Fix formats file parsing (last format was omitted).
+    + If $HOME/.lltag/formats exists, /etc/lltag/formats is ignored.
+    + Fix documentation.
+  * Add --config, --gencfg and /etc/lltag/config to configure lltag behavior
+    (requested by Stephane Gimenez).
+  * Do not warn when no file is passed.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon, 17 Oct 2005 20:51:00 +0200
+
 lltag (0.9)
 
   * Add rename support with --rename (requested by Stephane Gimenez):

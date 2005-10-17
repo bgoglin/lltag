@@ -1,41 +1,50 @@
 .TH LLTAG 1 "March 2005"
 .\"
+
+
+
 .SH NAME
 lltag \- tag mp3/ogg/flac music files automagically
 .br
 .\"
+
+
+
 .SH SYNOPSIS
 .B lltag
-.RB [ \-F\ format ]
+.RB [ \-F\ <format> ]
 .RB [ \-G ]
-.RB [ \-R ]
 .RB [ \-p ]
-.RB [ \-a\ artist ]
-.RB [ \-t\ title ]
-.RB [ \-A\ album ]
-.RB [ \-n\ number ]
-.RB [ \-g\ genre ]
-.RB [ \-y\ year ]
-.RB [ \-c\ comment ]
+.RB [ \-a\ <artist> ]
+.RB [ \-t\ <title> ]
+.RB [ \-A\ <album> ]
+.RB [ \-n\ <number> ]
+.RB [ \-g\ <genre> ]
+.RB [ \-y\ <year> ]
+.RB [ \-c\ <comment> ]
 .RB [ \-\-spaces ]
 .RB [ \-\-maj ]
 .RB [ \-\-sep\ <s1|s2|...> ]
-.RB [ \-\-yes ]
-.RB [ \-\-ask ]
 .RB [ \-\-mp3/\-\-ogg/\-\-flac ]
 .RB [ \-\-clear ]
 .RB [ \-\-append ]
-.RB [ \-\-rename format ]
+.RB [ \-\-no-tagging ]
+.RB [ \-\-rename\ <format> ]
 .RB [ \-\-rename\-ext ]
 .RB [ \-\-rename\-min ]
-.RB [ \-\-rename\-sep sep ]
-.RB [ \-\-no-tagging ]
+.RB [ \-\-rename\-sep\ <sep> ]
 .RB [ \-\-dry\-run ]
+.RB [ \-\-yes ]
+.RB [ \-\-ask ]
+.RB [ \-R ]
+.RB [ \-v ]
+.RB [ \-\-config\ <file> ]
+.RB [ \-\-gencfg\ <file> ]
 .RB [ \-L ]
 .RB [ \-V ]
-.RB [ \-v ]
 .RB [ \-h ]
 .\"
+
 
 
 .SH DESCRIPTION
@@ -67,13 +76,17 @@ When called with
 the target file will also be renamed.
 
 
+
 .SH OPTIONS
+
 .TP
-.I "\-A, \-\-album album"
+.I "\-A, \-\-album <album>"
 Set the default value of the \fIAlbum\fR tag.
+
 .TP
-.I "\-a, \-\-artist artist"
+.I "\-a, \-\-artist <artist>"
 Set the default value of the \fIArtist\fR tag.
+
 .TP
 .I "\-\-append"
 Force appending of ogg/flac tags.
@@ -81,6 +94,7 @@ See
 .SM
 .B CLEARING, REPLACING OR APPENDING
 below for details.
+
 .TP
 .I "\-\-ask"
 Always ask confirmation to the user before tagging.
@@ -88,11 +102,13 @@ By default user-specified format matching is accepted
 while guess format matching is asked for confirmation.
 See
 .SM
-.B CONFIRMATION
+.B TAGGING CONFIRMATION
 below for details.
+
 .TP
-.I "\-c, \-\-comment comment"
+.I "\-c, \-\-comment <comment>"
 Set the default value of the \fIComment\fR tag.
+
 .TP
 .I "\-\-clear"
 Force clearing of id3 tags of mp3 files or flac tags.
@@ -100,94 +116,143 @@ See
 .SM
 .B CLEARING, REPLACING OR APPENDING
 below for details.
+
+.TP
+.I "\-\-config <file>"
+Parse additional configuration file.
+See
+.SM
+.B CONFIGURATION FILES
+below for details.
+
 .TP
 .I "\-\-dry\-run"
 Do not really tag files, just show what would have been done.
+
 .TP
-.I "\-F, \-\-format format"
+.I "\-F, \-\-format <format>"
 Add the specified format string to the list of user-supplied formats.
 Might be used several times to try different formats.
 See
 .SM
 .B FORMAT
 below for details.
+
 .TP
 .I "\-\-flac"
 Tag all files as FLAC files, using \fImetaflac\fR.
+
 .TP
 .I "\-G, \-\-guess"
 Guess format using the internal database if no user-specified format
 worked (default behavior).
+
 .TP
-.I "\-g, \-\-genre genre"
+.I "\-g, \-\-genre <genre>"
 Set the default value of the \fIGenre\fR tag.
+
+.TP
+.I "\-\-gencfg <file>"
+Generate configuration file.
+See
+.SM
+.B CONFIGURATION FILES
+below for details.
+
 .TP
 .I "\-h, \-\-help"
 Print a usage message and exit.
+
 .TP
 .I "\-L, \-\-list"
 List internal formats.
+
 .TP
 .I "\-\-maj"
 Upcase the first letter of each word in tags.
+
 .TP
 .I "\-\-mp3"
 Tag all files as MP3 files, using \fImp3info\fR.
+
 .TP
-.I "\-n, \-\-number number"
+.I "\-n, \-\-number <number>"
 Set the default value of the \fITrack Number\fR tag.
+
 .TP
 .I "\-\-no\-tagging"
 Do not actually tag files. This might be used to rename files
 without tagging.
+
 .TP
 .I "\-\-ogg"
 Tag all files as OGG files, using \fIvorbiscomment\fR.
+
 .TP
 .I "\-p, \-\-nopath"
 Do not consider the path of files when matching.
+
 .TP
 .I "\-R, \-\-recursive"
 Recursively search for files in subdirectories.
+
 .TP
-.I "\-\-rename format"
+.I "\-\-rename <format>"
 After tagging, rename the file according to the format.
+By default, confirmation is asked before tagging.
+See
+.SM
+.B RENAMING CONFIRMATION
+below for details.
+
 .TP
 .I "\-\-rename\-ext"
 Assume that the file extension is provided by the rename format
 instead of automatically adding the extension corresponding to
 the file type.
+
 .TP
 .I "\-\-rename\-min"
 Lowcase all tags before renaming.
+
 .TP
-.I "\-\-rename\-sep sep"
+.I "\-\-rename\-sep <sep>"
 Replace spaces with sep when renaming.
+
 .TP
-.I "\-\-sep string|string"
+.I "\-\-sep <string|string>"
 Replace the specified characters or strings with space in tags.
 They have to be |-separated.
+
 .TP
 .I "\-\-spaces"
 Allow multiple or no space instead of only one when matching.
 Also allow spaces limiting path elements.
+
 .TP
-.I "\-t, \-\-title title"
+.I "\-t, \-\-title <title>"
 Set the default value of the \fITitle\fR tag.
+
 .TP
 .I "\-v, \-\-verbose"
 Show verbose messages.
+
 .TP
 .I "\-V, \-\-version"
 Show the version.
+
 .TP
-.I "\-y, \-\-year year"
+.I "\-y, \-\-year <year>"
 Set the default value of the \fIYear\fR tag.
+
 .TP
 .I "\-\-yes"
 Always accept tagging without asking the user.
 By default user-specified format matching is accepted
 while guess format matching is asked for confirmation.
+
+Also always accept renaming without asking the user.
+
 
 
 .SH FORMAT
@@ -223,6 +288,7 @@ to match anything and forget it.
 to match %.
 
 
+
 .SH CLEARING, REPLACING OR APPENDING
 Id3 tags of mp3 files are a set of 7 independent fields,
 while ogg/flac tags is a unique stream of one field per line.
@@ -240,7 +306,7 @@ may either replace (by default), append or reset flac tags since
 is flexible enough to do so.
 
 If
-.I \-\-clear   
+.I \-\-clear
 is passed, all mp3/flac tags will be cleared first.
 This does not impact ogg tagging since it clears by default.
 
@@ -251,11 +317,14 @@ This does not impact mp3 tagging since appending is impossible
 (newly-defined existing tags are replaced, others are kept).
 
 
-.SH CONFIRMATION
-When --ask is passed or when guessing, each matching will lead to
+
+.SH TAGGING CONFIRMATION
+When
+.I \-\-ask
+is passed or when guessing, each matching will lead to
 a confirmation message before tagging.
-Available behavior are:
-    
+Available behaviors are:
+
 .B y
 .RS
 Tag current file with current format.
@@ -318,10 +387,54 @@ Show help about confirmation.
 .RE
 
 
+
+.SH RENAMING CONFIRMATION
+By default, before renaming, a confirmation is asked to the user.
+You may bypass it by passing
+.I \-\-yes
+on the command line.
+
+If the rename format uses a field that is not defined,
+a warning is shown and confirmation is always asked.
+
+Available behaviors when renaming are:
+
+.B y
+.RS
+Rename current file with current new filename.
+.RE
+
+.B a
+.RS
+Rename current file with current new filename.
+Then, never asking for a renaming confirmation anymore.
+.RE
+
+.B e
+.RS
+Edit current new filename before renaming.
+.RE
+
+.B n
+.RS
+Don't rename current file.
+.RE
+
+.B h
+.RS
+Show help about confirmation.
+.RE
+
+
+
 .SH INTERNAL FORMATS
 The internal format database is usually stored in
-.IR "/etc/lltag/format" .
-It contains entries composed of :
+.IR "/etc/lltag/formats" .
+The user may override this file by defining a
+.IR "$HOME/.lltag/formats" .
+If this file exists, the system-wide one is ignored.
+
+These files contain entries composed of :
 
 .RE
 .I [%n - %a - %t]
@@ -349,14 +462,54 @@ A list of format letters corresponding to %N or %A field in the previous format
 for a list of these letters).
 
 
+
+.SH CONFIGURATION FILES
+.IR lltag
+reads some configuration files before parsing command line options.
+The system-wide configuration file is defined in
+.I /etc/lltag/config
+where all options are documented.
+
+It also reads
+.I $HOME/.lltag/config
+if it exists.
+
+The user may also add another configurable file with
+.I --config .
+
+.IR lltag
+may also generate a configuration with
+.I --gencfg .
+
+
+
 .SH FILES
 .RE
-.I /etc/lltag/format
+.I /etc/lltag/formats
 .RS
-System-wide internal format database. See
+System-wide internal format database.
+See
 .SM
 .B INTERNAL FORMATS
 for details.
+.RE
+.I $HOME/.lltag/formats
+.RS
+User internal format database. If it exists, the system-wide one is ignored.
+.RE
+.I /etc/lltag/config
+.RS
+System-wide configuration file, with documentation.
+See
+.SM
+.B CONFIGURATION FILES
+for details.
+.RE
+.I $HOME/.lltag/config
+.RS
+User configuration file.
+
+
 
 .SH AUTHOR
 Brice Goglin

@@ -1,0 +1,71 @@
+# llgal configuration options.
+# These options may be defined in /etc/lltag/config,
+# a per-user ${HOME}/.lltag/config or in a file passed
+# on the command-line with --config.
+
+# Add a user-defined format
+# format = ""
+
+# Try to guess if user-defined format do not match
+# guess = 0
+
+# Do not use file path when matching filename
+# nopath = 0
+
+# Default field values
+# default_artist = ""
+# default_title = ""
+# default_album = ""
+# default_number = ""
+# default_genre = ""
+# default_year = ""
+# default_comment = ""
+
+# Allow no or multiple spaces
+# spaces = 0
+
+# Upcase first letters of words in tags
+# maj = 0
+
+# Replace |-separated strings with space in tags
+# sep = ""
+
+# Force mp3, ogg of flac instead of by-extension detection
+# type = <mp3|ogg|flac|none>
+
+# Clear all tags of audio files when possible
+# clear_tags = 0
+
+# Append tags only instead of replacing old ones when possible
+# append_tags = 0
+
+# Do not actually tag files
+# no_tagging = 0
+
+# Rename file according to format
+# rename_format = ""
+
+# Lowcase tags before renaming
+# rename_min = 0
+
+# Replace space with s in tags before renaming
+# rename_sep = ""
+
+# Assume the rename format provides an extension
+# rename_ext = 0
+
+# Do nothing but show what would have been done
+# dry_run = 0
+
+# Tag without asking for confirmation when guessing
+# Rename without asking for confirmation
+# yes = 0
+
+# Always ask for confirmation before tagging
+# ask = 0
+
+# Recursively traverse all given subdirectories
+# recursive = 0
+
+# Verbose messages
+# verbose = 0
