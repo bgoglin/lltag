@@ -4,6 +4,7 @@
   * When renaming with a undefined track number, initialize it to 0.
   * When renaming with a track number, make it at least 2 digits
     (reported by Emmanuel Jeandel).
+  * Fix typos in the manpage (reported by Emmanuel Jeandel).
 
 
 lltag (0.9.1)
