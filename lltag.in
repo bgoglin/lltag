@@ -65,6 +65,7 @@ sub usage {
     print "     --config <file>        Read additional configuration file\n" ;
     print "     --gencfg <file>        Generate additional configuration file\n" ;
     print "   Behavior options:\n" ;
+    print "     --show-tags [<tag,..>] Show existing tags in files\n" ;
     print "     -L, --list             List internal formats\n" ;
     print "     -V, --version          Show lltag version\n" ;
     print "     -h, --help             Show this help\n" ;
@@ -104,6 +105,7 @@ my $dry_run_opt = 0 ;
 my $verbose_opt = 0 ;
 my $recursive_opt = 0 ;
 my $list_formats_opt = 0 ;
+my $show_tags_opt = "" ;
 my $no_tagging_opt = 0 ;
 
 my $ask_opt = 0 ;
@@ -268,6 +270,10 @@ GetOptions(
 	   'h|help'       => sub { usage () ; },
 	   'V|version'    => sub { version () ; },
 	   'L|list'       => \$list_formats_opt,
+	   'show-tags:s'  => sub { shift ; my $value = shift ;
+				   $value = "all" if !$value ;
+				   $show_tags_opt = $value ;
+			       },
 	   map { my $i = $_; $field_letter[$i].'|'.$field_name[$i].'=s'
 		=> sub { shift ; $field_default[$i] = shift ; $default_opt = 1 ; },
 	  	} ( 0 .. $fields-1 )
@@ -300,6 +306,158 @@ my $TAG_NO_MATCH = -4 ;
 my $TAG_MAY_SKIP_PARSER = 1 ;
 my $TAG_MAY_SKIP_PATH_PARSER = 2 ;
 my $TAG_MAY_PREFER = 4 ;
+
+#######################################################
+# rewrite of system which returns a descriptor of a stream
+# containing both stdout and stderr
+sub system_with_output {
+    pipe (my $pipe_out, my $pipe_in) ;
+    my $pid = fork() ;
+    if ($pid < 0) {
+	# in the father, when fork failed
+	close $pipe_in ;
+	close $pipe_out ;
+	return (-1, "Failed to fork to execute command line: ". join (" ", @_) ."\n") ;
+    } elsif ($pid > 0) {
+	# in the father, when fork done
+	close $pipe_in ;
+	waitpid($pid, 0);
+	my $status = $? >> 8 ;
+	$status = -1
+	    if $status == 255 ;
+	my @lines = <$pipe_out> ;
+	close $pipe_out ;
+	return ( $status , @lines ) ;
+    } else {
+	# in the child
+	close $pipe_out ;
+	open STDERR, ">&", $pipe_in ;
+	open STDOUT, ">&", $pipe_in ;
+	{ exec @_ } ;
+	print $pipe_in "Failed to execute command line: ". join (" ", @_) ."\n" ;
+	print $pipe_in "Please install $_[0] properly (see README).\n"
+	    if $!{ENOENT} or $!{EPERM} ;
+	close $pipe_in ;
+	exit -1 ;
+    }
+}
+
+#######################################################
+# files to process
+
+# process remaining command-line arguments as files
+
+my @files = () ;
+while ( @ARGV ) {
+    if ($recursive_opt) {
+	my $dir = shift @ARGV ;
+	open FIND, "find \"$dir\" |" ;
+	my @dirfiles = <FIND> ;
+	close FIND ;
+	foreach my $file (@dirfiles) {
+	    chomp $file ;
+	    if (-f $file) {
+		push (@files, $file) ;
+	    }
+	}
+    } else {
+	my $file = shift @ARGV ;
+	if (-f $file) {
+	    push (@files, $file) ;
+	} else {
+	    print "Skipping the non-file '$file'\n" ;
+	}
+    }
+}
+
+#######################################################
+# show existing tags if --show-tags was passed
+
+sub mp3_show_tags {
+    my $filename = shift ;
+    my ($status, @output) = system_with_output
+	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nTrack=%n\nGenre=%g\nYear=%y\nComment=%c\n", $filename) ;
+    return ($status)
+	if $status ;
+    return ($status, @output) ;
+}
+
+sub ogg_show_tags {
+    my $filename = shift ;
+    my ($status, @output) = system_with_output
+	("vorbiscomment", "-l", $filename) ;
+    return ($status)
+	if $status ;
+    return ($status, @output) ;
+}
+
+sub flac_show_tags {
+    my $filename = shift ;
+    my ($status, @output) = system_with_output
+	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $filename) ;
+    return ($status)
+	if $status ;
+    @output = map { my $line =$_ ; $line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ; $line } ( grep { /comment\[\d+\]/ } @output ) ;
+    return ($status, @output) ;
+}
+
+if ($show_tags_opt) {
+    my @fields_to_show = split (/,/, $show_tags_opt) ;
+    foreach my $filename (@files) {
+	# split into filename and extension
+	my @parts = split (/\./, $filename) ;
+	my $extension = pop @parts ;
+	
+	print "$filename:\n"
+	    if @files ;
+	
+	# find out file type
+	my $tag_type = $type_opt ;
+	if (not defined $tag_type) {
+	    # use the extension to find the type
+	    if ($extension =~ /$mp3_ext/i) {
+		$tag_type = $mp3_type ;
+	    } elsif ($extension =~ /$ogg_ext/i) {
+		$tag_type = $ogg_type ;
+	    } elsif ($extension =~ /$flac_ext/i) {
+		$tag_type = $flac_type ;
+	    } else {
+		print "  Skipping this unknown-type file.\n" ;
+		next ;
+	    }
+	}
+	
+	# get the tags
+	my $status ;
+	my @output ;
+	if ($tag_type eq $mp3_type) {
+	    ($status, @output) = mp3_show_tags $filename ;
+	} elsif ($tag_type eq $ogg_type) {
+	    ($status, @output) = ogg_show_tags $filename ;
+	} elsif ($tag_type eq $flac_type) {
+	    ($status, @output) = flac_show_tags $filename ;
+	}
+	if ($status) {
+	    print "  Failed to get tags from file.\n" ;
+	    next ;
+	}
+
+	my @lines = () ;
+	while (my $line = shift @output) {
+	    chomp $line ;
+	    my ($first, $remaining, $value) = ($line =~ /(.)(.*)=(.*)/) ;
+	    next if !$value ;
+	    $remaining = lc($remaining) ;
+	    $remaining = "rack" if $remaining eq "racknumber" ;
+	    next unless grep { /^all$/ } @fields_to_show 
+		or grep { /^$first$remaining$/i } @fields_to_show ;
+	    push (@lines, "$first$remaining=$value") ;
+	}
+
+	map { print "  $_\n" } @lines ;
+    }
+    exit 0 ;
+}
 
 #######################################################
 # internal parsers
@@ -423,34 +581,6 @@ if ($list_formats_opt) {
 	}
     }
     exit 0 ;
-}
-
-#######################################################
-# files to process
-
-# process remaining command-line arguments as files
-
-my @files = () ;
-while ( @ARGV ) {
-    if ($recursive_opt) {
-	my $dir = shift @ARGV ;
-	open FIND, "find \"$dir\" |" ;
-	my @dirfiles = <FIND> ;
-	close FIND ;
-	foreach my $file (@dirfiles) {
-	    chomp $file ;
-	    if (-f $file) {
-		push (@files, $file) ;
-	    }
-	}
-    } else {
-	my $file = shift @ARGV ;
-	if (-f $file) {
-	    push (@files, $file) ;
-	} else {
-	    print "Skipping the non-file '$file'\n" ;
-	}
-    }
 }
 
 #######################################################
@@ -738,9 +868,9 @@ while ( @files ) {
 }
 
 #######################################################
-# mp3info and vorbiscomment specific options
+# mp3info and vorbiscomment tagging specific options
 
-sub mp3_system_args {
+sub mp3_tagging_system_args {
     my @field = @_ ;
     my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
     my @mp3_tagging_cmd = ( 'mp3info' ) ;
@@ -755,7 +885,7 @@ sub mp3_system_args {
 	     ) ;
 }
 
-sub ogg_system_args {
+sub ogg_tagging_system_args {
     my @field = @_ ;
     my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
     my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
@@ -770,7 +900,7 @@ sub ogg_system_args {
 	     ) ;
 }
 
-sub flac_system_args {
+sub flac_tagging_system_args {
     my @field = @_ ;
     my @field_metaflac_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
     my @flac_tagging_cmd = ( 'metaflac' ) ;
@@ -956,40 +1086,6 @@ sub confirm_and_tag {
     return $res ;
 }
 
-# rewrite of system which returns a descriptor of a stream
-# containing both stdout and stderr
-sub system_with_output {
-    pipe (my $pipe_out, my $pipe_in) ;
-    my $pid = fork() ;
-    if ($pid < 0) {
-	# in the father, when fork failed
-	close $pipe_in ;
-	close $pipe_out ;
-	return (-1, "Failed to fork to execute command line: ". join (" ", @_) ."\n") ;
-    } elsif ($pid > 0) {
-	# in the father, when fork done
-	close $pipe_in ;
-	waitpid($pid, 0);
-	my $status = $? >> 8 ;
-	$status = -1
-	    if $status == 255 ;
-	my @lines = <$pipe_out> ;
-	close $pipe_out ;
-	return ( $status , @lines ) ;
-    } else {
-	# in the child
-	close $pipe_out ;
-	open STDERR, ">&", $pipe_in ;
-	open STDOUT, ">&", $pipe_in ;
-	{ exec @_ } ;
-	print $pipe_in "Failed to execute command line: ". join (" ", @_) ."\n" ;
-	print $pipe_in "Please install $_[0] properly (see README).\n"
-	    if $!{ENOENT} or $!{EPERM} ;
-	close $pipe_in ;
-	exit -1 ;
-    }
-}
-
 sub tag_with_fields {
     my $file = shift ;
     my $tag_type = shift ;
@@ -1013,11 +1109,11 @@ sub tag_with_fields {
     # tagging command line
     my @system_args ;
     if ($tag_type eq $mp3_type) {
-	@system_args = ( (mp3_system_args @field), $file) ;
+	@system_args = ( (mp3_tagging_system_args @field), $file) ;
     } elsif ($tag_type eq $ogg_type) {
-	@system_args = ( (ogg_system_args @field), $file) ;
+	@system_args = ( (ogg_tagging_system_args @field), $file) ;
     } elsif ($tag_type eq $flac_type) {
-	@system_args = ( (flac_system_args @field), $file) ;
+	@system_args = ( (flac_tagging_system_args @field), $file) ;
     }
 
     # show command line and really tag if asked

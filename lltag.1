@@ -40,6 +40,7 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-v ]
 .RB [ \-\-config\ <file> ]
 .RB [ \-\-gencfg\ <file> ]
+.RB [ \-\-show-tags\ [<tags>] ]
 .RB [ \-L ]
 .RB [ \-V ]
 .RB [ \-h ]
@@ -223,6 +224,15 @@ Replace spaces with sep when renaming.
 .I "\-\-sep <string|string>"
 Replace the specified characters or strings with space in tags.
 They have to be |-separated.
+
+.TP
+.I "\-\-show-tags [<tag,tag>]"
+Instead of tagging,
+.B lltag
+shows the tags that are currently set in files.
+Without a parameter, all defined tags are shown.
+A comma-separated list of tag names might be passed
+to shown only some.
 
 .TP
 .I "\-\-spaces"

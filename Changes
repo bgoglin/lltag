@@ -1,3 +1,8 @@
+
+  * Added --show-tags to only show file tags instead of tagging
+    (requested by Stephane Gimenez in Gna! bug #4601).
+
+
 lltag (0.9.1)
 
   * Large fix of internal database format files processing:
