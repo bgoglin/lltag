@@ -1191,6 +1191,12 @@ sub rename_with_tags {
 		print "    WARNING: Undefined field ".$field_name[$indices[0]]."\n" ;
 		$val = "" ;
 	    }
+	    if ($char eq 'n') {
+		# initialize track number to 0 if empty
+		$val = "0" if !$val ;
+		# make it at least 2 digits
+		$val = '0'.$val if $val < 10 and length $val < 2 ;
+	    }
 	    $array[$i] = $val ;
 	} else {
 	    die "    ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
