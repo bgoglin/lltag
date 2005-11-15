@@ -1,5 +1,5 @@
 
-  * Added --show-tags to only show file tags instead of tagging
+  * Added -S ans --show-tags to only show file tags instead of tagging
     (requested by Stephane Gimenez in Gna! bug #4601).
   * When renaming with a undefined track number, initialize it to 0.
   * When renaming with a track number, make it at least 2 digits
