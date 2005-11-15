@@ -1300,13 +1300,11 @@ sub generate_config {
     print NEWCFG "clear_tags = $clear_opt\n" ;
     print NEWCFG "append_tags = $append_opt\n" ;
     print NEWCFG "no_tagging = $no_tagging_opt\n" ;
-    
-    if (defined $rename_opt) {
-	print NEWCFG "rename_format = \"$rename_opt\"\n" ;
-	print NEWCFG "rename_min = $rename_min_opt\n" ;
-	print NEWCFG "rename_sep = \"$rename_sep_opt\"\n" ;
-	print NEWCFG "rename_ext = $rename_ext_opt\n" ;
-    }
+
+    print NEWCFG "rename_format = \"" .($rename_opt?$rename_opt:""). "\"\n" ;
+    print NEWCFG "rename_min = $rename_min_opt\n" ;
+    print NEWCFG "rename_sep = \"$rename_sep_opt\"\n" ;
+    print NEWCFG "rename_ext = $rename_ext_opt\n" ;
 
     print NEWCFG "dry_run = $dry_run_opt\n" ;
     print NEWCFG "yes = $yes_opt\n" ;

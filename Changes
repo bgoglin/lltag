@@ -4,6 +4,8 @@
   * When renaming with a undefined track number, initialize it to 0.
   * When renaming with a track number, make it at least 2 digits
     (reported by Emmanuel Jeandel).
+  * Always write renaming configuration options with --gencfg, even
+    if renaming was not enabled.
   * Use ' instead of # to show spaces between command line argument
     with --dry-run (request by Emmanuel Jeandel).
   * Fix the error when no formats file is found.
