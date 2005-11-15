@@ -6,6 +6,9 @@
     (reported by Emmanuel Jeandel).
   * Always write renaming configuration options with --gencfg, even
     if renaming was not enabled.
+  * Cleanup core function names and several messages so that lltag speak
+    about matching instead of tagging. It avoids getting messages about
+    tagging while --no-tagging was passed (requested by Stephane Gimenez).
   * Use ' instead of # to show spaces between command line argument
     with --dry-run (request by Emmanuel Jeandel).
   * Fix the error when no formats file is found.

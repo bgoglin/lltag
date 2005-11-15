@@ -627,8 +627,8 @@ sub parse_file_with_internal_parsers
 			print "    '$path_parser->{title}/$filename_parser->{title}' matches this file\n" ;
 			my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
 			# try to tag, with confirmation
-			my $res = tag_with_parser ($file, $tag_type, $whole_parser,
-						   1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER, @_) ;
+			my $res = match_fields_with_parser ($file, $tag_type, $whole_parser,
+							    1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER, @_) ;
 			if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
 			    if ($res == $TAG_SUCCESS_PREFERRED) {
 				$preferred_parser = $whole_parser ;
@@ -652,8 +652,8 @@ sub parse_file_with_internal_parsers
 	    if ($filename =~ /^$filename_parser->{regexp}$/) {
 		print "    '$filename_parser->{title}' matches this file\n" ;
 		# try to tag, with confirmation
-		my $res = tag_with_parser ($file, $tag_type, $filename_parser,
-					   1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
+		my $res = match_fields_with_parser ($file, $tag_type, $filename_parser,
+						    1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
 		if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
 		    if ($res == $TAG_SUCCESS_PREFERRED) {
 			$preferred_parser = $filename_parser ;
@@ -777,7 +777,8 @@ sub parse_file_with_user_parsers
 	if ($filename =~ /^$parser->{regexp}$/) {
 	    print "\n" ;
 	    # try to tag, without confirmation
-	    my $res = tag_with_parser ($file, $tag_type, $parser, 0, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
+	    my $res = match_fields_with_parser ($file, $tag_type, $parser, 0,
+						$TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
 	    if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
 		if ($res == $TAG_SUCCESS_PREFERRED) {
 		    $preferred_parser = $parser ;
@@ -861,7 +862,7 @@ while ( @files ) {
     if ($guess_opt or @parsers) {
 	print "  Didn't find any parser!\n" ;
     }
-    $res = confirm_and_tag ($file, $tag_type, 1, 0, @field) ;
+    $res = confirm_fields ($file, $tag_type, 1, 0, @field) ;
     die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
 
   NEXT_FILE:
@@ -869,56 +870,7 @@ while ( @files ) {
 }
 
 #######################################################
-# mp3info and vorbiscomment tagging specific options
-
-sub mp3_tagging_system_args {
-    my @field = @_ ;
-    my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
-    my @mp3_tagging_cmd = ( 'mp3info' ) ;
-    my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
-    # append is not supported by id3 tags
-
-    return ( @mp3_tagging_cmd ,
-	     $clear_opt ? @mp3_tagging_clear_option : () ,
-	     ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
-	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-	       ) ,
-	     ) ;
-}
-
-sub ogg_tagging_system_args {
-    my @field = @_ ;
-    my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
-    my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
-    my @ogg_tagging_clear_option = ( '-w' ) ;
-    my @ogg_tagging_append_option = ( '-a' ) ;
-
-    return ( @ogg_tagging_cmd ,
-	     $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
-	     ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
-	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-	       ) ,
-	     ) ;
-}
-
-sub flac_tagging_system_args {
-    my @field = @_ ;
-    my @field_metaflac_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
-    my @flac_tagging_cmd = ( 'metaflac' ) ;
-    my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
-
-    return (@flac_tagging_cmd ,
-	    $clear_opt ? @flac_tagging_clear_option : () ,
-	    !$append_opt ? ( map { ( "--remove-tag", $field_metaflac_option[$_] ) }
-			     ( grep { defined $field[$_] } ( 0 .. $fields-1 ) ) ) : () ,
-	    ( map { ( "--set-tag", $field_metaflac_option[$_]."=".$field[$_] ) }
-	      ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-	      ) ,
-	    ) ;
-}
-
-#######################################################
-# effective tagging
+# fields confirmation
 
 sub confirm_letters {
     my $behaviors = shift ;
@@ -933,64 +885,21 @@ sub confirm_letters {
 
 sub confirm_tag_usage {
     my $behaviors = shift ;
-    print "    y => Yes, tag with this format (default)\n" ;
-    print "    v => View which fields would be set\n" ;
+    print "    y => Yes, use this matching (default)\n" ;
+    print "    v => View which fields were matched\n" ;
     print "    u => Use this format for all files until one does not match\n"
 	if $behaviors & $TAG_MAY_PREFER ;
     print "    a => Always yes, stop asking for a confirmation\n" ;
-    print "    e => Edit these fields before tagging\n" ;
+    print "    e => Edit these fields by hand\n" ;
     print "    n => No, try the next matching format\n"
 	if $behaviors & $TAG_MAY_SKIP_PARSER ;
     print "    p => No, try the next path matching format\n"
 	if $behaviors & $TAG_MAY_SKIP_PATH_PARSER ;
-    print "    s => Skip this file, don't tag it\n" ;
+    print "    s => Skip this file, don't process it\n" ;
     print "    h => Show this help\n" ;
 }
 
-sub tag_with_parser {
-    my $file = shift ;
-    my $tag_type = shift ;
-    my $parser = shift ;
-    my $confirm = shift ;
-    my $behaviors = shift ;
-
-    # get default fields (without modifying the original)
-    my @field = @field_default ;
-    $#field = $fields-1 ;
-
-    # set to 1 when the field is defined (not by default)
-    my @field_set = () ;
-    $#field_set = $fields-1 ;
-
-    # get fields and show them if asked
-    my $i = 1 ;
-    while ( $i <= $parser->{indices} ) {
-        my $indice = $parser->{$i-1};
-	if ( $indice >= 0 ) {
-	    my $val = ${$i} ;
-	    $val =~ s/\b(.)/uc $1/eg if $maj_opt ;
-	    $val =~ s/($sep_opt)/ /g if defined $sep_opt ;
-	    if ($field_set[$indice]) {
-		print "    WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
-		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
-		goto NEXT_FIELD ;
-	    }
-	    $field[$indice] = $val ;
-	    $field_set[$indice] = 1 ;
-	    if ($verbose_opt or $confirm or $current_ask_opt) {
-		print "    ". ucfirst($field_name[$indice])
-		    .$field_trailing_spaces[$indice]
-		    .": ". $val ."\n" ;
-	    }
-	}
-     NEXT_FIELD:
-	$i++ ;
-    }
-
-    return confirm_and_tag ($file, $tag_type, $confirm, $behaviors, @field) ;
-}
-
-sub confirm_and_tag {
+sub confirm_fields {
     my $file = shift ;
     my $tag_type = shift ;
     my $confirm = shift ;
@@ -1008,14 +917,14 @@ sub confirm_and_tag {
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "  Really tag the file ".(confirm_letters ($behaviors))." ? " ;
+	print "  Use this matching ".(confirm_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
 	    goto TAG_IT ;
 	} elsif ($reply eq "v") {
 	    for(my $i = 0; $i < $fields; $i++) {
-		print "        ".ucfirst($field_name[$i]).$field_trailing_spaces[$i].": ".$field[$i]."\n" if defined $field[$i] ;
+		print "    ".ucfirst($field_name[$i]).$field_trailing_spaces[$i].": ".$field[$i]."\n" if defined $field[$i] ;
 	    }
 	    goto ASK_CONFIRM ;
 	} elsif ($reply =~ /^a/i) {
@@ -1070,7 +979,7 @@ sub confirm_and_tag {
 			." => Edit ".ucfirst($field_name[$i]).$field_trailing_spaces[$i]
 			." (=".$val.")\n" ;
 		}
-		print "      E => End edition and tag\n" ;
+		print "      E => End edition and process the file\n" ;
 		print "      C => Cancel edition\n" ;
 		goto ASK_EDIT ;
 	    }
@@ -1085,6 +994,98 @@ sub confirm_and_tag {
     my $res = tag_with_fields ($file, $tag_type, @field) ;
     return $TAG_SUCCESS_PREFERRED if $preferred and $res == $TAG_SUCCESS ;
     return $res ;
+}
+
+sub match_fields_with_parser {
+    my $file = shift ;
+    my $tag_type = shift ;
+    my $parser = shift ;
+    my $confirm = shift ;
+    my $behaviors = shift ;
+
+    # get default fields (without modifying the original)
+    my @field = @field_default ;
+    $#field = $fields-1 ;
+
+    # set to 1 when the field is defined (not by default)
+    my @field_set = () ;
+    $#field_set = $fields-1 ;
+
+    # get fields and show them if asked
+    my $i = 1 ;
+    while ( $i <= $parser->{indices} ) {
+        my $indice = $parser->{$i-1};
+	if ( $indice >= 0 ) {
+	    my $val = ${$i} ;
+	    $val =~ s/\b(.)/uc $1/eg if $maj_opt ;
+	    $val =~ s/($sep_opt)/ /g if defined $sep_opt ;
+	    if ($field_set[$indice]) {
+		print "    WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
+		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
+		goto NEXT_FIELD ;
+	    }
+	    $field[$indice] = $val ;
+	    $field_set[$indice] = 1 ;
+	    if ($verbose_opt or $confirm or $current_ask_opt) {
+		print "    ". ucfirst($field_name[$indice])
+		    .$field_trailing_spaces[$indice]
+		    .": ". $val ."\n" ;
+	    }
+	}
+     NEXT_FIELD:
+	$i++ ;
+    }
+
+    return confirm_fields ($file, $tag_type, $confirm, $behaviors, @field) ;
+}
+
+#######################################################
+# tagging
+
+sub mp3_tagging_system_args {
+    my @field = @_ ;
+    my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
+    my @mp3_tagging_cmd = ( 'mp3info' ) ;
+    my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
+    # append is not supported by id3 tags
+
+    return ( @mp3_tagging_cmd ,
+	     $clear_opt ? @mp3_tagging_clear_option : () ,
+	     ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
+	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	       ) ,
+	     ) ;
+}
+
+sub ogg_tagging_system_args {
+    my @field = @_ ;
+    my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
+    my @ogg_tagging_clear_option = ( '-w' ) ;
+    my @ogg_tagging_append_option = ( '-a' ) ;
+
+    return ( @ogg_tagging_cmd ,
+	     $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
+	     ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
+	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	       ) ,
+	     ) ;
+}
+
+sub flac_tagging_system_args {
+    my @field = @_ ;
+    my @field_metaflac_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my @flac_tagging_cmd = ( 'metaflac' ) ;
+    my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
+
+    return (@flac_tagging_cmd ,
+	    $clear_opt ? @flac_tagging_clear_option : () ,
+	    !$append_opt ? ( map { ( "--remove-tag", $field_metaflac_option[$_] ) }
+			     ( grep { defined $field[$_] } ( 0 .. $fields-1 ) ) ) : () ,
+	    ( map { ( "--set-tag", $field_metaflac_option[$_]."=".$field[$_] ) }
+	      ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
+	      ) ,
+	    ) ;
 }
 
 sub tag_with_fields {
@@ -1189,7 +1190,7 @@ sub rename_with_tags {
 	    my $val = $field[$indices[0]] ;
 	    if (not defined $val) {
 		$undefined++ ;
-		print "    WARNING: Undefined field ".$field_name[$indices[0]]."\n" ;
+		print "    WARNING: Undefined field '".$field_name[$indices[0]]."'.\n" ;
 		$val = "" ;
 	    }
 	    if ($char eq 'n') {
