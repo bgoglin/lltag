@@ -6,6 +6,7 @@
     (reported by Emmanuel Jeandel).
   * Use ' instead of # to show spaces between command line argument
     with --dry-run (request by Emmanuel Jeandel).
+  * Fix the error when no formats file is found.
   * Fix typos in the manpage (reported by Emmanuel Jeandel).
 
 

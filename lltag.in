@@ -473,8 +473,8 @@ if ($guess_opt or $list_formats_opt) {
     } elsif (open FORMAT, "$common_lltag_dir/$lltag_format_filename") {
 	$file = "$common_lltag_dir/$lltag_format_filename" ;
     } else {
-	print "Did not find any format file\n" ;
-	return ;
+	print "Did not find any format file.\n" ;
+	goto NO_FORMATS_FILE_FOUND;
     }
     print "Reading format file '$file'...\n" if $verbose_opt ;
 
@@ -570,6 +570,7 @@ if ($guess_opt or $list_formats_opt) {
     } elsif ($type or $title or $regexp or @indice_table) {
 	die "Incomplete format at line $. in file '$file'\n" ;
     }
+  NO_FORMATS_FILE_FOUND:
 }
 
 # if -L was passed, show formats and exit
