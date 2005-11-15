@@ -65,7 +65,8 @@ sub usage {
     print "  --config <file>        Read additional configuration file\n" ;
     print "  --gencfg <file>        Generate additional configuration file\n" ;
     print " Behavior options:\n" ;
-    print "  --show-tags [<tag,..>] Show existing tags in files\n" ;
+    print "  -S                     Show all tags from files\n" ;
+    print "  --show-tags <tag,..>   Show several tags from files\n" ;
     print "  -L, --list             List internal formats\n" ;
     print "  -V, --version          Show lltag version\n" ;
     print "  -h, --help             Show this help\n" ;
@@ -270,10 +271,8 @@ GetOptions(
 	   'h|help'       => sub { usage () ; },
 	   'V|version'    => sub { version () ; },
 	   'L|list'       => \$list_formats_opt,
-	   'show-tags:s'  => sub { shift ; my $value = shift ;
-				   $value = "all" if !$value ;
-				   $show_tags_opt = $value ;
-			       },
+	   'show-tags=s'  => \$show_tags_opt,
+	   'S'            => sub { $show_tags_opt = "all" ; },
 	   map { my $i = $_; $field_letter[$i].'|'.$field_name[$i].'=s'
 		=> sub { shift ; $field_default[$i] = shift ; $default_opt = 1 ; },
 	  	} ( 0 .. $fields-1 )
@@ -376,7 +375,7 @@ while ( @ARGV ) {
 sub mp3_show_tags {
     my $filename = shift ;
     my ($status, @output) = system_with_output
-	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nTrack=%n\nGenre=%g\nYear=%y\nComment=%c\n", $filename) ;
+	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nNumber=%n\nGenre=%g\nYear=%y\nComment=%c\n", $filename) ;
     return ($status)
 	if $status ;
     return ($status, @output) ;
@@ -407,10 +406,10 @@ if ($show_tags_opt) {
 	# split into filename and extension
 	my @parts = split (/\./, $filename) ;
 	my $extension = pop @parts ;
-	
+
 	print "$filename:\n"
 	    if @files ;
-	
+
 	# find out file type
 	my $tag_type = $type_opt ;
 	if (not defined $tag_type) {
@@ -426,7 +425,7 @@ if ($show_tags_opt) {
 		next ;
 	    }
 	}
-	
+
 	# get the tags
 	my $status ;
 	my @output ;
@@ -445,11 +444,12 @@ if ($show_tags_opt) {
 	my @lines = () ;
 	while (my $line = shift @output) {
 	    chomp $line ;
+	    $line =~ s/^tracknumber=/number=/i ;
 	    my ($first, $remaining, $value) = ($line =~ /(.)(.*)=(.*)/) ;
 	    next if !$value ;
+	    $first = uc($first) ;
 	    $remaining = lc($remaining) ;
-	    $remaining = "rack" if $remaining eq "racknumber" ;
-	    next unless grep { /^all$/ } @fields_to_show 
+	    next unless grep { /^all$/ } @fields_to_show
 		or grep { /^$first$remaining$/i } @fields_to_show ;
 	    push (@lines, "$first$remaining=$value") ;
 	}

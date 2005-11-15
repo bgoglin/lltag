@@ -40,7 +40,8 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-v ]
 .RB [ \-\-config\ <file> ]
 .RB [ \-\-gencfg\ <file> ]
-.RB [ \-\-show-tags\ [<tags>] ]
+.RB [ \-S ]
+.RB [ \-\-show-tags\ <tags> ]
 .RB [ \-L ]
 .RB [ \-V ]
 .RB [ \-h ]
@@ -221,18 +222,30 @@ Lowcase all tags before renaming.
 Replace spaces with sep when renaming.
 
 .TP
+.I "\-S"
+Instead of tagging,
+.B lltag
+shows the tags that are currently set in files.
+See
+.B "\-\-show-tags"
+to show only some tags.
+
+.TP
 .I "\-\-sep <string|string>"
 Replace the specified characters or strings with space in tags.
 They have to be |-separated.
 
 .TP
-.I "\-\-show-tags [<tag,tag>]"
+.I "\-\-show-tags <tag1,tag2,...>"
 Instead of tagging,
 .B lltag
-shows the tags that are currently set in files.
-Without a parameter, all defined tags are shown.
-A comma-separated list of tag names might be passed
-to shown only some.
+shows tags that are currently set in files.
+The argument is a comma separated list of tag types
+(\fIartist\fR, \fItitle\fR, \fIalbum\fR, \fInumber\fR,
+\fIgenre\fR, \fIyear\fR, \fIcomment\fR or \fIall\fR).
+See also
+.B "\-B"
+to show all tags.
 
 .TP
 .I "\-\-spaces"
