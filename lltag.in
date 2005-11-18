@@ -694,23 +694,31 @@ sub generate_user_parser {
     my $j = 0 ;
     for(my $i = 0; $i < @array - 1; $i++) {
 
+	my $char = $array[$i] ;
 	# normal characters
-	if ($array[$i] ne "%") {
-	    if ($array[$i] eq " ") {
+	if ($char ne "%") {
+
+	    if ($char eq " ") {
 		# replace spaces with general space matching regexp
 		$array[$i] = $match_space ;
-	    } elsif ($array[$i] eq "/") {
+
+	    } elsif ($char eq "/") {
 		# replace / with space flexible matching regexp
 		$array[$i] = $match_limit."/".$match_limit ;
+
+	    } elsif (index ("()[]", $char) != -1) {
+		# escape regexp control characters
+		$array[$i] = "\\".$char ;
+
 	    }
-	    # if that's not a %, keep it
+	    # keep this character
 	    next ;
 	}
 
 	# remove % and check next char
 	splice (@array, $i, 1) ;
 	# replace the char with the matching
-	my $char = $array[$i] ;
+	$char = $array[$i] ;
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;

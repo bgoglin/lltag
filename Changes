@@ -11,6 +11,8 @@
     tagging while --no-tagging was passed (requested by Stephane Gimenez).
   * Use ' instead of # to show spaces between command line argument
     with --dry-run (request by Emmanuel Jeandel).
+  * Allow to pass ()[] characters in the matching format without having
+    to protect them.
   * Allow all %x in the renaming format when x is not a field letter.
   * Fix where the 'd' field (dummy) is allowed.
   * Fix the error when no formats file is found.
