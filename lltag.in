@@ -1201,7 +1201,7 @@ sub rename_with_tags {
 	    }
 	    $array[$i] = $val ;
 	} else {
-	    die "    ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	    $array[$i] = "%".$char ;
 	}
     }
 
