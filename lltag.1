@@ -25,6 +25,7 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-spaces ]
 .RB [ \-\-maj ]
 .RB [ \-\-sep\ <s1|s2|...> ]
+.RB [ \-\-regexp\ <regexp> ]
 .RB [ \-\-mp3/\-\-ogg/\-\-flac ]
 .RB [ \-\-clear ]
 .RB [ \-\-append ]
@@ -33,6 +34,7 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-rename\-ext ]
 .RB [ \-\-rename\-min ]
 .RB [ \-\-rename\-sep\ <sep> ]
+.RB [ \-\-rename-regexp\ <regexp> ]
 .RB [ \-\-dry\-run ]
 .RB [ \-\-yes ]
 .RB [ \-\-ask ]
@@ -194,6 +196,13 @@ Do not consider the path of files when matching.
 Recursively search for files in subdirectories.
 
 .TP
+.I "\-\-regexp <[tag,tag:]s/from/to/>"
+Replace \fIfrom\fR with \fIto\fR in tags before tagging.
+If several tags (comma-separated) prefix the regexp, replacement is
+only applied to the corresponding fields.
+This option might be used multiple times to specify multiple replacing.
+
+.TP
 .I "\-\-rename <format>"
 After tagging, rename the file according to the format.
 By default, confirmation is asked before tagging.
@@ -213,8 +222,18 @@ the file type.
 Lowcase all tags before renaming.
 
 .TP
+.I "\-\-rename\-regexp <[tag,tag:]s/from/to/>"
+Replace \fIfrom\fR with \fIto\fR in tags before renaming.
+If several tags (comma-separated) prefix the regexp, replacement is
+only applied to the corresponding fields.
+This option might be used multiple times to specify multiple replacing.
+
+.TP
 .I "\-\-rename\-sep <sep>"
 Replace spaces with sep when renaming.
+See
+.B "\-\-rename\-regexp"
+for a more general replace feature.
 
 .TP
 .I "\-S"
@@ -229,6 +248,9 @@ to show only some tags.
 .I "\-\-sep <string|string>"
 Replace the specified characters or strings with space in tags.
 They have to be |-separated.
+See
+.B "\-\-regexp"
+for a more general replace feature.
 
 .TP
 .I "\-\-show-tags <tag1,tag2,...>"

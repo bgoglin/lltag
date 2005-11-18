@@ -1,6 +1,8 @@
 
   * Added -S ans --show-tags to only show file tags instead of tagging
     (requested by Stephane Gimenez in Gna! bug #4601).
+  * Add --regexp and --rename-regexp for basic regexp-replacing in tags
+    (requested by Jonathan Worth Washington).
   * When renaming with a undefined track number, initialize it to 0.
   * When renaming with a track number, make it at least 2 digits
     (reported by Emmanuel Jeandel).
@@ -12,7 +14,7 @@
   * Use ' instead of # to show spaces between command line argument
     with --dry-run (request by Emmanuel Jeandel).
   * Allow to pass ()[] characters in the matching format without having
-    to protect them.
+    to escape them.
   * Allow all %x in the renaming format when x is not a field letter.
   * Fix where the 'd' field (dummy) is allowed.
   * Fix the error when no formats file is found.

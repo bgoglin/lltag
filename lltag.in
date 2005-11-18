@@ -46,6 +46,7 @@ sub usage {
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
+    print "  --regexp <regexp>      Apply a replace regexp to tags before tagging\n" ;
     print "  --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
@@ -54,6 +55,7 @@ sub usage {
     print "  --rename <format>      Rename file according to format\n" ;
     print "  --rename-min           Lowcase tags before renaming\n" ;
     print "  --rename-sep <s>       Replace space with s in tags before renaming\n" ;
+    print "  --rename-regexp <reg>  Apply a replace regexp to tags before renaming\n" ;
     print "  --rename-ext           Assume the rename format provides an extension\n" ;
     print " General options:\n" ;
     print "  --dry-run              Do nothing but show what would have been done\n" ;
@@ -120,11 +122,13 @@ my $yes_opt = 0 ;
 my $default_opt = 0 ;
 my $clear_opt = 0 ;
 my $append_opt = 0 ;
+my @regexp_opts = () ;
 
 my $rename_opt = undef ;
 my $rename_min_opt = 0 ;
 my $rename_sep_opt = " " ;
 my $rename_ext_opt = 0 ;
+my @rename_regexp_opts = () ;
 
 my $mp3_ext = "mp3" ;
 my $ogg_ext = "ogg" ;
@@ -178,6 +182,8 @@ sub process_option {
 	} else {
 	    $type_opt = $1 ;
 	}
+    } elsif (/^regexp\s*=\s*"(.+)"$/) {
+	push (@regexp_opts, $1) ;
     } elsif (/^clear_tags\s*=\s*(.+)$/) {
 	$clear_opt = $1 ;
     } elsif (/^append_tags\s*=\s*(.+)$/) {
@@ -194,6 +200,8 @@ sub process_option {
 	$rename_min_opt = $1 ;
     } elsif (/^rename_sep\s*=\s*"(.*)"$/) {
 	$rename_sep_opt = $1 ;
+    } elsif (/^rename_regexp\s*=\s*"(.+)"$/) {
+	push (@rename_regexp_opts, $1) ;
     } elsif (/^rename_ext\s*=\s*(.+)$/) {
 	$rename_ext_opt = $1 ;
     } elsif (/^dry_run\s*=\s*(.+)$/) {
@@ -252,6 +260,7 @@ GetOptions(
 	   'spaces'       => \$spaces_opt,
 	   'maj'          => \$maj_opt,
 	   'sep=s'        => \$sep_opt,
+	   'regexp=s'     => \@regexp_opts,
 	   'mp3'          => sub { $type_opt = $mp3_type ; },
 	   'ogg'          => sub { $type_opt = $ogg_type ; },
 	   'flac'         => sub { $type_opt = $flac_type ; },
@@ -261,6 +270,7 @@ GetOptions(
 	   'rename=s'     => \$rename_opt,
 	   'rename-min'   => \$rename_min_opt,
 	   'rename-sep=s' => \$rename_sep_opt,
+	   'rename-regexp=s' => \@rename_regexp_opts,
 	   'rename-ext'   => \$rename_ext_opt,
 	   'dry-run'      => \$dry_run_opt,
 	   'R|recursive'  => \$recursive_opt,
@@ -457,6 +467,29 @@ if ($show_tags_opt) {
 	map { print "  $_\n" } @lines ;
     }
     exit 0 ;
+}
+
+#######################################################
+# apply user-given regexp
+
+sub apply_regexp_to_tag {
+    my $val = shift ;
+    my $regexp = shift ;
+    my $tag = shift ;
+
+    # parse the regexp
+    if ($regexp =~ /(?:([^:]+):)?s\/([^\/]+)\/([^\/]*)\/$/) {
+	my @tags = () ;
+	@tags = split (/,/, $1) if $1;
+	my $from = $2 ;
+	my $to = $3 ;
+	$val =~ s/$from/$to/g
+	    if !@tags or grep { $tag eq $_ } @tags ;
+    } else {
+	die "Unrecognized user regexp '$regexp'.\n" ;
+    }
+
+    return $val ;
 }
 
 #######################################################
@@ -1027,6 +1060,7 @@ sub match_fields_with_parser {
 	    my $val = ${$i} ;
 	    $val =~ s/\b(.)/uc $1/eg if $maj_opt ;
 	    $val =~ s/($sep_opt)/ /g if defined $sep_opt ;
+	    map { $val = apply_regexp_to_tag ($val, $_, $field_name[$indice]) } @regexp_opts ;
 	    if ($field_set[$indice]) {
 		print "    WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
 		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
@@ -1176,6 +1210,7 @@ sub rename_with_tags {
 		if $rename_min_opt ;
 	    $val =~ s/ /$rename_sep_opt/g
 		if $rename_sep_opt ;
+	    map { $val = apply_regexp_to_tag ($val, $_, $field_name[$i]) } @rename_regexp_opts ;
 	}
 	$field[$i] = $val ;
     }
@@ -1305,6 +1340,7 @@ sub generate_config {
     print NEWCFG "maj = $maj_opt\n" ;
     print NEWCFG "sep = \"$sep_opt\"\n"
 	if defined $sep_opt ;
+    map { print NEWCFG "regexp = \"$_\"\n" ; } @regexp_opts ;
     print NEWCFG "type = ". (defined $type_opt?$type_opt:"none") ."\n" ;
     print NEWCFG "clear_tags = $clear_opt\n" ;
     print NEWCFG "append_tags = $append_opt\n" ;
@@ -1313,6 +1349,7 @@ sub generate_config {
     print NEWCFG "rename_format = \"" .($rename_opt?$rename_opt:""). "\"\n" ;
     print NEWCFG "rename_min = $rename_min_opt\n" ;
     print NEWCFG "rename_sep = \"$rename_sep_opt\"\n" ;
+    map { print NEWCFG "rename_regexp = \"$_\"\n" ; } @rename_regexp_opts ;
     print NEWCFG "rename_ext = $rename_ext_opt\n" ;
 
     print NEWCFG "dry_run = $dry_run_opt\n" ;
