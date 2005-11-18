@@ -673,7 +673,7 @@ sub parse_file_with_internal_parsers
 # user parsers
 
 # change format names into a parsing string
-my $field_letters = (join '|', @field_letter).'|d' ;
+my $field_letters = (join '|', @field_letter) ;
 
 # change a format strings into usable infos
 sub generate_user_parser {
@@ -714,7 +714,7 @@ sub generate_user_parser {
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$field_letters/) {
+	} elsif ($array[$i] =~ /$field_letters|d/) {
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
