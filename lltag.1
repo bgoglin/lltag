@@ -394,11 +394,13 @@ Then, never asking for a confirmation anymore.
 Edit current fields before tagging, including fields
 that are non matched by the format, and default values.
 Editing ends by tagging or canceling (return to confirmation menu).
-The current value, if defined, is shown in parenthesis.
-Pressing
+
+The behavior depends on the installed readline library.
+If it is smart, the current value may be edited inline and an
+history is available.
+If not, pressing
 .BI <enter>
-will keep this value.
-Entering
+will keep the current value while
 .BI CLEAR
 will empty it.
 .RE
@@ -453,6 +455,9 @@ Then, never asking for a renaming confirmation anymore.
 .B e
 .RS
 Edit current new filename before renaming.
+The behavior depends on the installed readline library.
+If it is smart, the current value may be edited inline
+and an history is available.
 .RE
 
 .B n
@@ -536,6 +541,11 @@ for details.
 .I $HOME/.lltag/formats
 .RS
 User internal format database. If it exists, the system-wide one is ignored.
+.RE
+.I $HOME/.lltag/edit_history
+.RS
+History of last entered values in the edition mode if the Readline
+library supports this feature.
 .RE
 .I /etc/lltag/config
 .RS

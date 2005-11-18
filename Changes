@@ -1,4 +1,7 @@
 
+  * Use Readline library to make tag editing easier if the installed
+    readline library is smart, with inline edition of existing tags
+    and history of last entered values.
   * Added -S ans --show-tags to only show file tags instead of tagging
     (requested by Stephane Gimenez in Gna! bug #4601).
   * Add --regexp and --rename-regexp for basic regexp-replacing in tags

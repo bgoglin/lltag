@@ -6,12 +6,76 @@ no strict "refs" ;
 use Getopt::Long ;
 Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 
+use Term::ReadLine;
+
 #######################################################
 # configuration file location
 my $common_lltag_dir = "@SYSCONFDIR@/lltag" ;
 my $user_lltag_dir = "$ENV{HOME}/.lltag" ;
 my $lltag_format_filename = "formats" ;
 my $lltag_config_filename = "config" ;
+my $lltag_edit_history_filename = "edit_history" ;
+
+#######################################################
+# configure readline depending on the features provided by the installation
+
+my $term = Term::ReadLine->new('lltag editor');
+my $attribs = $term->Attribs;
+$term->ornaments('md,me,,');
+
+# read the history file
+eval {
+    if (-f $user_lltag_dir."/".$lltag_edit_history_filename) {
+	$term->ReadHistory ($user_lltag_dir."/".$lltag_edit_history_filename)
+	    or warn "Failed to open history file $user_lltag_dir/$lltag_edit_history_filename: $!\n" ;
+    }
+} unless $term->Features->{ReadHistory} ;
+
+my $readline_firsttime = 1 ;
+
+sub dummy_readline {
+    my $indent = shift ;
+    my $prompt = shift ;
+    my $preput = shift ;
+    my $clear_allowed = shift ;
+    $preput = "" if not defined $preput ;
+    print $indent."The current value is given in parenthesis, <ENTER> to keep it"
+	. ($clear_allowed ? ", <CLEAR> to clear it" : "")
+	. ".\n"
+	if $readline_firsttime ;
+    $readline_firsttime = 0 ;
+  ASK:
+    my $val = $term->readline ("$indent$prompt ($preput) ? ") ;
+    return $preput if !$val ;
+    $val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
+    if (!$val and !$clear_allowed) {
+	print "$indent  Clearing is not allowed here.\n" ;
+	goto ASK ;
+    }
+    return $val ;
+}
+
+sub real_readline {
+  my $indent = shift ;
+  my $prompt = shift ;
+  my $preput = shift ;
+  my $clear_allowed = shift ;
+  $preput = "" if not defined $preput ;
+ ASK:
+  my $val = $term->readline ("$indent$prompt ? ", $preput) ;
+  if (!$val and !$clear_allowed) {
+      print "$indent  Clearing is not allowed here.\n" ;
+      goto ASK ;
+  }
+  return $val ;
+}
+
+my $myreadline ;
+if ($term->Features->{preput}) {
+    $myreadline = \&real_readline ;
+} else {
+    $myreadline = \&dummy_readline ;
+}
 
 #######################################################
 # format parameters
@@ -991,15 +1055,7 @@ sub confirm_fields {
 	    chomp $edit_reply ;
 	    if ($edit_reply =~ /^($field_letters)$/) {
 		my $i = ( grep { $edit_reply eq $field_letter[$_] } ( 0 .. $fields-1 ) ) [0] ;
-		print "      Enter ".ucfirst($field_name[$i])." field (" ;
-		print "<enter> to keep '".$edit_field[$i]."', " if defined $edit_field[$i] ;
-		print "CLEAR to clear): " ;
-		my $val = <> ;
-		chomp $val ;
-		if ($val) {
-		    $val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
-		    $edit_field[$i] = $val ;
-		}
+		$edit_field[$i] = &$myreadline ("      ", ucfirst($field_name[$i])." field", $edit_field[$i], 1) ;
 		goto ASK_EDIT ;
 	    } elsif ($edit_reply eq "E") {
 		@field = @edit_field ;
@@ -1275,9 +1331,7 @@ sub rename_with_tags {
 	} elsif ($reply =~ /^n/i) {
 	    return ;
 	} elsif ($reply =~ /^e/i) {
-	    print "      Enter new filename: " ;
-	    $new_name = <> ;
-	    chomp $new_name ;
+	    $new_name = &$myreadline ("      ", "New filename", $new_name, 0) ;
 	    goto ASK_CONFIRM ;
 	} else {
 	    confirm_rename_usage ;
@@ -1363,3 +1417,22 @@ sub generate_config {
 
 generate_config $gencfg_file
     if defined $gencfg_file ;
+
+#######################################################
+# save readline history if supported by the installation
+
+# only keep the last 100 entries
+eval {
+  $term->StifleHistory (100);
+} unless $term->Features->{StifleHistory} ;
+
+# save the history file
+eval {
+    if (!-d $user_lltag_dir."/") {
+	mkdir $user_lltag_dir
+	    or warn "Failed to create $user_lltag_dir directory to store the history file: $!.\n" ;
+    }
+    $term->WriteHistory ($user_lltag_dir."/".$lltag_edit_history_filename)
+	or warn "Failed to write history file $user_lltag_dir/$lltag_edit_history_filename: $!.\n" ;
+} unless $term->Features->{WriteHistory} ;
+
