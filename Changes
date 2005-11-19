@@ -6,7 +6,7 @@ lltag (0.10)
   * Added -S ans --show-tags to only show file tags instead of tagging
     (requested by Stephane Gimenez in Gna! bug #4601).
   * Add --regexp and --rename-regexp for basic regexp-replacing in tags
-    (requested by Jonathan Worth Washington).
+    (requested by Jonathan Worth Washington, Gna! bug #4604).
   * When renaming with a undefined track number, initialize it to 0.
   * When renaming with a track number, make it at least 2 digits
     (reported by Emmanuel Jeandel).
@@ -16,7 +16,7 @@ lltag (0.10)
     about matching instead of tagging. It avoids getting messages about
     tagging while --no-tagging was passed (requested by Stephane Gimenez).
   * Use ' instead of # to show spaces between command line argument
-    with --dry-run (request by Emmanuel Jeandel).
+    with --dry-run (requested by Emmanuel Jeandel).
   * Allow to pass ()[] characters in the matching format without having
     to escape them.
   * Allow all %x in the renaming format when x is not a field letter.
