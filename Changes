@@ -1,3 +1,4 @@
+lltag (0.10)
 
   * Use Readline library to make tag editing easier if the installed
     readline library is smart, with inline edition of existing tags
@@ -23,6 +24,7 @@
   * Fix the error when no formats file is found.
   * Fix typos in the manpage (reported by Emmanuel Jeandel).
 
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sat, 19 Nov 2005 02:41:00 -0500
 
 lltag (0.9.1)
 
