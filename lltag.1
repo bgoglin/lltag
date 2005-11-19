@@ -25,6 +25,7 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-spaces ]
 .RB [ \-\-maj ]
 .RB [ \-\-sep\ <s1|s2|...> ]
+.RB [ \-\-regexp\ <regexp> ]
 .RB [ \-\-mp3/\-\-ogg/\-\-flac ]
 .RB [ \-\-clear ]
 .RB [ \-\-append ]
@@ -33,6 +34,7 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-\-rename\-ext ]
 .RB [ \-\-rename\-min ]
 .RB [ \-\-rename\-sep\ <sep> ]
+.RB [ \-\-rename-regexp\ <regexp> ]
 .RB [ \-\-dry\-run ]
 .RB [ \-\-yes ]
 .RB [ \-\-ask ]
@@ -40,6 +42,8 @@ lltag \- tag mp3/ogg/flac music files automagically
 .RB [ \-v ]
 .RB [ \-\-config\ <file> ]
 .RB [ \-\-gencfg\ <file> ]
+.RB [ \-S ]
+.RB [ \-\-show-tags\ <tags> ]
 .RB [ \-L ]
 .RB [ \-V ]
 .RB [ \-h ]
@@ -49,19 +53,15 @@ lltag \- tag mp3/ogg/flac music files automagically
 
 .SH DESCRIPTION
 .B lltag
-is a command-line tool to automagically set tags of
-MP3, OGG or FLAC files.
-It parses the filenames according different formats
-to get the tags.
-The formats may be either given by the user or guessed
-by
+is a command-line tool to automagically set tags of MP3, OGG or FLAC files.
+It parses the filenames according to different formats to get the tags.
+The formats may be either given by the user or guessed by
 .B lltag
 from its internal database.
 
 When called with the
 .B \-F
-option (once or multiple times), it will first try
-the user-specified formats.
+option (once or multiple times), it will first try the user-specified formats.
 
 Internal formats will be tried later if the
 .B \-G
@@ -74,7 +74,6 @@ and \fImetaflac\fR is used for FLAC files.
 When called with
 .B \-\-rename
 the target file will also be renamed.
-
 
 
 .SH OPTIONS
@@ -197,6 +196,13 @@ Do not consider the path of files when matching.
 Recursively search for files in subdirectories.
 
 .TP
+.I "\-\-regexp <[tag,tag:]s/from/to/>"
+Replace \fIfrom\fR with \fIto\fR in tags before tagging.
+If several tags (comma-separated) prefix the regexp, replacement is
+only applied to the corresponding fields.
+This option might be used multiple times to specify multiple replacing.
+
+.TP
 .I "\-\-rename <format>"
 After tagging, rename the file according to the format.
 By default, confirmation is asked before tagging.
@@ -216,13 +222,47 @@ the file type.
 Lowcase all tags before renaming.
 
 .TP
+.I "\-\-rename\-regexp <[tag,tag:]s/from/to/>"
+Replace \fIfrom\fR with \fIto\fR in tags before renaming.
+If several tags (comma-separated) prefix the regexp, replacement is
+only applied to the corresponding fields.
+This option might be used multiple times to specify multiple replacing.
+
+.TP
 .I "\-\-rename\-sep <sep>"
 Replace spaces with sep when renaming.
+See
+.B "\-\-rename\-regexp"
+for a more general replace feature.
+
+.TP
+.I "\-S"
+Instead of tagging,
+.B lltag
+shows the tags that are currently set in files.
+See
+.B "\-\-show-tags"
+to show only some tags.
 
 .TP
 .I "\-\-sep <string|string>"
 Replace the specified characters or strings with space in tags.
 They have to be |-separated.
+See
+.B "\-\-regexp"
+for a more general replace feature.
+
+.TP
+.I "\-\-show-tags <tag1,tag2,...>"
+Instead of tagging,
+.B lltag
+shows tags that are currently set in files.
+The argument is a comma separated list of tag types
+(\fIartist\fR, \fItitle\fR, \fIalbum\fR, \fInumber\fR,
+\fIgenre\fR, \fIyear\fR, \fIcomment\fR or \fIall\fR).
+See also
+.B "\-B"
+to show all tags.
 
 .TP
 .I "\-\-spaces"
@@ -354,11 +394,13 @@ Then, never asking for a confirmation anymore.
 Edit current fields before tagging, including fields
 that are non matched by the format, and default values.
 Editing ends by tagging or canceling (return to confirmation menu).
-The current value, if defined, is shown in parenthesis.
-Pressing
+
+The behavior depends on the installed readline library.
+If it is smart, the current value may be edited inline and an
+history is available.
+If not, pressing
 .BI <enter>
-will keep this value.
-Entering
+will keep the current value while
 .BI CLEAR
 will empty it.
 .RE
@@ -413,6 +455,9 @@ Then, never asking for a renaming confirmation anymore.
 .B e
 .RS
 Edit current new filename before renaming.
+The behavior depends on the installed readline library.
+If it is smart, the current value may be edited inline
+and an history is available.
 .RE
 
 .B n
@@ -496,6 +541,11 @@ for details.
 .I $HOME/.lltag/formats
 .RS
 User internal format database. If it exists, the system-wide one is ignored.
+.RE
+.I $HOME/.lltag/edit_history
+.RS
+History of last entered values in the edition mode if the Readline
+library supports this feature.
 .RE
 .I /etc/lltag/config
 .RS

@@ -1,3 +1,31 @@
+lltag (0.10)
+
+  * Use Readline library to make tag editing easier if the installed
+    readline library is smart, with inline edition of existing tags
+    and history of last entered values.
+  * Added -S ans --show-tags to only show file tags instead of tagging
+    (requested by Stephane Gimenez in Gna! bug #4601).
+  * Add --regexp and --rename-regexp for basic regexp-replacing in tags
+    (requested by Jonathan Worth Washington).
+  * When renaming with a undefined track number, initialize it to 0.
+  * When renaming with a track number, make it at least 2 digits
+    (reported by Emmanuel Jeandel).
+  * Always write renaming configuration options with --gencfg, even
+    if renaming was not enabled.
+  * Cleanup core function names and several messages so that lltag speak
+    about matching instead of tagging. It avoids getting messages about
+    tagging while --no-tagging was passed (requested by Stephane Gimenez).
+  * Use ' instead of # to show spaces between command line argument
+    with --dry-run (request by Emmanuel Jeandel).
+  * Allow to pass ()[] characters in the matching format without having
+    to escape them.
+  * Allow all %x in the renaming format when x is not a field letter.
+  * Fix where the 'd' field (dummy) is allowed.
+  * Fix the error when no formats file is found.
+  * Fix typos in the manpage (reported by Emmanuel Jeandel).
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sat, 19 Nov 2005 02:41:00 -0500
+
 lltag (0.9.1)
 
   * Large fix of internal database format files processing:
