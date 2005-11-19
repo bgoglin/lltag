@@ -7,3 +7,11 @@ to tag mp3 files without having to install vorbis-tools or flac.
 
 If tagging fails saying that mp3info, vorbiscomment or metaflac
 command does not exist, you should install the required package.
+
+lltag may benefit from readline features when editing tags by hands.
+It is recommended to install libterm-readline-gnu-perl to get a fully
+functional readline editor mode with on-file saving of the history.
+libterm-readline-perl-perl may be used instead, even if it provides
+less features than the former.
+If none of the above is installed, lltag uses standard Perl input
+functions, that is almost nothing interesting.
