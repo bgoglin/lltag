@@ -1,52 +1,52 @@
-.TH LLTAG 1 "March 2005"
+.\" Process this file with
+.\" groff -man -Tascii foo.1
 .\"
+.TH LLTAG 1 "DECEMBER 2005"
 
 
 
 .SH NAME
-lltag \- tag mp3/ogg/flac music files automagically
-.br
-.\"
+lltag - tag mp3/ogg/flac music files automagically
 
 
 
 .SH SYNOPSIS
 .B lltag
-.RB [ \-F\ <format> ]
-.RB [ \-G ]
-.RB [ \-p ]
-.RB [ \-a\ <artist> ]
-.RB [ \-t\ <title> ]
-.RB [ \-A\ <album> ]
-.RB [ \-n\ <number> ]
-.RB [ \-g\ <genre> ]
-.RB [ \-y\ <year> ]
-.RB [ \-c\ <comment> ]
-.RB [ \-\-spaces ]
-.RB [ \-\-maj ]
-.RB [ \-\-sep\ <s1|s2|...> ]
-.RB [ \-\-regexp\ <regexp> ]
-.RB [ \-\-mp3/\-\-ogg/\-\-flac ]
-.RB [ \-\-clear ]
-.RB [ \-\-append ]
-.RB [ \-\-no-tagging ]
-.RB [ \-\-rename\ <format> ]
-.RB [ \-\-rename\-ext ]
-.RB [ \-\-rename\-min ]
-.RB [ \-\-rename\-sep\ <sep> ]
-.RB [ \-\-rename-regexp\ <regexp> ]
-.RB [ \-\-dry\-run ]
-.RB [ \-\-yes ]
-.RB [ \-\-ask ]
-.RB [ \-R ]
-.RB [ \-v ]
-.RB [ \-\-config\ <file> ]
-.RB [ \-\-gencfg\ <file> ]
-.RB [ \-S ]
-.RB [ \-\-show-tags\ <tags> ]
-.RB [ \-L ]
-.RB [ \-V ]
-.RB [ \-h ]
+.RB [ "-F <format>" ]
+.RB [ -G ]
+.RB [ -p ]
+.RB [ "-a <artist>" ]
+.RB [ "-t <title>" ]
+.RB [ "-A <album>" ]
+.RB [ "-n <number>" ]
+.RB [ "-g <genre>" ]
+.RB [ "-y <year>" ]
+.RB [ "-c <comment>" ]
+.RB [ --spaces ]
+.RB [ --maj ]
+.RB [ "--sep\ <s1|s2|...>" ]
+.RB [ "--regexp <regexp>" ]
+.RB [ --mp3/--ogg/--flac ]
+.RB [ --clear ]
+.RB [ --append ]
+.RB [ --no-tagging ]
+.RB [ "--rename <format>" ]
+.RB [ --rename-ext ]
+.RB [ --rename-min ]
+.RB [ "--rename-sep <sep>" ]
+.RB [ "--rename-regexp <regexp>" ]
+.RB [ --dry-run ]
+.RB [ --yes ]
+.RB [ --ask ]
+.RB [ -R ]
+.RB [ -v ]
+.RB [ "--config <file>" ]
+.RB [ "--gencfg <file>" ]
+.RB [ -S ]
+.RB [ "--show-tags <tags>" ]
+.RB [ -L ]
+.RB [ -V ]
+.RB [ -h ]
 .\"
 
 
@@ -55,238 +55,236 @@ lltag \- tag mp3/ogg/flac music files automagically
 .B lltag
 is a command-line tool to automagically set tags of MP3, OGG or FLAC files.
 It parses the filenames according to different formats to get the tags.
-The formats may be either given by the user or guessed by
-.B lltag
-from its internal database.
+The formats may be either given by the user or guessed by lltag from
+its internal database.
 
 When called with the
-.B \-F
+.B -F
 option (once or multiple times), it will first try the user-specified formats.
 
 Internal formats will be tried later if the
-.B \-G
+.B -G
 option was passed.
 
-\fImp3info\fR is used to tag MP3 files
-while \fIvorbiscomment\fR is used for OGG files,
-and \fImetaflac\fR is used for FLAC files.
+.B mp3info
+is used to tag
+.B MP3
+files while
+.B vorbiscomment
+is used for
+.B OGG
+files, and
+.B metaflac
+is used for
+.B FLAC
+files.
 
 When called with
-.B \-\-rename
+.B --rename
 the target file will also be renamed.
 
 
 .SH OPTIONS
 
 .TP
-.I "\-A, \-\-album <album>"
+.BI "-A, --album" " <album>"
 Set the default value of the \fIAlbum\fR tag.
 
 .TP
-.I "\-a, \-\-artist <artist>"
+.BI "-a, --artist" " <artist>"
 Set the default value of the \fIArtist\fR tag.
 
 .TP
-.I "\-\-append"
+.BI "--append"
 Force appending of ogg/flac tags.
 See
-.SM
 .B CLEARING, REPLACING OR APPENDING
 below for details.
 
 .TP
-.I "\-\-ask"
+.B --ask
 Always ask confirmation to the user before tagging.
 By default user-specified format matching is accepted
 while guess format matching is asked for confirmation.
 See
-.SM
 .B TAGGING CONFIRMATION
 below for details.
 
 .TP
-.I "\-c, \-\-comment <comment>"
+.BI "-c, --comment" " <comment>"
 Set the default value of the \fIComment\fR tag.
 
 .TP
-.I "\-\-clear"
+.B --clear
 Force clearing of id3 tags of mp3 files or flac tags.
 See
-.SM
 .B CLEARING, REPLACING OR APPENDING
 below for details.
 
 .TP
-.I "\-\-config <file>"
+.BI --config " <file>"
 Parse additional configuration file.
 See
-.SM
 .B CONFIGURATION FILES
 below for details.
 
 .TP
-.I "\-\-dry\-run"
+.B --dry-run
 Do not really tag files, just show what would have been done.
 
 .TP
-.I "\-F, \-\-format <format>"
+.BI "-F, --format" " <format>"
 Add the specified format string to the list of user-supplied formats.
 Might be used several times to try different formats.
 See
-.SM
 .B FORMAT
 below for details.
 
 .TP
-.I "\-\-flac"
-Tag all files as FLAC files, using \fImetaflac\fR.
+.B --flac
+Tag all files as FLAC files, using \fBmetaflac\fR.
 
 .TP
-.I "\-G, \-\-guess"
+.B "-G, --guess"
 Guess format using the internal database if no user-specified format
 worked (default behavior).
 
 .TP
-.I "\-g, \-\-genre <genre>"
+.BI "-g, --genre" " <genre>"
 Set the default value of the \fIGenre\fR tag.
 
 .TP
-.I "\-\-gencfg <file>"
+.BI --gencfg " <file>"
 Generate configuration file.
 See
-.SM
 .B CONFIGURATION FILES
 below for details.
 
 .TP
-.I "\-h, \-\-help"
+.B "-h, --help"
 Print a usage message and exit.
 
 .TP
-.I "\-L, \-\-list"
+.B "-L, --list"
 List internal formats.
 
 .TP
-.I "\-\-maj"
+.B --maj
 Upcase the first letter of each word in tags.
 
 .TP
-.I "\-\-mp3"
-Tag all files as MP3 files, using \fImp3info\fR.
+.B --mp3
+Tag all files as MP3 files, using \fBmp3info\fR.
 
 .TP
-.I "\-n, \-\-number <number>"
+.BI "-n, --number" " <number>"
 Set the default value of the \fITrack Number\fR tag.
 
 .TP
-.I "\-\-no\-tagging"
+.B --no-tagging
 Do not actually tag files. This might be used to rename files
 without tagging.
 
 .TP
-.I "\-\-ogg"
-Tag all files as OGG files, using \fIvorbiscomment\fR.
+.B --ogg
+Tag all files as OGG files, using \fBvorbiscomment\fR.
 
 .TP
-.I "\-p, \-\-nopath"
+.B "-p, --nopath"
 Do not consider the path of files when matching.
 
 .TP
-.I "\-R, \-\-recursive"
+.B "-R, --recursive"
 Recursively search for files in subdirectories.
 
 .TP
-.I "\-\-regexp <[tag,tag:]s/from/to/>"
+.BI --regexp " <[tag,tag:]s/from/to/>"
 Replace \fIfrom\fR with \fIto\fR in tags before tagging.
 If several tags (comma-separated) prefix the regexp, replacement is
 only applied to the corresponding fields.
 This option might be used multiple times to specify multiple replacing.
 
 .TP
-.I "\-\-rename <format>"
+.BI --rename " <format>"
 After tagging, rename the file according to the format.
 By default, confirmation is asked before tagging.
 See
-.SM
 .B RENAMING CONFIRMATION
 below for details.
 
 .TP
-.I "\-\-rename\-ext"
+.B --rename-ext
 Assume that the file extension is provided by the rename format
 instead of automatically adding the extension corresponding to
 the file type.
 
 .TP
-.I "\-\-rename\-min"
+.B --rename-min
 Lowcase all tags before renaming.
 
 .TP
-.I "\-\-rename\-regexp <[tag,tag:]s/from/to/>"
+.BI --rename-regexp " <[tag,tag:]s/from/to/>"
 Replace \fIfrom\fR with \fIto\fR in tags before renaming.
 If several tags (comma-separated) prefix the regexp, replacement is
 only applied to the corresponding fields.
 This option might be used multiple times to specify multiple replacing.
 
 .TP
-.I "\-\-rename\-sep <sep>"
+.BI --rename-sep " <sep>"
 Replace spaces with sep when renaming.
 See
-.B "\-\-rename\-regexp"
+.B --rename-regexp
 for a more general replace feature.
 
 .TP
-.I "\-S"
-Instead of tagging,
-.B lltag
-shows the tags that are currently set in files.
+.B -S
+Instead of tagging, lltag shows the tags that are currently set in
+files.
 See
-.B "\-\-show-tags"
+.B --show-tags
 to show only some tags.
 
 .TP
-.I "\-\-sep <string|string>"
+.BI --sep " <string|string>"
 Replace the specified characters or strings with space in tags.
 They have to be |-separated.
 See
-.B "\-\-regexp"
+.B --regexp
 for a more general replace feature.
 
 .TP
-.I "\-\-show-tags <tag1,tag2,...>"
-Instead of tagging,
-.B lltag
-shows tags that are currently set in files.
+.BI --show-tags " <tag1,tag2,...>"
+Instead of tagging, lltag shows tags that are currently set in files.
 The argument is a comma separated list of tag types
-(\fIartist\fR, \fItitle\fR, \fIalbum\fR, \fInumber\fR,
-\fIgenre\fR, \fIyear\fR, \fIcomment\fR or \fIall\fR).
+.RI ( artist ", " title ", " album ", " number ", "
+.IR genre ", " year ", " comment " or " all).
 See also
-.B "\-B"
+.B -B
 to show all tags.
 
 .TP
-.I "\-\-spaces"
+.B --spaces
 Allow multiple or no space instead of only one when matching.
 Also allow spaces limiting path elements.
 
 .TP
-.I "\-t, \-\-title <title>"
+.BI "-t, --title" " <title>"
 Set the default value of the \fITitle\fR tag.
 
 .TP
-.I "\-v, \-\-verbose"
+.B "-v, --verbose"
 Show verbose messages.
 
 .TP
-.I "\-V, \-\-version"
+.B "-V, --version"
 Show the version.
 
 .TP
-.I "\-y, \-\-year <year>"
+.BI "-y, --year" " <year>"
 Set the default value of the \fIYear\fR tag.
 
 .TP
-.I "\-\-yes"
+.B --yes
 Always accept tagging without asking the user.
 By default user-specified format matching is accepted
 while guess format matching is asked for confirmation.
@@ -335,23 +333,20 @@ while ogg/flac tags is a unique stream of one field per line.
 That is why mp3 tags may be changed independently while
 ogg/flac tags may be reset or appended.
 
-Thus,
-.IR lltag
-clears ogg tag by default before setting the new ones,
+Thus, lltag clears ogg tag by default before setting the new ones,
 while it only replaces mp3 tags.
 
-.IR lltag
-may either replace (by default), append or reset flac tags since
-.I metaflac
+lltag may either replace (by default), append or reset flac tags since
+.B metaflac
 is flexible enough to do so.
 
 If
-.I \-\-clear
+.B --clear
 is passed, all mp3/flac tags will be cleared first.
 This does not impact ogg tagging since it clears by default.
 
 If
-.I \-\-append
+.B --append
 is passed, ogg/flac tags are appended to the existing ones.
 This does not impact mp3 tagging since appending is impossible
 (newly-defined existing tags are replaced, others are kept).
@@ -360,22 +355,22 @@ This does not impact mp3 tagging since appending is impossible
 
 .SH TAGGING CONFIRMATION
 When
-.I \-\-ask
+.B --ask
 is passed or when guessing, each matching will lead to
 a confirmation message before tagging.
 Available behaviors are:
 
-.B y
+.I y
 .RS
 Tag current file with current format.
 .RE
 
-.B v
+.I v
 .RS
 View which tags would be set.
 .RE
 
-.B u
+.I u
 .RS
 Tag current file with current format.
 Then use current format for all remaining matching files.
@@ -383,13 +378,13 @@ When a non-matching file is reached, stop using this
 preferred format.
 .RE
 
-.B a
+.I a
 .RS
 Tag current file with current format.
 Then, never asking for a confirmation anymore.
 .RE
 
-.B e
+.I e
 .RS
 Edit current fields before tagging, including fields
 that are non matched by the format, and default values.
@@ -399,31 +394,31 @@ The behavior depends on the installed readline library.
 If it is smart, the current value may be edited inline and an
 history is available.
 If not, pressing
-.BI <enter>
+.I <enter>
 will keep the current value while
-.BI CLEAR
+.I CLEAR
 will empty it.
 .RE
 
-.B n
+.I n
 .RS
 Don't tag current file with this format.
 Try the next matching format on the current file.
 .RE
 
-.B p
+.I p
 .RS
 When matching is done through combination of a path parser
 and a filename parser, keep the filename parser and try the
 next path parser on the current file.
 .RE
 
-.B s
+.I s
 .RS
 Skip the current file, don't tag it at all.
 .RE
 
-.B h
+.I h
 .RS
 Show help about confirmation.
 .RE
@@ -433,7 +428,7 @@ Show help about confirmation.
 .SH RENAMING CONFIRMATION
 By default, before renaming, a confirmation is asked to the user.
 You may bypass it by passing
-.I \-\-yes
+.B --yes
 on the command line.
 
 If the rename format uses a field that is not defined,
@@ -441,18 +436,18 @@ a warning is shown and confirmation is always asked.
 
 Available behaviors when renaming are:
 
-.B y
+.I y
 .RS
 Rename current file with current new filename.
 .RE
 
-.B a
+.I a
 .RS
 Rename current file with current new filename.
 Then, never asking for a renaming confirmation anymore.
 .RE
 
-.B e
+.I e
 .RS
 Edit current new filename before renaming.
 The behavior depends on the installed readline library.
@@ -460,12 +455,12 @@ If it is smart, the current value may be edited inline
 and an history is available.
 .RE
 
-.B n
+.I n
 .RS
 Don't rename current file.
 .RE
 
-.B h
+.I h
 .RS
 Show help about confirmation.
 .RE
@@ -474,9 +469,9 @@ Show help about confirmation.
 
 .SH INTERNAL FORMATS
 The internal format database is usually stored in
-.IR "/etc/lltag/formats" .
+.IR /etc/lltag/formats .
 The user may override this file by defining a
-.IR "$HOME/.lltag/formats" .
+.IR $HOME/.lltag/formats .
 If this file exists, the system-wide one is ignored.
 
 These files contain entries composed of :
@@ -489,9 +484,9 @@ A title between bracket
 .I type = filename
 .RS
 The type is either
-.IR filename
+.I filename
 or
-.IR "path"
+.I path
 .RE
 .I regexp = %L%N%S-%S%A%S-%S%A%L
 .RS
@@ -502,15 +497,13 @@ A format composed of %L for limiting space, %N for numbers, %S for a space,
 .RS
 A list of format letters corresponding to %N or %A field in the previous format
 (See
-.SM
 .B FORMAT
 for a list of these letters).
 
 
 
 .SH CONFIGURATION FILES
-.IR lltag
-reads some configuration files before parsing command line options.
+lltag reads some configuration files before parsing command line options.
 The system-wide configuration file is defined in
 .I /etc/lltag/config
 where all options are documented.
@@ -520,11 +513,10 @@ It also reads
 if it exists.
 
 The user may also add another configurable file with
-.I --config .
+.B --config .
 
-.IR lltag
-may also generate a configuration with
-.I --gencfg .
+lltag may also generate a configuration with
+.B --gencfg .
 
 
 
@@ -534,7 +526,6 @@ may also generate a configuration with
 .RS
 System-wide internal format database.
 See
-.SM
 .B INTERNAL FORMATS
 for details.
 .RE
@@ -544,14 +535,14 @@ User internal format database. If it exists, the system-wide one is ignored.
 .RE
 .I $HOME/.lltag/edit_history
 .RS
-History of last entered values in the edition mode if the Readline
+History of last entered values in the edition mode if the
+.B Readline
 library supports this feature.
 .RE
 .I /etc/lltag/config
 .RS
 System-wide configuration file, with documentation.
 See
-.SM
 .B CONFIGURATION FILES
 for details.
 .RE
@@ -563,4 +554,3 @@ User configuration file.
 
 .SH AUTHOR
 Brice Goglin
-.br

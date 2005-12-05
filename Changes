@@ -1,3 +1,7 @@
+
+  * Major cleanup of the manpage.
+
+
 lltag (0.10)
 
   * Use Readline library to make tag editing easier if the installed
