@@ -137,9 +137,8 @@ sub usage {
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -p, --nopath           Remove the path from filenames when matching\n" ;
-    print map { "  -". $field_name_letter{$_} .", --". $_ . $field_name_trailing_spaces{$_}
-		    ." <val>    Set the default value for "
-		    .ucfirst($_)."\n" } @field_names ;
+    print map { "  -". $field_name_letter{$_} .", --". $_.$field_name_trailing_spaces{$_}
+		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @field_names ;
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
@@ -975,11 +974,11 @@ while ( @files ) {
 	goto NEXT_FILE if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
 
-    # tag with default values only
-    my $values = { map { $_ => $field_default{$_}, } (keys %field_default) } ;
     if ($guess_opt or @parsers) {
 	print "  Didn't find any parser!\n" ;
     }
+    # tag with default values only
+    my $values = { map { $_ => $field_default{$_}, } (keys %field_default) } ;
     $res = confirm_fields ($file, $tag_type, 1, 0, $values) ;
     die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
 
