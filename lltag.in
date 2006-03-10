@@ -1256,7 +1256,7 @@ sub tag_with_fields {
 
     # show command line and really tag if asked
     if ($dry_run_opt or $verbose_opt) {
-	print "      ". +(join "' '", @system_args) ."\n" ;
+	print "      '". +(join "' '", @system_args) ."'\n" ;
     }
     if (!$dry_run_opt) {
 	print "    Tagging.\n" ;

@@ -1,7 +1,7 @@
 
   * Large rework of the internal structures.
   * Major cleanup of the manpage.
-
+  * Fix quoting of the command-line in --dry-run.
 
 lltag (0.10)
 
