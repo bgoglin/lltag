@@ -477,7 +477,7 @@ while ( @ARGV ) {
 #######################################################
 # show existing tags if --show-tags was passed
 
-sub mp3_show_tags {
+sub mp3_read_tags {
     my $filename = shift ;
     my ($status, @output) = system_with_output
 	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nNumber=%n\nGenre=%g\nYear=%y\nComment=%c\n", $filename) ;
@@ -486,7 +486,7 @@ sub mp3_show_tags {
     return ($status, @output) ;
 }
 
-sub ogg_show_tags {
+sub ogg_read_tags {
     my $filename = shift ;
     my ($status, @output) = system_with_output
 	("vorbiscomment", "-l", $filename) ;
@@ -495,7 +495,7 @@ sub ogg_show_tags {
     return ($status, @output) ;
 }
 
-sub flac_show_tags {
+sub flac_read_tags {
     my $filename = shift ;
     my ($status, @output) = system_with_output
 	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $filename) ;
@@ -505,62 +505,80 @@ sub flac_show_tags {
     return ($status, @output) ;
 }
 
+sub read_tags {
+    my $filename = shift ;
+
+    # split into filename and extension
+    my @parts = split (/\./, $filename) ;
+    my $extension = pop @parts ;
+
+    # find out file type
+    my $tag_type = $type_opt ;
+    if (not defined $tag_type) {
+	# use the extension to find the type
+	if ($extension =~ /$mp3_ext/i) {
+	    $tag_type = $mp3_type ;
+	} elsif ($extension =~ /$ogg_ext/i) {
+	    $tag_type = $ogg_type ;
+	} elsif ($extension =~ /$flac_ext/i) {
+	    $tag_type = $flac_type ;
+	} else {
+	    print "  Skipping this unknown-type file.\n" ;
+	    next ;
+	}
+    }
+
+    # extract tags as a stream
+    my $status ;
+    my @output ;
+    if ($tag_type eq $mp3_type) {
+	($status, @output) = mp3_read_tags $filename ;
+    } elsif ($tag_type eq $ogg_type) {
+	($status, @output) = ogg_read_tags $filename ;
+    } elsif ($tag_type eq $flac_type) {
+	($status, @output) = flac_read_tags $filename ;
+    }
+    if ($status) {
+	print "  Failed to get tags from file.\n" ;
+	next ;
+    }
+
+    # extract tags from the stream
+    my $values = () ;
+    @{$values->{fields}} = () ;
+    while (my $line = shift @output) {
+	chomp $line ;
+	$line =~ s/^tracknumber=/number=/i ;
+	my ($field, $value) = ($line =~ /^(.*)=(.*)$/) ;
+	next if !$value ;
+	if (not defined $values->{$field}) {
+	    push @{$values->{fields}}, $field ;
+	    @{$values->{$field}} = () ;
+	}
+	push @{$values->{$field}}, $value ;
+    }
+
+    return $values ;
+}
+
 if ($show_tags_opt) {
     my @fields_to_show = split (/,/, $show_tags_opt) ;
     foreach my $filename (@files) {
-	# split into filename and extension
-	my @parts = split (/\./, $filename) ;
-	my $extension = pop @parts ;
-
 	print "$filename:\n"
 	    if @files ;
 
-	# find out file type
-	my $tag_type = $type_opt ;
-	if (not defined $tag_type) {
-	    # use the extension to find the type
-	    if ($extension =~ /$mp3_ext/i) {
-		$tag_type = $mp3_type ;
-	    } elsif ($extension =~ /$ogg_ext/i) {
-		$tag_type = $ogg_type ;
-	    } elsif ($extension =~ /$flac_ext/i) {
-		$tag_type = $flac_type ;
-	    } else {
-		print "  Skipping this unknown-type file.\n" ;
-		next ;
-	    }
-	}
+	my $values = read_tags $filename ;
 
-	# get the tags
-	my $status ;
-	my @output ;
-	if ($tag_type eq $mp3_type) {
-	    ($status, @output) = mp3_show_tags $filename ;
-	} elsif ($tag_type eq $ogg_type) {
-	    ($status, @output) = ogg_show_tags $filename ;
-	} elsif ($tag_type eq $flac_type) {
-	    ($status, @output) = flac_show_tags $filename ;
-	}
-	if ($status) {
-	    print "  Failed to get tags from file.\n" ;
-	    next ;
-	}
-
-	my @lines = () ;
-	while (my $line = shift @output) {
-	    chomp $line ;
-	    $line =~ s/^tracknumber=/number=/i ;
-	    my ($first, $remaining, $value) = ($line =~ /(.)(.*)=(.*)/) ;
-	    next if !$value ;
+	foreach my $field (@{$values->{fields}}) {
+	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
 	    $first = uc($first) ;
 	    $remaining = lc($remaining) ;
 	    next unless grep { /^all$/ } @fields_to_show
 		or grep { /^$first$remaining$/i } @fields_to_show ;
-	    push (@lines, "$first$remaining=$value") ;
+	    map { print "$first$remaining=$_\n" } @{$values->{$field}} ;
 	}
-
-	map { print "  $_\n" } @lines ;
     }
+
     exit 0 ;
 }
 
