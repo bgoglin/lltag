@@ -481,27 +481,27 @@ while ( @ARGV ) {
 # show existing tags if --show-tags was passed
 
 sub mp3_read_tags {
-    my $filename = shift ;
+    my $file = shift ;
     my ($status, @output) = system_with_output
-	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nNumber=%n\nGenre=%g\nYear=%y\nComment=%c\n", $filename) ;
+	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nNumber=%n\nGenre=%g\nYear=%y\nComment=%c\n", $file) ;
     return ($status)
 	if $status ;
     return ($status, @output) ;
 }
 
 sub ogg_read_tags {
-    my $filename = shift ;
+    my $file = shift ;
     my ($status, @output) = system_with_output
-	("vorbiscomment", "-l", $filename) ;
+	("vorbiscomment", "-l", $file) ;
     return ($status)
 	if $status ;
     return ($status, @output) ;
 }
 
 sub flac_read_tags {
-    my $filename = shift ;
+    my $file = shift ;
     my ($status, @output) = system_with_output
-	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $filename) ;
+	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $file) ;
     return ($status)
 	if $status ;
     @output = map { my $line =$_ ; $line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ; $line } ( grep { /comment\[\d+\]/ } @output ) ;
@@ -509,10 +509,10 @@ sub flac_read_tags {
 }
 
 sub read_tags {
-    my $filename = shift ;
+    my $file = shift ;
 
     # split into filename and extension
-    my @parts = split (/\./, $filename) ;
+    my @parts = split (/\./, $file) ;
     my $extension = pop @parts ;
 
     # find out file type
@@ -535,11 +535,11 @@ sub read_tags {
     my $status ;
     my @output ;
     if ($tag_type eq $mp3_type) {
-	($status, @output) = mp3_read_tags $filename ;
+	($status, @output) = mp3_read_tags $file ;
     } elsif ($tag_type eq $ogg_type) {
-	($status, @output) = ogg_read_tags $filename ;
+	($status, @output) = ogg_read_tags $file ;
     } elsif ($tag_type eq $flac_type) {
-	($status, @output) = flac_read_tags $filename ;
+	($status, @output) = flac_read_tags $file ;
     }
     if ($status) {
 	print "  Failed to get tags from file.\n" ;
@@ -566,11 +566,11 @@ sub read_tags {
 
 if ($show_tags_opt) {
     my @fields_to_show = split (/,/, $show_tags_opt) ;
-    foreach my $filename (@files) {
-	print "$filename:\n"
+    foreach my $file (@files) {
+	print "$file:\n"
 	    if @files ;
 
-	my $values = read_tags $filename ;
+	my $values = read_tags $file ;
 
 	foreach my $field (@{$values->{fields}}) {
 	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
@@ -611,7 +611,7 @@ sub apply_regexp_to_tag {
 #######################################################
 # internal parsers
 
-my @internal_filename_parsers = () ;
+my @internal_basename_parsers = () ;
 my @internal_path_parsers = () ;
 
 if ($guess_opt or $list_formats_opt) {
@@ -642,9 +642,10 @@ if ($guess_opt or $list_formats_opt) {
 		$parser->{title} = $title ;
 		$parser->{regexp} = $regexp ;
 		@{$parser->{field_table}} = @field_table ;
-		if ($type eq "filename") {
-		    print "  Got filename format '$title'\n" if $verbose_opt ;
-		    push (@internal_filename_parsers, $parser) ;
+		if ($type eq "basename" or $type eq "filename") {
+		    # TODO: drop filename support on september 11 2006
+		    print "  Got basename format '$title'\n" if $verbose_opt ;
+		    push (@internal_basename_parsers, $parser) ;
 		} elsif ($type eq "path") {
 		    print "  Got path format '$title'\n" if $verbose_opt ;
 		    push (@internal_path_parsers, $parser) ;
@@ -657,7 +658,8 @@ if ($guess_opt or $list_formats_opt) {
 	    # stocker la ligne ?
 	} elsif (/^type = (.*)$/) {
 	    die "Unsupported format type '$1' at line $. in file '$file'\n"
-		if $1 ne "filename" and $1 ne "path" ;
+		if $1 ne "basename" and $1 ne "filename" and $1 ne "path" ;
+	    # TODO: drop filename support on september 11 2006
 	    $type = $1 ;
 	} elsif (/^regexp = (.*)$/) {
 	    $regexp = $1 ;
@@ -703,9 +705,10 @@ if ($guess_opt or $list_formats_opt) {
 	$parser->{title} = $title ;
 	$parser->{regexp} = $regexp ;
 	@{$parser->{field_table}} = @field_table ;
-	if ($type eq "filename") {
-	    print "  Got filename format '$title'\n" if $verbose_opt ;
-	    push (@internal_filename_parsers, $parser) ;
+	if ($type eq "basename" or $type eq "filename") {
+		    # TODO: drop filename support on september 11 2006
+	    print "  Got basename format '$title'\n" if $verbose_opt ;
+	    push (@internal_basename_parsers, $parser) ;
 	} elsif ($type eq "path") {
 	    print "  Got path format '$title'\n" if $verbose_opt ;
 	    push (@internal_path_parsers, $parser) ;
@@ -720,8 +723,8 @@ if ($guess_opt or $list_formats_opt) {
 if ($list_formats_opt) {
     print "Listing internal parsers:\n" ;
     foreach my $path_parser (@internal_path_parsers) {
-	foreach my $filename_parser (@internal_filename_parsers) {
-	    print "  $path_parser->{title}/$filename_parser->{title}\n" ;
+	foreach my $basename_parser (@internal_basename_parsers) {
+	    print "  $path_parser->{title}/$basename_parser->{title}\n" ;
 	}
     }
     exit 0 ;
@@ -733,13 +736,13 @@ sub apply_internal_basename_parsers
     my $parsename = shift ;
     my $tag_type = shift ;
 
-    # no path, only try each filename parser
-    foreach my $filename_parser (@internal_filename_parsers) {
+    # no path, only try each basename parser
+    foreach my $basename_parser (@internal_basename_parsers) {
 	# try to tag, with confirmation
-	my ($res, $values) = apply_parser $file, $parsename, $tag_type, $filename_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
+	my ($res, $values) = apply_parser $file, $parsename, $tag_type, $basename_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
 	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
 	    if ($res == $TAG_SUCCESS_PREFERRED) {
-		$preferred_parser = $filename_parser ;
+		$preferred_parser = $basename_parser ;
 	    }
 	    return ($res, $values) ;
 	}
@@ -752,11 +755,11 @@ sub apply_internal_basename_parsers
 sub merge_internal_parsers
 {
     my $path_parser = shift ;
-    my $filename_parser = shift ;
+    my $basename_parser = shift ;
     my $parser ;
-    $parser->{title} = "$path_parser->{title}/$filename_parser->{title}" ;
-    $parser->{regexp} = "$path_parser->{regexp}/$filename_parser->{regexp}" ;
-    @{$parser->{field_table}} = (@{$path_parser->{field_table}}, @{$filename_parser->{field_table}}) ;
+    $parser->{title} = "$path_parser->{title}/$basename_parser->{title}" ;
+    $parser->{regexp} = "$path_parser->{regexp}/$basename_parser->{regexp}" ;
+    @{$parser->{field_table}} = (@{$path_parser->{field_table}}, @{$basename_parser->{field_table}}) ;
     return $parser ;
 }
 
@@ -766,11 +769,11 @@ sub apply_internal_path_basename_parsers
     my $parsename = shift ;
     my $tag_type = shift ;
 
-    # try each path parser and each filename parser
+    # try each path parser and each basename parser
     foreach my $path_parser (@internal_path_parsers) {
 	if ($parsename =~ /^$path_parser->{regexp}\/[^\/]+$/) {
-	    foreach my $filename_parser (@internal_filename_parsers) {
-		my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
+	    foreach my $basename_parser (@internal_basename_parsers) {
+		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
 		my ($res, $values) = apply_parser $file, $parsename, $tag_type, $whole_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER ;
 		if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
@@ -1378,14 +1381,8 @@ while ( @files ) {
 
     print "Processing file \"".$file."\"...\n" ;
 
-    # removing path if asked, only in $filename, keep $file complete
-    my $filename = $file ;
-    if ($nopath_opt && $filename =~ /\//) {
-	$filename =~ s/.*\/([^\/]+)/$1/ ;
-    }
-
-    # split into filename and extension
-    my @parts = split (/\./, $filename) ;
+    # split into parsename and extension, and remove the path if asked
+    my @parts = split (/\./, $file) ;
     my $extension = pop @parts ;
     my $parsename = join (".", @parts) ;
     if ($nopath_opt) {

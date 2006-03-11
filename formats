@@ -2,8 +2,8 @@
 # each entry is composed of:
 #   [natural format]
 #	format will be shown when matching
-#   type = filename or path
-#	does this format apply to the wall path or only the filename ?
+#   type = basename or path
+#	does this format apply to the wall path or only the basename ?
 #   regexp = 
 #	internal regexp with	%L for limiting space
 #				%S for a space
@@ -21,37 +21,37 @@
 #				y for year
 
 [%n - %a - %t]
-type = filename
+type = basename
 regexp = %L%N%S-%S%A%S-%S%A%L
 indices = n,a,t
 
 [%n - %t]
-type = filename
+type = basename
 regexp = %L%N%S-%S%A%L
 indices = n,t
 
 [%n. %t]
-type = filename
+type = basename
 regexp = %L%N.%S%A%L
 indices = n,t
 
 [%n) %t]
-type = filename
+type = basename
 regexp = %L%N)%S%A%L
 indices = n,t
 
 [%a - %n - %t]
-type = filename
+type = basename
 regexp = %L%A%S-%S%N%S-%S%A%L
 indices = a,n,t
 
 [%a - %t]
-type = filename
+type = basename
 regexp = %L%A%S-%S%A%L
 indices = a,t
 
 [%t]
-type = filename
+type = basename
 regexp = %L%A%L
 indices = t
 

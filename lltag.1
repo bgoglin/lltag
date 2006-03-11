@@ -409,7 +409,7 @@ Try the next matching format on the current file.
 .I p
 .RS
 When matching is done through combination of a path parser
-and a filename parser, keep the filename parser and try the
+and a basename parser, keep the basename parser and try the
 next path parser on the current file.
 .RE
 
@@ -481,10 +481,10 @@ These files contain entries composed of :
 .RS
 A title between bracket
 .RE
-.I type = filename
+.I type = basename
 .RS
 The type is either
-.I filename
+.I basename
 or
 .I path
 .RE
