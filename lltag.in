@@ -727,6 +727,28 @@ if ($list_formats_opt) {
     exit 0 ;
 }
 
+sub apply_internal_basename_parsers
+{
+    my $file = shift ;
+    my $parsename = shift ;
+    my $tag_type = shift ;
+
+    # no path, only try each filename parser
+    foreach my $filename_parser (@internal_filename_parsers) {
+	# try to tag, with confirmation
+	my ($res, $values) = apply_parser $file, $parsename, $tag_type, $filename_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
+	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
+	    if ($res == $TAG_SUCCESS_PREFERRED) {
+		$preferred_parser = $filename_parser ;
+	    }
+	    return ($res, $values) ;
+	}
+	# try next parser
+	die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
+    }
+    return ($TAG_NO_MATCH, undef) ;
+}
+
 sub merge_internal_parsers
 {
     my $path_parser = shift ;
@@ -738,57 +760,35 @@ sub merge_internal_parsers
     return $parser ;
 }
 
-sub apply_internal_parsers
+sub apply_internal_path_basename_parsers
 {
     my $file = shift ;
-    my $filename = shift ;
+    my $parsename = shift ;
     my $tag_type = shift ;
 
-    print "  with internal formats...\n" ;
-
-    # split into path and parts if possible
-    my @parts = split (/\//, $filename) ;
-    $filename = pop @parts ;
-
-    if (!$nopath_opt and @parts) {
-	# try each path parser and each filename parser
-	my $path = join ("/", @parts) ;
-      NEXT_PATH_PARSER: foreach my $path_parser (@internal_path_parsers) {
-	    if ($path =~ /^$path_parser->{regexp}$/) {
-		foreach my $filename_parser (@internal_filename_parsers) {
-		    my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
-		    # try to tag, with confirmation
-		    my ($res, $values) = apply_parser $file, $filename, $tag_type, $whole_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER ;
-		    if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
-			if ($res == $TAG_SUCCESS_PREFERRED) {
-			    $preferred_parser = $whole_parser ;
-			}
-			return ($res, $values) ;
+    # try each path parser and each filename parser
+    foreach my $path_parser (@internal_path_parsers) {
+	if ($parsename =~ /^$path_parser->{regexp}\/[^\/]+$/) {
+	    foreach my $filename_parser (@internal_filename_parsers) {
+		my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
+		# try to tag, with confirmation
+		my ($res, $values) = apply_parser $file, $parsename, $tag_type, $whole_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER ;
+		if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
+		    if ($res == $TAG_SUCCESS_PREFERRED) {
+			$preferred_parser = $whole_parser ;
 		    }
-		    # try next path parser if asked
-		    next NEXT_PATH_PARSER if $res == $TAG_SKIP_PATH_PARSER ;
+		    return ($res, $values) ;
+		}
+		# try next path parser if asked
+		goto NEXT_PATH_PARSER
+		    if $res == $TAG_SKIP_PATH_PARSER ;
 
-		    # try next parser
-		    die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
-		}
+		# try next parser
+		die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
 	    }
 	}
-    } else {
-	# no path, only try each filename parser
-	foreach my $filename_parser (@internal_filename_parsers) {
-	    # try to tag, with confirmation
-	    my ($res, $values) = apply_parser $file, $filename, $tag_type, $filename_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
-	    if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
-		if ($res == $TAG_SUCCESS_PREFERRED) {
-		    $preferred_parser = $filename_parser ;
-		}
-		return ($res, $values) ;
-	    }
-	    # try next parser
-	    die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
-	}
+      NEXT_PATH_PARSER:
     }
-    # no parser was found or used
     return ($TAG_NO_MATCH, undef) ;
 }
 
@@ -892,15 +892,13 @@ my @user_parsers = map ( generate_user_parser ($_), @user_format_strings ) ;
 sub apply_user_parsers
 {
     my $file = shift ;
-    my $filename = shift ;
+    my $parsename = shift ;
     my $tag_type = shift ;
-
-    print "  with user-provided formats...\n" ;
 
     # try each format until one works
     foreach my $parser (@user_parsers) {
 	# try to tag, without confirmation
-	my ($res, $values) = apply_parser $file, $filename, $tag_type, $parser, 0, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
+	my ($res, $values) = apply_parser $file, $parsename, $tag_type, $parser, 0, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
 	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
 	    if ($res == $TAG_SUCCESS_PREFERRED) {
 		$preferred_parser = $parser ;
@@ -1034,13 +1032,13 @@ sub tags_confirm_fields {
 sub apply_parser
 {
     my $file = shift ;
-    my $filename = shift ;
+    my $parsename = shift ;
     my $tag_type = shift ;
     my $parser = shift ;
     my $confirm = shift ;
     my $behaviors = shift ;
 
-    if ($filename =~ /^$parser->{regexp}$/) {
+    if ($parsename =~ /^$parser->{regexp}$/) {
 	print "    '$parser->{title}' matches this file...\n" ;
 
 	my @field_table = @{$parser->{field_table}} ;
@@ -1085,7 +1083,7 @@ sub apply_parser
 sub try_to_parse
 {
     my $file = shift ;
-    my $filename = shift ;
+    my $parsename = shift ;
     my $tag_type = shift ;
 
     my $values = undef ;
@@ -1095,7 +1093,7 @@ sub try_to_parse
     if (defined $preferred_parser) {
 	print "  with the previous matching parser...\n" ;
 	# there can't be any confirmation here, SKIP is not possible
-	($res, $values) = apply_parser $file, $filename, $tag_type, $preferred_parser, 0, 0 ;
+	($res, $values) = apply_parser $file, $parsename, $tag_type, $preferred_parser, 0, 0 ;
 	if ($res != $TAG_SKIP_PARSER) {
 	    # only SUCCESS if possible
 	    die "Unknown tag return value: $res.\n"
@@ -1110,14 +1108,21 @@ sub try_to_parse
 
     # try user provided parsers then
     if (@user_parsers) {
-	($res, $values) = apply_user_parsers $file, $filename, $tag_type ;
+	print "  with user-provided formats...\n" ;
+	($res, $values) = apply_user_parsers $file, $parsename, $tag_type ;
 	return ($res, $values)
 	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
 
     # try to guess my internal format database then
     if ($guess_opt) {
-	($res, $values) = apply_internal_parsers $file, $filename, $tag_type ;
+	print "  with internal formats...\n" ;
+
+	if ($nopath_opt or not ($parsename =~ /\//)) {
+	    ($res, $values) = apply_internal_basename_parsers $file, $parsename, $tag_type ;
+	} else {
+	    ($res, $values) = apply_internal_path_basename_parsers $file, $parsename, $tag_type ;
+	}
 	return ($res, $values)
 	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
@@ -1382,9 +1387,13 @@ while ( @files ) {
     # split into filename and extension
     my @parts = split (/\./, $filename) ;
     my $extension = pop @parts ;
-    $filename = join (".", @parts) ;
+    my $parsename = join (".", @parts) ;
+    if ($nopath_opt) {
+	my @parts = split (/\//, $parsename) ;
+	$parsename = pop @parts ;
+    }
 
-    # split into filename and extension
+    # get the type
     my $tag_type = $type_opt ;
     if (not defined $tag_type) {
 	if ($extension =~ /$mp3_ext/i) {
@@ -1400,7 +1409,7 @@ while ( @files ) {
     }
 
     # try to parse this file
-    my ($res, $values) = try_to_parse $file, $filename, $tag_type ;
+    my ($res, $values) = try_to_parse $file, $parsename, $tag_type ;
     goto NEXT_FILE
 	if $res == $TAG_SKIP_FILE ;
     die "Unknown tag return value: $res.\n"
