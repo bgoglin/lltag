@@ -450,34 +450,6 @@ sub system_with_output {
 }
 
 #######################################################
-# files to process
-
-# process remaining command-line arguments as files
-
-my @files = () ;
-while ( @ARGV ) {
-    if ($recursive_opt) {
-	my $dir = shift @ARGV ;
-	open FIND, "find \"$dir\" |" ;
-	my @dirfiles = <FIND> ;
-	close FIND ;
-	foreach my $file (@dirfiles) {
-	    chomp $file ;
-	    if (-f $file) {
-		push (@files, $file) ;
-	    }
-	}
-    } else {
-	my $file = shift @ARGV ;
-	if (-f $file) {
-	    push (@files, $file) ;
-	} else {
-	    print "Skipping the non-file '$file'\n" ;
-	}
-    }
-}
-
-#######################################################
 # show existing tags if --show-tags was passed
 
 sub mp3_read_tags {
@@ -564,27 +536,6 @@ sub read_tags {
     return $values ;
 }
 
-if ($show_tags_opt) {
-    my @fields_to_show = split (/,/, $show_tags_opt) ;
-    foreach my $file (@files) {
-	print "$file:\n"
-	    if @files ;
-
-	my $values = read_tags $file ;
-
-	foreach my $field (@{$values->{fields}}) {
-	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
-	    $first = uc($first) ;
-	    $remaining = lc($remaining) ;
-	    next unless grep { /^all$/ } @fields_to_show
-		or grep { /^$first$remaining$/i } @fields_to_show ;
-	    map { print "$first$remaining=$_\n" } @{$values->{$field}} ;
-	}
-    }
-
-    exit 0 ;
-}
-
 #######################################################
 # apply user-given regexp
 
@@ -614,7 +565,7 @@ sub apply_regexp_to_tag {
 my @internal_basename_parsers = () ;
 my @internal_path_parsers = () ;
 
-if ($guess_opt or $list_formats_opt) {
+sub read_internal_parsers {
     # get parsers from configuration files
     my $file ;
     if (open FORMAT, "$user_lltag_dir/$lltag_format_filename") {
@@ -719,19 +670,7 @@ if ($guess_opt or $list_formats_opt) {
   NO_FORMATS_FILE_FOUND:
 }
 
-# if -L was passed, show formats and exit
-if ($list_formats_opt) {
-    print "Listing internal parsers:\n" ;
-    foreach my $path_parser (@internal_path_parsers) {
-	foreach my $basename_parser (@internal_basename_parsers) {
-	    print "  $path_parser->{title}/$basename_parser->{title}\n" ;
-	}
-    }
-    exit 0 ;
-}
-
-sub apply_internal_basename_parsers
-{
+sub apply_internal_basename_parsers {
     my $file = shift ;
     my $parsename = shift ;
     my $file_type = shift ;
@@ -752,8 +691,7 @@ sub apply_internal_basename_parsers
     return ($TAG_NO_MATCH, undef) ;
 }
 
-sub merge_internal_parsers
-{
+sub merge_internal_parsers {
     my $path_parser = shift ;
     my $basename_parser = shift ;
     my $parser ;
@@ -763,8 +701,7 @@ sub merge_internal_parsers
     return $parser ;
 }
 
-sub apply_internal_path_basename_parsers
-{
+sub apply_internal_path_basename_parsers {
     my $file = shift ;
     my $parsename = shift ;
     my $file_type = shift ;
@@ -797,6 +734,9 @@ sub apply_internal_path_basename_parsers
 
 #######################################################
 # user parsers
+
+# list of user-provided parsers
+my @user_parsers ;
 
 # change format names into a parsing string
 my $field_letters_union = (join '|', @field_letters) ;
@@ -889,11 +829,11 @@ sub generate_user_parser {
     return $parser ;
 }
 
-# user parsers
-my @user_parsers = map ( generate_user_parser ($_), @user_format_strings ) ;
+sub generate_user_parsers {
+    @user_parsers = map ( generate_user_parser ($_), @user_format_strings ) ;
+}
 
-sub apply_user_parsers
-{
+sub apply_user_parsers {
     my $file = shift ;
     my $parsename = shift ;
     my $file_type = shift ;
@@ -1032,8 +972,7 @@ sub tags_confirm_fields {
     }
 }
 
-sub apply_parser
-{
+sub apply_parser {
     my $file = shift ;
     my $parsename = shift ;
     my $file_type = shift ;
@@ -1083,8 +1022,7 @@ sub apply_parser
     }
 }
 
-sub try_to_parse
-{
+sub try_to_parse {
     my $file = shift ;
     my $parsename = shift ;
     my $file_type = shift ;
@@ -1374,8 +1312,72 @@ sub rename_with_tags {
 }
 
 #######################################################
-# process files
+# main process
 
+# read internal parsers
+read_internal_parsers
+    if $guess_opt or $list_formats_opt ;
+
+# if -L was passed, show formats and exit
+if ($list_formats_opt) {
+    print "Listing internal parsers:\n" ;
+    foreach my $path_parser (@internal_path_parsers) {
+	foreach my $basename_parser (@internal_basename_parsers) {
+	    print "  $path_parser->{title}/$basename_parser->{title}\n" ;
+	}
+    }
+    exit 0 ;
+}
+
+# process remaining command-line arguments as files
+my @files = () ;
+while ( @ARGV ) {
+    if ($recursive_opt) {
+	my $dir = shift @ARGV ;
+	open FIND, "find \"$dir\" |" ;
+	my @dirfiles = <FIND> ;
+	close FIND ;
+	foreach my $file (@dirfiles) {
+	    chomp $file ;
+	    if (-f $file) {
+		push (@files, $file) ;
+	    }
+	}
+    } else {
+	my $file = shift @ARGV ;
+	if (-f $file) {
+	    push (@files, $file) ;
+	} else {
+	    print "Skipping the non-file '$file'\n" ;
+	}
+    }
+}
+
+if ($show_tags_opt) {
+    my @fields_to_show = split (/,/, $show_tags_opt) ;
+    foreach my $file (@files) {
+	print "$file:\n"
+	    if @files ;
+
+	my $values = read_tags $file ;
+
+	foreach my $field (@{$values->{fields}}) {
+	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
+	    $first = uc($first) ;
+	    $remaining = lc($remaining) ;
+	    next unless grep { /^all$/ } @fields_to_show
+		or grep { /^$first$remaining$/i } @fields_to_show ;
+	    map { print "$first$remaining=$_\n" } @{$values->{$field}} ;
+	}
+    }
+
+    exit 0 ;
+}
+
+# generate user parsers
+generate_user_parsers ;
+
+# main loop
 while ( @files ) {
     my $file = shift @files ;
 
