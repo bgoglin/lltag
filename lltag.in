@@ -450,6 +450,36 @@ sub system_with_output {
 }
 
 #######################################################
+# extract file type and parsename
+
+sub extract_parsename_and_type {
+    my $file = shift ;
+
+    # split into parsename and extension, and remove the path if asked
+    my @parts = split (/\./, $file) ;
+    my $extension = pop @parts ;
+    my $parsename = join (".", @parts) ;
+    if ($nopath_opt) {
+	my @parts = split (/\//, $parsename) ;
+	$parsename = pop @parts ;
+    }
+
+    my $file_type = $type_opt ;
+    if (not defined $type_opt) {
+    # if not forced, get the type from the extension
+	if ($extension =~ /$mp3_ext/i) {
+	    $file_type = $mp3_type ;
+	} elsif ($extension =~ /$ogg_ext/i) {
+	    $file_type = $ogg_type ;
+	} elsif ($extension =~ /$flac_ext/i) {
+	    $file_type = $flac_type ;
+	}
+    }
+
+    return ($parsename, $file_type) ;
+}
+
+#######################################################
 # show existing tags if --show-tags was passed
 
 sub mp3_read_tags {
@@ -482,26 +512,7 @@ sub flac_read_tags {
 
 sub read_tags {
     my $file = shift ;
-
-    # split into filename and extension
-    my @parts = split (/\./, $file) ;
-    my $extension = pop @parts ;
-
-    # find out file type
-    my $file_type = $type_opt ;
-    if (not defined $file_type) {
-	# use the extension to find the type
-	if ($extension =~ /$mp3_ext/i) {
-	    $file_type = $mp3_type ;
-	} elsif ($extension =~ /$ogg_ext/i) {
-	    $file_type = $ogg_type ;
-	} elsif ($extension =~ /$flac_ext/i) {
-	    $file_type = $flac_type ;
-	} else {
-	    print "  Skipping this unknown-type file.\n" ;
-	    next ;
-	}
-    }
+    my $file_type = shift ;
 
     # extract tags as a stream
     my $status ;
@@ -1359,7 +1370,13 @@ if ($show_tags_opt) {
 	print "$file:\n"
 	    if @files ;
 
-	my $values = read_tags $file ;
+	my ($parsename, $file_type) = extract_parsename_and_type $file ;
+	if (not defined $file_type) {
+	    print "  Skipping this unknown-type file.\n" ;
+	    next ;
+	}
+
+	my $values = read_tags $file, $file_type ;
 
 	foreach my $field (@{$values->{fields}}) {
 	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
@@ -1383,28 +1400,10 @@ while ( @files ) {
 
     print "Processing file \"".$file."\"...\n" ;
 
-    # split into parsename and extension, and remove the path if asked
-    my @parts = split (/\./, $file) ;
-    my $extension = pop @parts ;
-    my $parsename = join (".", @parts) ;
-    if ($nopath_opt) {
-	my @parts = split (/\//, $parsename) ;
-	$parsename = pop @parts ;
-    }
-
-    # get the type
-    my $file_type = $type_opt ;
+    my ($parsename, $file_type) = extract_parsename_and_type $file ;
     if (not defined $file_type) {
-	if ($extension =~ /$mp3_ext/i) {
-	    $file_type = $mp3_type ;
-	} elsif ($extension =~ /$ogg_ext/i) {
-	    $file_type = $ogg_type ;
-	} elsif ($extension =~ /$flac_ext/i) {
-	    $file_type = $flac_type ;
-	} else {
-	    print "  Skipping this unknown-type file '$file'\n" ;
-	    goto NEXT_FILE ;
-	}
+	print "  Skipping this unknown-type file '$file'\n" ;
+	goto NEXT_FILE ;
     }
 
     # try to parse this file
