@@ -1082,6 +1082,56 @@ sub apply_parser
     }
 }
 
+sub try_to_parse
+{
+    my $file = shift ;
+    my $filename = shift ;
+    my $tag_type = shift ;
+
+    my $values = undef ;
+    my $res ;
+
+    # try the preferred parser first
+    if (defined $preferred_parser) {
+	print "  with the previous matching parser...\n" ;
+	# there can't be any confirmation here, SKIP is not possible
+	($res, $values) = apply_parser $file, $filename, $tag_type, $preferred_parser, 0, 0 ;
+	if ($res != $TAG_SKIP_PARSER) {
+	    # only SUCCESS if possible
+	    die "Unknown tag return value: $res.\n"
+		if $res != $TAG_SUCCESS ;
+	    return ($res, $values) ;
+	} else {
+	    print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
+	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
+	    $preferred_parser = undef ;
+	}
+    }
+
+    # try user provided parsers then
+    if (@user_parsers) {
+	($res, $values) = apply_user_parsers $file, $filename, $tag_type ;
+	return ($res, $values)
+	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+    }
+
+    # try to guess my internal format database then
+    if ($guess_opt) {
+	($res, $values) = apply_internal_parsers $file, $filename, $tag_type ;
+	return ($res, $values)
+	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+    }
+
+    if ($guess_opt or @user_parsers) {
+	print "  Didn't find any parser!\n" ;
+    }
+    # tag with default values only
+    my $default_values = { map { $_ => $field_default{$_}, } (keys %field_default) } ;
+    ($res, $values) = tags_confirm_fields $file, $tag_type, 1, 0, $default_values ;
+    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
+    return ($res, $values) ;
+}
+
 #######################################################
 # real tagging
 
@@ -1320,7 +1370,6 @@ sub rename_with_tags {
 
 while ( @files ) {
     my $file = shift @files ;
-    my $res ;
 
     print "Processing file \"".$file."\"...\n" ;
 
@@ -1350,45 +1399,13 @@ while ( @files ) {
 	}
     }
 
-    my $values = undef ;
+    # try to parse this file
+    my ($res, $values) = try_to_parse $file, $filename, $tag_type ;
+    goto NEXT_FILE
+	if $res == $TAG_SKIP_FILE ;
+    die "Unknown tag return value: $res.\n"
+	if $res != $TAG_SUCCESS and $res != $TAG_SUCCESS_PREFERRED ;
 
-    # try the preferred parser first
-    if (defined $preferred_parser) {
-	print "  with the previous matching parser...\n" ;
-	# there can't be any confirmation here, SKIP is not possible
-	($res, $values) = apply_parser $file, $filename, $tag_type, $preferred_parser, 0, 0 ;
-	if ($res != $TAG_SKIP_PARSER) {
-	    # only SUCCESS if possible
-	    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS ;
-	    goto TAG_IT ;
-	} else {
-	    print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
-	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
-	    $preferred_parser = undef ;
-	}
-    }
-
-    # try user provided parsers then
-    if (@user_parsers) {
-	($res, $values) = apply_user_parsers $file, $filename, $tag_type ;
-	goto TAG_IT if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
-    }
-
-    # try to guess my internal format database then
-    if ($guess_opt) {
-	($res, $values) = apply_internal_parsers $file, $filename, $tag_type ;
-	goto TAG_IT if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
-    }
-
-    if ($guess_opt or @user_parsers) {
-	print "  Didn't find any parser!\n" ;
-    }
-    # tag with default values only
-    my $default_values = { map { $_ => $field_default{$_}, } (keys %field_default) } ;
-    ($res, $values) = tags_confirm_fields $file, $tag_type, 1, 0, $default_values ;
-    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
-
-  TAG_IT:
     # actually tagging
     tag_with_fields $file, $tag_type, $values
 	unless $no_tagging_opt ;
@@ -1398,6 +1415,7 @@ while ( @files ) {
 	if defined $rename_opt ;
 
     # next file
+  NEXT_FILE:
     shift ;
 }
 
