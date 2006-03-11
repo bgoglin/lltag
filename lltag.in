@@ -233,7 +233,7 @@ my $flac_ext = "flac" ;
 my $gencfg_file = undef ;
 
 # parsers
-my @format_strings = () ;
+my @user_format_strings = () ;
 
 #######################################################
 # parse config files first
@@ -253,7 +253,7 @@ sub process_option {
     $_ = shift ;
     chomp $_ ;
     if (/^format\s*=\s*"(.+)"$/) {
-	push (@format_strings, $1) ;
+	push (@user_format_strings, $1) ;
     } elsif (/^guess\s*=\s*(.+)$/) {
 	$guess_opt = $1 ;
     } elsif (/^nopath\s*=\s*(.+)$/) {
@@ -348,7 +348,7 @@ foreach my $file (@additional_config_files) {
 
 # parse options
 GetOptions(
-	   'F|format=s'   => \@format_strings,
+	   'F|format=s'   => \@user_format_strings,
 	   'G|guess'      => \$guess_opt,
 	   'p|nopath'     => \$nopath_opt,
 	   'spaces'       => \$spaces_opt,
@@ -394,7 +394,7 @@ my $current_rename_yes_opt = $yes_opt ;
 $match_limit = $match_space = $match_spaces if $spaces_opt ;
 
 # if no parsers and no guess, force guess
-$guess_opt = 1 unless @format_strings or $default_opt or $list_formats_opt ;
+$guess_opt = 1 unless @user_format_strings or $default_opt or $list_formats_opt ;
 
 # forward declarations
 sub apply_parser ;
@@ -893,7 +893,7 @@ sub generate_user_parser {
 }
 
 # user parsers
-my @parsers = map ( generate_user_parser ($_), @format_strings ) ;
+my @user_parsers = map ( generate_user_parser ($_), @user_format_strings ) ;
 
 sub parse_file_with_user_parsers
 {
@@ -904,7 +904,7 @@ sub parse_file_with_user_parsers
     print "  with user-provided formats...\n" ;
 
     # try each format until one works
-    foreach my $parser (@parsers) {
+    foreach my $parser (@user_parsers) {
 	# try to tag, without confirmation
 	my $res = apply_parser $file, $filename, $tag_type, $parser, 0, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
 	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
@@ -972,8 +972,10 @@ while ( @files ) {
     }
 
     # try user provided parsers then
-    $res = parse_file_with_user_parsers($file, $filename, $tag_type) ;
-    goto NEXT_FILE if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+    if (@user_parsers) {
+	$res = parse_file_with_user_parsers($file, $filename, $tag_type) ;
+	goto NEXT_FILE if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+    }
 
     # try to guess my internal format database then
     if ($guess_opt) {
@@ -981,7 +983,7 @@ while ( @files ) {
 	goto NEXT_FILE if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
 
-    if ($guess_opt or @parsers) {
+    if ($guess_opt or @user_parsers) {
 	print "  Didn't find any parser!\n" ;
     }
     # tag with default values only
@@ -1417,7 +1419,7 @@ sub generate_config {
     print NEWCFG "# You may modify and reuse it as you want.\n" ;
     print NEWCFG "\n" ;
 
-    map { print NEWCFG "format = \"$_\"\n" ; } @format_strings ;
+    map { print NEWCFG "format = \"$_\"\n" ; } @user_format_strings ;
 
     print NEWCFG "guess = $guess_opt\n" ;
     print NEWCFG "nopath = $nopath_opt\n" ;
