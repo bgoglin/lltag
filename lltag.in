@@ -957,18 +957,18 @@ while ( @files ) {
 
     # try the preferred parser first
     if (defined $preferred_parser) {
-	if ($filename =~ /^$preferred_parser->{regexp}$/) {
-	    $res = tag_with_parser ($file, $tag_type, $preferred_parser, 0, 0, @_) ;
-	    # there can't be any confirmation here, SKIP is not possible
+	print "  with the previous matching parser...\n" ;
+	# there can't be any confirmation here, SKIP is not possible
+	$res = apply_parser $file, $filename, $tag_type, $preferred_parser, 0, 0 ;
+	if ($res != $TAG_SKIP_PARSER) {
 	    # only SUCCESS if possible
 	    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS ;
 	    goto NEXT_FILE ;
 	} else {
-	    print "  Preferred parser '$preferred_parser->{title}' does not match this file\n" ;
-	    print "    Returning to original mode\n" ;
+	    print "    '$preferred_parser->{title}' does not match anymore, returning to orginal mode\n" ;
 	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
+	    $preferred_parser = undef ;
 	}
-	$preferred_parser = undef ;
     }
 
     # try user provided parsers then

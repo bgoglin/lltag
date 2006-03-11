@@ -1,4 +1,6 @@
 
+  * Fix 'u' confirmation to try the current parser first for next files
+    (was broken since 0.10).
   * Large rework of the internal structures.
   * Major cleanup of the manpage.
   * Fix quoting of the command-line in --dry-run.
