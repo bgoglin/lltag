@@ -547,7 +547,7 @@ sub read_tags {
     }
 
     # extract tags from the stream
-    my $values = () ;
+    my $values = {} ;
     @{$values->{fields}} = () ;
     while (my $line = shift @output) {
 	chomp $line ;
@@ -727,9 +727,6 @@ if ($list_formats_opt) {
     exit 0 ;
 }
 
-#######################################################
-# merge path and filename internal parsers
-
 sub merge_internal_parsers
 {
     my $path_parser = shift ;
@@ -741,8 +738,7 @@ sub merge_internal_parsers
     return $parser ;
 }
 
-# parse
-sub parse_file_with_internal_parsers
+sub apply_internal_parsers
 {
     my $file = shift ;
     my $filename = shift ;
@@ -757,7 +753,7 @@ sub parse_file_with_internal_parsers
     if (!$nopath_opt and @parts) {
 	# try each path parser and each filename parser
 	my $path = join ("/", @parts) ;
-	foreach my $path_parser (@internal_path_parsers) {
+      NEXT_PATH_PARSER: foreach my $path_parser (@internal_path_parsers) {
 	    if ($path =~ /^$path_parser->{regexp}$/) {
 		foreach my $filename_parser (@internal_filename_parsers) {
 		    my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
@@ -770,15 +766,12 @@ sub parse_file_with_internal_parsers
 			return ($res, $values) ;
 		    }
 		    # try next path parser if asked
-		    if ($res == $TAG_SKIP_PATH_PARSER) {
-			goto NEXT_PATH_PARSER;
-                   }
+		    next NEXT_PATH_PARSER if $res == $TAG_SKIP_PATH_PARSER ;
 
 		    # try next parser
 		    die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
 		}
 	    }
-	  NEXT_PATH_PARSER:
 	}
     } else {
 	# no path, only try each filename parser
@@ -896,7 +889,7 @@ sub generate_user_parser {
 # user parsers
 my @user_parsers = map ( generate_user_parser ($_), @user_format_strings ) ;
 
-sub parse_file_with_user_parsers
+sub apply_user_parsers
 {
     my $file = shift ;
     my $filename = shift ;
@@ -924,7 +917,7 @@ sub parse_file_with_user_parsers
 #######################################################
 # parsing confirmation
 
-sub confirm_letters {
+sub tags_confirm_letters {
     my $behaviors = shift ;
     my $string = "[Yv" ;
     $string .= "u" if $behaviors & $TAG_MAY_PREFER ;
@@ -935,7 +928,7 @@ sub confirm_letters {
     return $string ;
 }
 
-sub confirm_usage {
+sub tags_confirm_usage {
     my $behaviors = shift ;
     print "    y => Yes, use this matching (default)\n" ;
     print "    v => View which fields were matched\n" ;
@@ -951,7 +944,7 @@ sub confirm_usage {
     print "    h => Show this help\n" ;
 }
 
-sub confirm_fields {
+sub tags_confirm_fields {
     my $file = shift ;
     my $tag_type = shift ;
     my $confirm = shift ;
@@ -964,14 +957,15 @@ sub confirm_fields {
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "  Use this matching ".(confirm_letters ($behaviors))." ? " ;
+	print "  Use this matching ".(tags_confirm_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
 	    goto OK ;
 	} elsif ($reply eq "v") {
 	    foreach my $field (@field_names) {
-		print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n" if defined $values->{$field} ;
+		print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
+		    if defined $values->{$field} ;
 	    }
 	    goto ASK_CONFIRM ;
 	} elsif ($reply =~ /^a/i) {
@@ -989,7 +983,7 @@ sub confirm_fields {
 	    return ($TAG_SKIP_FILE, undef) ;
 	} elsif ($reply =~ /^e/i) {
 
-	    my $edit_values = [] ;
+	    my $edit_values = {} ;
 	    foreach (keys %{$values}) { $edit_values->{$_} = $values->{$_} } ;
 	  ASK_EDIT:
 	    print "    Edit a field [atAngycEC,(h)elp] ? " ;
@@ -1024,7 +1018,7 @@ sub confirm_fields {
 	    }
 
 	} else {
-	    confirm_tag_usage $behaviors ;
+	    tags_confirm_usage $behaviors ;
 	    goto ASK_CONFIRM ;
 	}
     }
@@ -1082,7 +1076,7 @@ sub apply_parser
 	    $values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
 	}
 
-	return confirm_fields ($file, $tag_type, $confirm, $behaviors, $values) ;
+	return tags_confirm_fields ($file, $tag_type, $confirm, $behaviors, $values) ;
     } else {
 	return ($TAG_SKIP_PARSER, undef) ;
     }
@@ -1197,7 +1191,7 @@ sub tag_with_fields {
 #############################################
 # renaming
 
-sub confirm_rename_usage {
+sub rename_confirm_usage {
     my $behaviors = shift ;
     print "      y => Yes, rename this file (default)\n" ;
     print "      a => Always rename without asking\n" ;
@@ -1288,7 +1282,7 @@ sub rename_with_tags {
 	    $new_name = &$myreadline ("      ", "New filename", $new_name, 0) ;
 	    goto ASK_CONFIRM ;
 	} else {
-	    confirm_rename_usage ;
+	    rename_confirm_usage ;
 	    goto ASK_CONFIRM ;
 	}
     }
@@ -1376,13 +1370,13 @@ while ( @files ) {
 
     # try user provided parsers then
     if (@user_parsers) {
-	($res, $values) = parse_file_with_user_parsers $file, $filename, $tag_type ;
+	($res, $values) = apply_user_parsers $file, $filename, $tag_type ;
 	goto TAG_IT if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
 
     # try to guess my internal format database then
     if ($guess_opt) {
-	($res, $values) = parse_file_with_internal_parsers $file, $filename, $tag_type ;
+	($res, $values) = apply_internal_parsers $file, $filename, $tag_type ;
 	goto TAG_IT if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
 
@@ -1391,7 +1385,7 @@ while ( @files ) {
     }
     # tag with default values only
     my $default_values = { map { $_ => $field_default{$_}, } (keys %field_default) } ;
-    ($res, $values) = confirm_fields $file, $tag_type, 1, 0, $default_values ;
+    ($res, $values) = tags_confirm_fields $file, $tag_type, 1, 0, $default_values ;
     die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
 
   TAG_IT:
