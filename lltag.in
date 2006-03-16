@@ -500,11 +500,23 @@ sub append_tag_value {
 sub get_tag_value_array {
     my $values = shift ;
     my $field = shift ;
-    if (ref($values->{$field}) eq 'ARRAY') {
+    if (not defined $values->{$field}) {
+	return () ;
+    } elsif (ref ($values->{$field}) eq 'ARRAY') {
 	return @{$values->{$field}} ;
     } else {
 	return ($values->{$field}) ;
     }
+}
+
+# return a unique value for a field
+sub get_tag_unique_value {
+    my $values = shift ;
+    my $field = shift ;
+    my @array = get_tag_value_array $values, $field ;
+    die "Trying to return a unique tag value on an empty array.\n"
+	if ! @array ;
+    return $array[0] ;
 }
 
 #######################################################
@@ -1241,7 +1253,7 @@ sub rename_with_tags {
     print "  Renaming with format '$rename_opt'...\n" ;
 
     foreach my $field (keys %{$values}) {
-	my $val = (get_tag_value_array $values, $field)[0] ;
+	my $val = get_tag_unique_value $values, $field ;
 	$val = lc ($val)
 	    if $rename_min_opt ;
 	$val =~ s/ /$rename_sep_opt/g
@@ -1265,6 +1277,7 @@ sub rename_with_tags {
 	if ($char =~ /$field_letters_union/) {
 	    my $field = $field_letter_name{$char} ;
 	    my $val = $rename_values->{$field} ;
+	    # rename does not contain an array anymore
 	    if (not defined $val) {
 		$undefined++ ;
 		print "    WARNING: Undefined field '".$field."'.\n" ;
