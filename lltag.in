@@ -488,7 +488,6 @@ sub append_tag_value {
     my $field = shift ;
     my $value = shift ;
     if (not defined $values->{$field}) {
-	push @{$values->{fields}}, $field ;
 	$values->{$field} = $value ;
     } elsif (ref($values->{$field}) ne 'ARRAY') {
 	@{$values->{$field}} = ($values->{$field}, $value) ;
@@ -560,7 +559,6 @@ sub read_tags {
 
     # extract tags from the stream
     my $values = {} ;
-    @{$values->{fields}} = () ;
     while (my $line = shift @output) {
 	chomp $line ;
 	$line =~ s/^tracknumber=/number=/i ;
@@ -1403,7 +1401,8 @@ if ($show_tags_opt) {
 
 	my $values = read_tags $file, $file_type ;
 
-	foreach my $field (@{$values->{fields}}) {
+	foreach my $field (keys %{$values}) {
+	    # sort fields
 	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
 	    $first = uc($first) ;
 	    next unless grep { /^all$/ } @fields_to_show
