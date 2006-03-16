@@ -1,4 +1,7 @@
 
+  * Always read existing tags first, allowing to:
+    + Rename using existing tags when the old filename is useless
+      (requested by Fabien Wernli).
   * Fix 'u' confirmation to try the current parser first for next files
     (was broken since 0.10).
   * 'basename' is now used instead of 'filename' for 'type' in the format
