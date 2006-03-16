@@ -479,6 +479,35 @@ sub extract_parsename_and_type {
     return ($parsename, $file_type) ;
 }
 
+ #######################################################
+# handle hashes of tags
+
+# add a value to a field, creating an array if required
+sub append_tag_value {
+    my $values = shift ;
+    my $field = shift ;
+    my $value = shift ;
+    if (not defined $values->{$field}) {
+	push @{$values->{fields}}, $field ;
+	$values->{$field} = $value ;
+    } elsif (ref($values->{$field}) ne 'ARRAY') {
+	@{$values->{$field}} = ($values->{$field}, $value) ;
+    } else {
+	push @{$values->{$field}}, $value ;
+    }
+}
+
+# return values for a field as an array
+sub get_tag_value_array {
+    my $values = shift ;
+    my $field = shift ;
+    if (ref($values->{$field}) eq 'ARRAY') {
+	return @{$values->{$field}} ;
+    } else {
+	return ($values->{$field}) ;
+    }
+}
+
 #######################################################
 # show existing tags if --show-tags was passed
 
@@ -537,11 +566,7 @@ sub read_tags {
 	$line =~ s/^tracknumber=/number=/i ;
 	my ($field, $value) = ($line =~ /^(.*)=(.*)$/) ;
 	next if !$value ;
-	if (not defined $values->{$field}) {
-	    push @{$values->{fields}}, $field ;
-	    @{$values->{$field}} = () ;
-	}
-	push @{$values->{$field}}, $value ;
+	append_tag_value $values, $field, $value ;
     }
 
     return $values ;
@@ -1218,7 +1243,7 @@ sub rename_with_tags {
     print "  Renaming with format '$rename_opt'...\n" ;
 
     foreach my $field (keys %{$values}) {
-	my $val = $values->{$field} ;
+	my $val = (get_tag_value_array $values, $field)[0] ;
 	$val = lc ($val)
 	    if $rename_min_opt ;
 	$val =~ s/ /$rename_sep_opt/g
@@ -1384,7 +1409,7 @@ if ($show_tags_opt) {
 	    $remaining = lc($remaining) ;
 	    next unless grep { /^all$/ } @fields_to_show
 		or grep { /^$first$remaining$/i } @fields_to_show ;
-	    map { print "$first$remaining=$_\n" } @{$values->{$field}} ;
+	    map { print "$first$remaining=$_\n" } (get_tag_value_array $values, $field) ;
 	}
     }
 
