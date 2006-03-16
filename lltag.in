@@ -1401,8 +1401,8 @@ if ($show_tags_opt) {
 
 	my $values = read_tags $file, $file_type ;
 
-	foreach my $field (keys %{$values}) {
-	    # sort fields
+	foreach my $field (@field_names) {
+	    next if not defined $values->{$field} ;
 	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
 	    $first = uc($first) ;
 	    next unless grep { /^all$/ } @fields_to_show
