@@ -513,6 +513,174 @@ The user may also add another configurable file with
 lltag may also generate a configuration with
 .B --gencfg .
 
+The available options are :
+
+.I format = \fI"string"
+.RS
+Add a user-defined format
+.RB [ -R ].
+Might be used multiple times.
+Default is to guess if no user-defined formats and no default field values are given.
+.RE
+.I guess = <0/1>
+.RS
+Try to guess if user-defined formats do not match
+.RB [ -G ].
+Default is
+.BR 0 " (" disabled ") when no user-defined formats and no default field values are given."
+.RE
+.I nopath = <0/1>
+.RS
+Do not use file path when matching filename
+.RB [ -p ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I default_ARTIST = \fI"string"
+.RE
+.I default_TITLE = \fI"string"
+.RE
+.I default_ALBUM = \fI"string"
+.RE
+.I default_NUMBER = \fI"string"
+.RE
+.I default_GENRE = \fI"string"
+.RE
+.I default_YEAR = \fI"string"
+.RE
+.I default_COMMENT = \fI"string"
+.RS
+Default field value
+.RB [ -a ", " -t ", " -A ", " -n ", " -g ", " -y " and " -c ].
+Default is to not set any default value.
+.RE
+.I spaces = <0/1>
+.RS
+Allow no or multiple spaces
+.RB [ --spaces ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I maj = <0/1>
+.RS
+Upcase first letters of words in tags
+.RB [ --maj ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I regexp = \fI"s/from/to/"
+.RS
+Replace \fIfrom\fR with \fIto\fR in all tags.
+.I title,number:s/from/to/
+replaces in title and number tags only.
+Might be used multiple times
+.RB [ --regexp ].
+Default is to not apply any regexp.
+.RE
+.I sep = \fI"string"
+.RS
+Replace |-separated strings with space in tags.
+Default is to not replace any separator.
+.RE
+.I type = <mp3|ogg|flac|none>
+.RS
+Force mp3, ogg of flac instead of by-extension detection
+.RB [ --mp3 ", " --ogg " and " --flac ].
+Default is
+.BR none .
+.RE
+.I clear_tags = <0/1>
+.RS
+Clear all tags of audio files.
+.BR [ --clear ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I append_tags = <0/1>
+.RS
+Append tags only instead of replacing old ones.
+.RB [ --append ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I no_tagging = <0/1>
+.RS
+Do not actually tag files
+.RB [ --no-tagging ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I rename_format = \fI"string"
+.RS
+Rename file according to format
+.RB [ --rename ].
+Default is to not rename.
+.RE
+.I rename_min = <0/1>
+.RS
+Lowcase tags before renaming
+.RB [ --rename-min ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I rename_regexp = \fI"s/from/to/"
+.RS
+Replace \fIfrom\fR with \fIto\fR in all tags before renaming.
+.I title,number:s/from/to/
+replaces in title and number tags only.
+Might be used multiple times
+.RB [ --rename-regexp ].
+Default is to not apply any regexp.
+.RE
+.I rename_sep = \fI"string"
+.RS
+Replace space with s in tags before renaming
+.RB [ --rename-sep ].
+Default is to not replace any separator.
+.RE
+.I rename_ext = <0/1>
+.RS
+Assume the rename format provides an extension
+.RB [ --rename-ext ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I dry_run = <0/1>
+.RS
+Do nothing but show what would have been done
+.RB [ --dry-run ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I yes = <0/1>
+.RS
+Tag without asking for confirmation when guessing
+and rename without asking for confirmation
+.RB [ --yes ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I ask = <0/1>
+.RS
+Always ask for confirmation before tagging
+.RB [ --ask ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I recursive = <0/1>
+.RS
+Recursively traverse all given subdirectories
+.RB [ -R ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
+.I verbose = <0/1>
+.RS
+Verbose messages
+.RB [ -v ].
+Default is
+.BR 0 " (" disabled ")."
+
 
 
 .SH FILES

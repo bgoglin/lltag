@@ -18,6 +18,7 @@
     + default_<non-capitalized-name> option still supported in the config.
   * Print default letter in <> instead of capital when confirming/editing.
   * Add EDITING TAGS in the manpage.
+  * Add configuration option of the config file in the manpage.
   * Fix quoting of the command-line in --dry-run.
   * Large rework of the internal structures.
   * Major cleanup of the manpage.
