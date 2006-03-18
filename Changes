@@ -13,6 +13,9 @@
   * 'basename' is now used instead of 'filename' for 'type' in the format
     file, 'filename' is still supported.
   * Do not rename if the new name already exists.
+  * Fix reading/tagging the date of ogg/flac files.
+  * Use all-capitals tag names to match ogg/flac.
+    + default_<non-capitalized-name> option still supported in the config.
   * Print default letter in <> instead of capital when confirming/editing.
   * Add EDITING TAGS in the manpage.
   * Fix quoting of the command-line in --dry-run.

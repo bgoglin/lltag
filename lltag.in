@@ -81,42 +81,42 @@ if ($term->Features->{preput}) {
 # format parameters
 # (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year, %c = comment)
 
-my @field_names = ('artist', 'title', 'album', 'number', 'genre', 'year', 'comment') ;
+my @field_names = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'YEAR', 'COMMENT') ;
 my @field_letters = ('a', 't', 'A', 'n', 'g', 'y', 'c') ;
 
 my %field_name_letter =
     (
-     'artist' => 'a',
-     'title' => 't',
-     'album' => 'A',
-     'number' => 'n',
-     'genre' => 'g',
-     'year' => 'y',
-     'comment' => 'c',
+     'ARTIST'  => 'a',
+     'TITLE'   => 't',
+     'ALBUM'   => 'A',
+     'NUMBER'  => 'n',
+     'GENRE'   => 'g',
+     'YEAR'    => 'y',
+     'COMMENT' => 'c',
      ) ;
 
 my %field_name_trailing_spaces =
     (
-     'artist' => '  ',
-     'title' => '   ',
-     'album' => '   ',
-     'number' => '  ',
-     'genre' => '   ',
-     'year' => '    ',
-     'comment' => ' ',
+     'ARTIST' => '  ',
+     'TITLE' => '   ',
+     'ALBUM' => '   ',
+     'NUMBER' => '  ',
+     'GENRE' => '   ',
+     'YEAR' => '    ',
+     'COMMENT' => ' ',
      ) ;
 
 my %field_default = () ;
 
 my %field_letter_name =
     (
-     'a' => 'artist',
-     't' => 'title',
-     'A' => 'album',
-     'n' => 'number',
-     'g' => 'genre',
-     'y' => 'year',
-     'c' => 'comment',
+     'a' => 'ARTIST',
+     't' => 'TITLE',
+     'A' => 'ALBUM',
+     'n' => 'NUMBER',
+     'g' => 'GENRE',
+     'y' => 'YEAR',
+     'c' => 'COMMENT',
      ) ;
 
 #######################################################
@@ -260,8 +260,8 @@ sub process_option {
 	$nopath_opt = $1 ;
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
         die "Unrecognized option line #$.: \"$_\"\n"
-	    unless defined $field_name_letter{$1} ;
-	$field_default{$1} = $2 ;
+	    unless defined $field_name_letter{uc ($1)} ;
+	$field_default{uc ($1)} = $2 ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
 	$spaces_opt = $1 ;
     } elsif (/^maj\s*=\s*(.+)$/) {
@@ -553,7 +553,7 @@ sub get_values_non_regular_keys {
 sub mp3_read_tags {
     my $file = shift ;
     my ($status, @output) = system_with_output
-	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nNumber=%n\nGenre=%g\nYear=%y\nComment=%c\n", $file) ;
+	("mp3info", "-p", "ARTIST=%a\nALBUM=%l\nTITLE=%t\nNUMBER=%n\nGENRE=%g\nYEAR=%y\nCOMMENT=%c\n", $file) ;
     return ($status)
 	if $status ;
     return ($status, @output) ;
@@ -565,6 +565,12 @@ sub ogg_read_tags {
 	("vorbiscomment", "-l", $file) ;
     return ($status)
 	if $status ;
+    @output = map {
+	my $line = $_ ;
+	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
+	$line =~ s/^DATE=/YEAR=/ ;
+	$line
+	} @output ;
     return ($status, @output) ;
 }
 
@@ -574,7 +580,13 @@ sub flac_read_tags {
 	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $file) ;
     return ($status)
 	if $status ;
-    @output = map { my $line =$_ ; $line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ; $line } ( grep { /comment\[\d+\]/ } @output ) ;
+    @output = map {
+	my $line = $_ ;
+	$line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ;
+	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
+	$line =~ s/^DATE=/YEAR=/ ;
+	$line
+	} ( grep { /comment\[\d+\]/ } @output ) ;
     return ($status, @output) ;
 }
 
@@ -601,10 +613,9 @@ sub read_tags {
     my $values = {} ;
     while (my $line = shift @output) {
 	chomp $line ;
-	$line =~ s/^tracknumber=/number=/i ;
 	my ($field, $value) = ($line =~ /^(.*)=(.*)$/) ;
 	next if !$value ;
-	append_tag_value $values, (lc $field), $value ;
+	append_tag_value $values, $field, $value ;
     }
 
     return $values ;
@@ -1176,13 +1187,13 @@ sub mp3_tagging_system_args {
     my $values = shift ;
     my %field_name_mp3info_option =
 	(
-	 'artist' => 'a',
-	 'title' => 't',
-	 'album' => 'l',
-	 'number' => 'n',
-	 'genre' => 'g',
-	 'year' => 'y',
-	 'comment' => 'c'
+	 'ARTIST'  => 'a',
+	 'TITLE'   => 't',
+	 'ALBUM'   => 'l',
+	 'NUMBER'  => 'n',
+	 'GENRE'   => 'g',
+	 'YEAR'    => 'y',
+	 'COMMENT' => 'c'
 	 ) ;
     my @mp3_tagging_cmd = ( 'mp3info' ) ;
     my @mp3_tagging_clear_option = map { ( "-$_" , "" ) } (values %field_name_mp3info_option) ;
@@ -1204,13 +1215,13 @@ sub ogg_tagging_system_args {
     my $values = shift ;
     my %field_name_vorbiscomment_option =
 	(
-	 'artist' => 'ARTIST',
-	 'title' => 'TITLE',
-	 'album' => 'ALBUM',
-	 'number' => 'TRACKNUMBER',
-	 'genre' => 'GENRE',
-	 'date' => 'DATE',
-	 'comment' => 'COMMENT'
+	 'ARTIST'  => 'ARTIST',
+	 'TITLE'   => 'TITLE',
+	 'ALBUM'   => 'ALBUM',
+	 'NUMBER'  => 'TRACKNUMBER',
+	 'GENRE'   => 'GENRE',
+	 'YEAR'    => 'DATE',
+	 'COMMENT' => 'COMMENT'
 	 ) ;
     my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
     my @ogg_tagging_clear_option = ( '-w' ) ;
@@ -1233,13 +1244,13 @@ sub flac_tagging_system_args {
     my $values = shift ;
     my %field_name_metaflac_option =
 	(
-	 'artist' => 'ARTIST',
-	 'title' => 'TITLE',
-	 'album' => 'ALBUM',
-	 'number' => 'TRACKNUMBER',
-	 'genre' => 'GENRE',
-	 'year' => 'DATE',
-	 'comment' => 'COMMENT'
+	 'ARTIST'  => 'ARTIST',
+	 'TITLE'   => 'TITLE',
+	 'ALBUM'   => 'ALBUM',
+	 'NUMBER'  => 'TRACKNUMBER',
+	 'GENRE'   => 'GENRE',
+	 'YEAR'    => 'DATE',
+	 'COMMENT' => 'COMMENT'
 	 ) ;
     my @flac_tagging_cmd = ( 'metaflac' ) ;
     my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
@@ -1485,16 +1496,10 @@ if ($show_tags_opt) {
 
 	my $values = read_tags $file, $file_type ;
 
-	foreach my $field (@field_names) {
+	foreach my $field (@field_names, get_values_non_regular_keys $values) {
 	    next if not defined $values->{$field} ;
-	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
-	    $first = uc($first) ;
 	    next unless grep { /^all$/ } @fields_to_show
-		or grep { /^$first$remaining$/i } @fields_to_show ;
-	    map { print "  $first$remaining=$_\n" } (get_tag_value_array $values, $field) ;
-	}
-
-	foreach my $field (get_values_non_regular_keys $values) {
+		or grep { /^$field$/i } @fields_to_show ;
 	    map { print "  $field=$_\n" } (get_tag_value_array $values, $field) ;
 	}
     }
