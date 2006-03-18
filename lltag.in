@@ -1205,7 +1205,7 @@ sub mp3_tagging_system_args {
 	     ( map {
 		 # only one tag is allowed, use the first one
 		 ( "-".$field_name_mp3info_option{$_} , (get_tag_unique_value $values, $_) )
-		 } @field_names
+		 } ( grep { defined $values->{$_} } @field_names )
 	       ),
 	     # TODO: drop other fields
 	     ) ;
