@@ -1164,7 +1164,11 @@ sub mp3_tagging_system_args {
 
     return ( @mp3_tagging_cmd ,
 	     $clear_opt ? @mp3_tagging_clear_option : () ,
-	     ( map { ( "-".$field_name_mp3info_option{$_} , $values->{$_} ) } (keys %{$values}) )
+	     ( map {
+		 # only one tag is allowed, use the first one
+		 ( "-".$field_name_mp3info_option{$_} , (get_tag_unique_value $values, $_) )
+		 } (keys %{$values})
+	       )
 	     ) ;
 }
 
@@ -1186,7 +1190,12 @@ sub ogg_tagging_system_args {
 
     return ( @ogg_tagging_cmd ,
 	     $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
-	     ( map { ( "-t" , $field_name_vorbiscomment_option{$_}."=".$values->{$_} ) } (keys %{$values}) ),
+	     ( map {
+		 my $option = $field_name_vorbiscomment_option{$_} ;
+		 my @tags = get_tag_value_array $values, $_ ;
+		 map { ( "-t" , $option."=".$_ ) } @tags
+		 } (keys %{$values}) # TODO: sort ?
+	       ),
 	     ) ;
 }
 
@@ -1208,7 +1217,12 @@ sub flac_tagging_system_args {
     return (@flac_tagging_cmd ,
 	    $clear_opt ? @flac_tagging_clear_option : () ,
 	    !$append_opt ? ( map { ( "--remove-tag", $_ ) } (values %field_name_metaflac_option) ) : () ,
-	    ( map { ( "--set-tag", $field_name_metaflac_option{$_}."=".$values->{$_} ) } (keys %{$values}) ),
+	    ( map {
+		my $option = $field_name_metaflac_option{$_} ;
+		my @tags = get_tag_value_array $values, $_ ;
+		map { ( "--set-tag", $option."=".$_ ) } @tags
+		} (keys %{$values}) # TODO: sort ?
+	      ),
 	    ) ;
 }
 
