@@ -1373,6 +1373,11 @@ sub rename_with_tags {
 	return ;
     }
 
+    if (-e $new_name) {
+	print "    File $new_name already exists, not renaming\n" ;
+	return ;
+    }
+
     return
 	if $dry_run_opt ;
 

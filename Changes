@@ -12,6 +12,7 @@
     (was broken since 0.10).
   * 'basename' is now used instead of 'filename' for 'type' in the format
     file, 'filename' is still supported.
+  * Do not rename if the new name already exists.
   * Large rework of the internal structures.
   * Major cleanup of the manpage.
   * Fix quoting of the command-line in --dry-run.
