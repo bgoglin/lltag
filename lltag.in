@@ -1213,15 +1213,10 @@ sub mp3_tagging_system_args {
 
 sub ogg_tagging_system_args {
     my $values = shift ;
-    my %field_name_vorbiscomment_option =
+    my %field_name_ogg_translations =
 	(
-	 'ARTIST'  => 'ARTIST',
-	 'TITLE'   => 'TITLE',
-	 'ALBUM'   => 'ALBUM',
 	 'NUMBER'  => 'TRACKNUMBER',
-	 'GENRE'   => 'GENRE',
 	 'YEAR'    => 'DATE',
-	 'COMMENT' => 'COMMENT'
 	 ) ;
     my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
     my @ogg_tagging_clear_option = ( '-w' ) ;
@@ -1231,9 +1226,10 @@ sub ogg_tagging_system_args {
 	     @ogg_tagging_clear_option ,
 	     # apply new tags
 	     ( map {
-		 my $option = $field_name_vorbiscomment_option{$_} ;
+		 my $oggname = $_ ;
+		 $oggname = $field_name_ogg_translations{$_} if defined $field_name_ogg_translations{$_} ;
 		 my @tags = get_tag_value_array $values, $_ ;
-		 map { ( "-t" , $option."=".$_ ) } @tags
+		 map { ( "-t" , $oggname."=".$_ ) } @tags
 		 } @field_names
 	       ),
 	     # TODO: handle other fields
@@ -1242,15 +1238,10 @@ sub ogg_tagging_system_args {
 
 sub flac_tagging_system_args {
     my $values = shift ;
-    my %field_name_metaflac_option =
+    my %field_name_flac_translations =
 	(
-	 'ARTIST'  => 'ARTIST',
-	 'TITLE'   => 'TITLE',
-	 'ALBUM'   => 'ALBUM',
 	 'NUMBER'  => 'TRACKNUMBER',
-	 'GENRE'   => 'GENRE',
 	 'YEAR'    => 'DATE',
-	 'COMMENT' => 'COMMENT'
 	 ) ;
     my @flac_tagging_cmd = ( 'metaflac' ) ;
     my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
@@ -1260,9 +1251,10 @@ sub flac_tagging_system_args {
 	     @flac_tagging_clear_option ,
 	     # apply new tags
 	     ( map {
-		 my $option = $field_name_metaflac_option{$_} ;
+		 my $flacname = $_ ;
+		 $flacname = $field_name_flac_translations{$_} if defined $field_name_flac_translations{$_} ;
 		 my @tags = get_tag_value_array $values, $_ ;
-		 map { ( "--set-tag", $option."=".$_ ) } @tags
+		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
 		 } @field_names
 	       ),
 	     # TODO: handle other fields
