@@ -538,20 +538,13 @@ sub get_tag_unique_value {
     return $array[0] ;
 }
 
-# return a sorted list of keys for defined values
-sub get_values_sorted_keys {
+# return non-regular keys whose value is defined
+sub get_values_non_regular_keys {
     my $values = shift ;
-    my @keys = keys %{$values} ;
-    my @sorted = () ;
-
-    for my $key (@field_names) {
-	if (grep { $_ eq $key } @keys) {
-	    push @sorted, $key ;
-	    @keys = grep { $_ ne $key } @keys ;
-	}
-    }
-
-    return (@sorted, @keys) ;
+    return grep {
+	my $key = $_ ;
+	!(grep { $_ eq $key } @field_names)
+    } (keys %{$values}) ;
 }
 
 #######################################################
@@ -1004,10 +997,11 @@ sub tags_confirm_fields {
 	if ($reply eq "" or $reply =~ /^y/i) {
 	    goto OK ;
 	} elsif ($reply eq "v") {
-	    foreach my $field (get_values_sorted_keys $values) {
+	    foreach my $field (@field_names) {
 		print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
 		    if defined $values->{$field} ;
 	    }
+	    # TODO: show other fields ? not possible until we edit existing tags
 	    goto ASK_CONFIRM ;
 	} elsif ($reply =~ /^a/i) {
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
@@ -1041,7 +1035,6 @@ sub tags_confirm_fields {
 		goto ASK_CONFIRM ;
 	    } else {
 		# print all fields, including the undefined ones
-		# TODO: handle other fields ?
 		foreach my $field (@field_names) {
 		    my $val = $edit_values->{$field} ;
 		    if (not defined $val) {
@@ -1055,6 +1048,7 @@ sub tags_confirm_fields {
 		    ." => Edit ".ucfirst($field).$field_name_trailing_spaces{$field}
 			." (=".$val.")\n" ;
 		}
+		# TODO: show other fields ? not possible until we edit existing tags
 		print "      E => End edition and process the file\n" ;
 		print "      C => Cancel edition\n" ;
 		goto ASK_EDIT ;
@@ -1200,8 +1194,9 @@ sub mp3_tagging_system_args {
 	     ( map {
 		 # only one tag is allowed, use the first one
 		 ( "-".$field_name_mp3info_option{$_} , (get_tag_unique_value $values, $_) )
-		 } (keys %{$values})
-	       )
+		 } @field_names
+	       ),
+	     # TODO: drop other fields
 	     ) ;
 }
 
@@ -1228,8 +1223,9 @@ sub ogg_tagging_system_args {
 		 my $option = $field_name_vorbiscomment_option{$_} ;
 		 my @tags = get_tag_value_array $values, $_ ;
 		 map { ( "-t" , $option."=".$_ ) } @tags
-		 } (get_values_sorted_keys $values)
+		 } @field_names
 	       ),
+	     # TODO: handle other fields
 	     ) ;
 }
 
@@ -1256,8 +1252,9 @@ sub flac_tagging_system_args {
 		 my $option = $field_name_metaflac_option{$_} ;
 		 my @tags = get_tag_value_array $values, $_ ;
 		 map { ( "--set-tag", $option."=".$_ ) } @tags
-		 } (get_values_sorted_keys $values)
+		 } @field_names
 	       ),
+	     # TODO: handle other fields
 	     ) ;
 }
 
@@ -1488,13 +1485,17 @@ if ($show_tags_opt) {
 
 	my $values = read_tags $file, $file_type ;
 
-	foreach my $field (get_values_sorted_keys $values) {
+	foreach my $field (@field_names) {
 	    next if not defined $values->{$field} ;
 	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
 	    $first = uc($first) ;
 	    next unless grep { /^all$/ } @fields_to_show
 		or grep { /^$first$remaining$/i } @fields_to_show ;
 	    map { print "  $first$remaining=$_\n" } (get_tag_value_array $values, $field) ;
+	}
+
+	foreach my $field (get_values_non_regular_keys $values) {
+	    map { print "  $field=$_\n" } (get_tag_value_array $values, $field) ;
 	}
     }
 
