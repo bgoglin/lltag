@@ -260,7 +260,9 @@ sub process_option {
 	$nopath_opt = $1 ;
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
         die "Unrecognized option line #$.: \"$_\"\n"
+	    # TODO: drop non-capitalized field name support on september 20 2006
 	    unless defined $field_name_letter{uc ($1)} ;
+	# TODO: drop filename support on september 20 2006
 	$field_default{uc ($1)} = $2 ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
 	$spaces_opt = $1 ;
@@ -679,7 +681,7 @@ sub read_internal_parsers {
 		$parser->{regexp} = $regexp ;
 		@{$parser->{field_table}} = @field_table ;
 		if ($type eq "basename" or $type eq "filename") {
-		    # TODO: drop filename support on september 11 2006
+		    # TODO: drop filename support on september 20 2006
 		    print "  Got basename format '$title'\n" if $verbose_opt ;
 		    push (@internal_basename_parsers, $parser) ;
 		} elsif ($type eq "path") {
@@ -695,7 +697,7 @@ sub read_internal_parsers {
 	} elsif (/^type = (.*)$/) {
 	    die "Unsupported format type '$1' at line $. in file '$file'\n"
 		if $1 ne "basename" and $1 ne "filename" and $1 ne "path" ;
-	    # TODO: drop filename support on september 11 2006
+	    # TODO: drop filename support on september 20 2006
 	    $type = $1 ;
 	} elsif (/^regexp = (.*)$/) {
 	    $regexp = $1 ;
@@ -742,7 +744,7 @@ sub read_internal_parsers {
 	$parser->{regexp} = $regexp ;
 	@{$parser->{field_table}} = @field_table ;
 	if ($type eq "basename" or $type eq "filename") {
-		    # TODO: drop filename support on september 11 2006
+		    # TODO: drop filename support on september 20 2006
 	    print "  Got basename format '$title'\n" if $verbose_opt ;
 	    push (@internal_basename_parsers, $parser) ;
 	} elsif ($type eq "path") {
@@ -1207,7 +1209,7 @@ sub mp3_tagging_system_args {
 		 ( "-".$field_name_mp3info_option{$_} , (get_tag_unique_value $values, $_) )
 		 } ( grep { defined $values->{$_} } @field_names )
 	       ),
-	     # TODO: drop other fields
+	     # TODO: drop other fields, say something ?
 	     ) ;
 }
 
