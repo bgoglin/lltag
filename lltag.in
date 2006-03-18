@@ -960,10 +960,24 @@ sub tags_confirm_fields {
     # prefer this type of tagging ?
     my $preferred = 0 ;
 
+    # are we only tagging default values ?
+    my $only_defaults = 0 ;
+    if (not defined $values) {
+	$values = () ;
+	$only_defaults = 1 ;
+    }
+
+    # add defaults
+    foreach my $field (@field_names) {
+	$values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
+    }
+
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "  Use this matching ".(tags_confirm_letters ($behaviors))." ? " ;
+	print "  ".
+	    ($only_defaults ? "Apply defaults" : "Use this matching")
+	    ." ".(tags_confirm_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
@@ -1076,11 +1090,6 @@ sub apply_parser {
 	    $i++ ;
 	}
 
-	# add defaults
-	foreach my $field (@field_names) {
-	    $values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
-	}
-
 	return tags_confirm_fields ($file, $file_type, $confirm, $behaviors, $values) ;
     } else {
 	return ($TAG_SKIP_PARSER, undef) ;
@@ -1136,9 +1145,9 @@ sub try_to_parse {
     if ($guess_opt or @user_parsers) {
 	print "  Didn't find any parser!\n" ;
     }
+
     # tag with default values only
-    my $default_values = { map { $_ => $field_default{$_}, } (keys %field_default) } ;
-    ($res, $values) = tags_confirm_fields $file, $file_type, 1, 0, $default_values ;
+    ($res, $values) = tags_confirm_fields $file, $file_type, 1, 0, undef ;
     die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
     return ($res, $values) ;
 }
