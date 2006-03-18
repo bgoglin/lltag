@@ -96,10 +96,11 @@ Set the default value of the \fIArtist\fR tag.
 
 .TP
 .BI "--append"
-Force appending of ogg/flac tags.
-See
-.B CLEARING, REPLACING OR APPENDING
-below for details.
+Force appending of ogg/flac tags
+(instead of replacing existing tags).
+
+Since mp3 files may only get one tag of each type, appending
+does nothing, the first occurence only is stored.
 
 .TP
 .B --ask
@@ -116,10 +117,8 @@ Set the default value of the \fIComment\fR tag.
 
 .TP
 .B --clear
-Force clearing of id3 tags of mp3 files or flac tags.
-See
-.B CLEARING, REPLACING OR APPENDING
-below for details.
+Force clearing of all tags before tagging
+(instead of replacing existing tags).
 
 .TP
 .BI --config " <file>"
@@ -207,6 +206,13 @@ This option might be used multiple times to specify multiple replacing.
 .TP
 .BI --rename " <format>"
 After tagging, rename the file according to the format.
+The format is filled using the first occurence of each tag that was
+used to tag the file right before.
+It means that an old existing tag may be used if no new one replaced
+it and
+.B --clear
+was not passed.
+
 By default, confirmation is asked before tagging.
 See
 .B RENAMING CONFIRMATION
@@ -324,32 +330,6 @@ to match anything and forget it.
 
 .I "%%"
 to match %.
-
-
-
-.SH CLEARING, REPLACING OR APPENDING
-Id3 tags of mp3 files are a set of 7 independent fields,
-while ogg/flac tags is a unique stream of one field per line.
-That is why mp3 tags may be changed independently while
-ogg/flac tags may be reset or appended.
-
-Thus, lltag clears ogg tag by default before setting the new ones,
-while it only replaces mp3 tags.
-
-lltag may either replace (by default), append or reset flac tags since
-.B metaflac
-is flexible enough to do so.
-
-If
-.B --clear
-is passed, all mp3/flac tags will be cleared first.
-This does not impact ogg tagging since it clears by default.
-
-If
-.B --append
-is passed, ogg/flac tags are appended to the existing ones.
-This does not impact mp3 tagging since appending is impossible
-(newly-defined existing tags are replaced, others are kept).
 
 
 

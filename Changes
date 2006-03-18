@@ -3,6 +3,11 @@
     + Rename using existing tags when the old filename is useless
       (requested by Fabien Wernli). In case of multiple occurence
       of a tag, the first is used.
+    + Suppport replacing, clearing, and appending well for all types:
+      - Replacing is now the default for all types.
+      - Appending is useless for mp3 since only one occurence
+        (the first one) may be stored in the file.
+      - Remove the CLEARING, REPLACING OR APPENDING manpage section.
   * Fix 'u' confirmation to try the current parser first for next files
     (was broken since 0.10).
   * 'basename' is now used instead of 'filename' for 'type' in the format
