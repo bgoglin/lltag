@@ -538,6 +538,22 @@ sub get_tag_unique_value {
     return $array[0] ;
 }
 
+# return a sorted list of keys for defined values
+sub get_values_sorted_keys {
+    my $values = shift ;
+    my @keys = keys %{$values} ;
+    my @sorted = () ;
+
+    for my $key (@field_names) {
+	if (grep { $_ eq $key } @keys) {
+	    push @sorted, $key ;
+	    @keys = grep { $_ ne $key } @keys ;
+	}
+    }
+
+    return (@sorted, @keys) ;
+}
+
 #######################################################
 # show existing tags if --show-tags was passed
 
@@ -988,7 +1004,7 @@ sub tags_confirm_fields {
 	if ($reply eq "" or $reply =~ /^y/i) {
 	    goto OK ;
 	} elsif ($reply eq "v") {
-	    foreach my $field (@field_names) {
+	    foreach my $field (get_values_sorted_keys $values) {
 		print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
 		    if defined $values->{$field} ;
 	    }
@@ -1024,7 +1040,7 @@ sub tags_confirm_fields {
 	    } elsif ($edit_reply eq "C") {
 		goto ASK_CONFIRM ;
 	    } else {
-		foreach my $field (@field_names) {
+		foreach my $field (get_values_sorted_keys $edit_values) {
 		    my $val = $edit_values->{$field} ;
 		    if (not defined $val) {
 			$val = "<not defined>" ;
@@ -1210,7 +1226,7 @@ sub ogg_tagging_system_args {
 		 my $option = $field_name_vorbiscomment_option{$_} ;
 		 my @tags = get_tag_value_array $values, $_ ;
 		 map { ( "-t" , $option."=".$_ ) } @tags
-		 } (keys %{$values}) # TODO: sort ?
+		 } (get_values_sorted_keys $values)
 	       ),
 	     ) ;
 }
@@ -1238,7 +1254,7 @@ sub flac_tagging_system_args {
 		 my $option = $field_name_metaflac_option{$_} ;
 		 my @tags = get_tag_value_array $values, $_ ;
 		 map { ( "--set-tag", $option."=".$_ ) } @tags
-		 } (keys %{$values}) # TODO: sort ?
+		 } (get_values_sorted_keys $values)
 	       ),
 	     ) ;
 }
@@ -1470,7 +1486,7 @@ if ($show_tags_opt) {
 
 	my $values = read_tags $file, $file_type ;
 
-	foreach my $field (@field_names) {
+	foreach my $field (get_values_sorted_keys $values) {
 	    next if not defined $values->{$field} ;
 	    my ($first, $remaining) = ($field =~ /^(.)(.*)$/) ;
 	    $first = uc($first) ;
