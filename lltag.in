@@ -1232,7 +1232,13 @@ sub ogg_tagging_system_args {
 		 map { ( "-t" , $oggname."=".$_ ) } @tags
 		 } @field_names
 	       ),
-	     # TODO: handle other fields
+	     # apply non-regular tags
+	     ( map {
+		 my $oggname = $_ ;
+		 my @tags = get_tag_value_array $values, $_ ;
+		 map { ( "-t" , $oggname."=".$_ ) } @tags
+		 } (get_values_non_regular_keys $values)
+	       ),
 	     ) ;
 }
 
@@ -1257,7 +1263,13 @@ sub flac_tagging_system_args {
 		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
 		 } @field_names
 	       ),
-	     # TODO: handle other fields
+	     # apply non-regular tags
+	     ( map {
+		 my $flacname = $_ ;
+		 my @tags = get_tag_value_array $values, $_ ;
+		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
+		 } (get_values_non_regular_keys $values)
+	       ),
 	     ) ;
 }
 
