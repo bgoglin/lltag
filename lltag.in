@@ -1040,7 +1040,9 @@ sub tags_confirm_fields {
 	    } elsif ($edit_reply eq "C") {
 		goto ASK_CONFIRM ;
 	    } else {
-		foreach my $field (get_values_sorted_keys $edit_values) {
+		# print all fields, including the undefined ones
+		# TODO: handle other fields ?
+		foreach my $field (@field_names) {
 		    my $val = $edit_values->{$field} ;
 		    if (not defined $val) {
 			$val = "<not defined>" ;
