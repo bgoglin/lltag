@@ -972,11 +972,16 @@ sub tags_confirm_fields {
 	$values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
     }
 
+    # is there something to do ?
+    my $nothing_to_do = (scalar (keys %{$values}) == 0) ;
+
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
 	print "  ".
-	    ($only_defaults ? "Apply defaults" : "Use this matching")
+	    ($nothing_to_do ? "Do not change any tag"
+	     : ($only_defaults ? "Apply defaults"
+		: "Use this matching"))
 	    ." ".(tags_confirm_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
