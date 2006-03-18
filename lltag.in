@@ -1218,7 +1218,7 @@ sub flac_tagging_system_args {
 
     return ( @flac_tagging_cmd ,
 	     # clear all tags
-	     @flac_tagging_clear_option : () ,
+	     @flac_tagging_clear_option ,
 	     # apply new tags
 	     ( map {
 		 my $option = $field_name_metaflac_option{$_} ;
