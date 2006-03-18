@@ -1286,6 +1286,7 @@ sub rename_with_tags {
     print "  Renaming with format '$rename_opt'...\n" ;
 
     foreach my $field (keys %{$values}) {
+	# use the first tag for renaming
 	my $val = get_tag_unique_value $values, $field ;
 	$val = lc ($val)
 	    if $rename_min_opt ;
