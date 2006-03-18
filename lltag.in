@@ -941,7 +941,7 @@ sub apply_user_parsers {
 
 sub tags_confirm_letters {
     my $behaviors = shift ;
-    my $string = "[Yv" ;
+    my $string = "[<y>v" ;
     $string .= "u" if $behaviors & $TAG_MAY_PREFER ;
     $string .= "ae" ;
     $string .= "n" if $behaviors & $TAG_MAY_SKIP_PARSER ;
@@ -1027,7 +1027,7 @@ sub tags_confirm_fields {
 	    my $edit_values = {} ;
 	    foreach (keys %{$values}) { $edit_values->{$_} = $values->{$_} } ;
 	  ASK_EDIT:
-	    print "    Edit a field [atAngycEC,(h)elp] ? " ;
+	    print "    Edit a field [atAngycEC,<h>elp] ? " ;
 	    my $edit_reply = <> ;
 	    chomp $edit_reply ;
 	    if ($edit_reply =~ /^($field_letters_union)$/) {
@@ -1378,7 +1378,7 @@ sub rename_with_tags {
     # confirm if required or if any field undefined
     if ($undefined or !$current_rename_yes_opt) {
       ASK_CONFIRM:
-	print "    Really rename the file [Yaen,(h)elp] ? " ;
+	print "    Really rename the file [<y>aen,(h)elp] ? " ;
 	my $reply = <> ;
 	chomp $reply ;
         if ($reply eq "" or $reply =~ /^y/i) {

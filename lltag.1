@@ -343,6 +343,7 @@ Available behaviors are:
 .I y
 .RS
 Tag current file with current format.
+This is the default reply (that is why \fI<y>\fR appears).
 .RE
 
 .I v
@@ -366,18 +367,7 @@ Then, never asking for a confirmation anymore.
 
 .I e
 .RS
-Edit current fields before tagging, including fields
-that are non matched by the format, and default values.
-Editing ends by tagging or canceling (return to confirmation menu).
-
-The behavior depends on the installed readline library.
-If it is smart, the current value may be edited inline and an
-history is available.
-If not, pressing
-.I <enter>
-will keep the current value while
-.I CLEAR
-will empty it.
+Edit current fields before tagging, see \fBEDITING TAGS\fR.
 .RE
 
 .I n
@@ -404,6 +394,30 @@ Show help about confirmation.
 .RE
 
 
+.SH EDITING TAGS
+
+It is possible to edit tags during matching confirmation.
+It includes fields that were matched by the format, default values
+and other fields.
+The current value of all regular fields is shown and may be modified
+or cleared.
+
+The behavior depends on the installed readline library.
+If it is smart, the current value may be edited inline and an
+history is available.
+If not, pressing
+.I <enter>
+will keep the current value while
+.I CLEAR
+will empty it.
+.RE
+
+Each field may be selected for edition by pressing its corresponding
+letter in the format (see \fBFORMAT\fR).
+Editing ends by tagging (if \fIE\fR is pressed)
+or canceling and return to confirmation menu (if \fIC\fR is pressed).
+
+
 
 .SH RENAMING CONFIRMATION
 By default, before renaming, a confirmation is asked to the user.
@@ -419,6 +433,7 @@ Available behaviors when renaming are:
 .I y
 .RS
 Rename current file with current new filename.
+This is the default reply (that is why \fI<y>\fR appears).
 .RE
 
 .I a
