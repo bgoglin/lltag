@@ -1,3 +1,38 @@
+lltag (0.11)
+
+  * Always read existing tags first, allowing to:
+    + Rename using existing tags when the old filename is useless
+      (requested by Fabien Wernli). In case of multiple occurence of a tag,
+      the first one is used.
+    + Suppport replacing, clearing, and appending well for all types:
+      - Replacing is now the default for all types.
+      - Appending is useless for mp3 since only one occurence (the first one)
+        may be stored in the file.
+      - Remove the CLEARING, REPLACING OR APPENDING manpage section.
+  * Add --tag for additional tags, and warn when not storable in in mp3 files.
+  * Now use %d, -d and DATE instead of %y, -y and YEAR since ogg/flac tags
+    are dates.
+  * Use %i instead of %d to ignore some text when matching.
+  * Fix 'u' confirmation to try the current parser first for next files
+    (was broken since 0.10).
+  * 'basename' is now used instead of 'filename' for 'type' in the format
+    file, 'filename' is still supported for now.
+  * Do not rename if the new name already exists.
+  * Fix reading/tagging the date of ogg/flac files.
+  * Use all-capitals tag names to match ogg/flac.
+    + default_<non-capitalized-name> option is still supported in the config
+      for now.
+  * The indices in the format file may now be full field names instead of
+    letters.
+  * Print the default letter in <> instead of capital when confirming/editing.
+  * Add EDITING TAGS in the manpage.
+  * Add configuration options for the config file in the manpage.
+  * Fix quoting of the command-line in --dry-run.
+  * Large rework of the internal structures.
+  * Major cleanup of the manpage.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sat, 19 Mar 2006 23:56:00 -0500
+
 lltag (0.10)
 
   * Use Readline library to make tag editing easier if the installed
@@ -6,7 +41,7 @@ lltag (0.10)
   * Added -S ans --show-tags to only show file tags instead of tagging
     (requested by Stephane Gimenez in Gna! bug #4601).
   * Add --regexp and --rename-regexp for basic regexp-replacing in tags
-    (requested by Jonathan Worth Washington).
+    (requested by Jonathan Worth Washington, Gna! bug #4604).
   * When renaming with a undefined track number, initialize it to 0.
   * When renaming with a track number, make it at least 2 digits
     (reported by Emmanuel Jeandel).
@@ -16,7 +51,7 @@ lltag (0.10)
     about matching instead of tagging. It avoids getting messages about
     tagging while --no-tagging was passed (requested by Stephane Gimenez).
   * Use ' instead of # to show spaces between command line argument
-    with --dry-run (request by Emmanuel Jeandel).
+    with --dry-run (requested by Emmanuel Jeandel).
   * Allow to pass ()[] characters in the matching format without having
     to escape them.
   * Allow all %x in the renaming format when x is not a field letter.

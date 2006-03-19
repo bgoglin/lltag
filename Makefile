@@ -20,6 +20,7 @@ DEBIAN_TARBALL	=	$(NAME)_$(VERSION).orig
 
 lltag::
 	sed -e 's!@SYSCONFDIR@!$(DESTDIR)$(SYSCONFDIR)!g' -e 's!@VERSION@!$(DESTDIR)$(VERSION)!g' < lltag.in > lltag
+	chmod 755 lltag
 
 clean::
 	rm -f lltag

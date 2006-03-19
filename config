@@ -6,20 +6,24 @@
 # Add a user-defined format.
 # format = ""
 
-# Try to guess if user-defined format do not match.
+# Try to guess if user-defined formats do not match.
 # guess = 0
 
 # Do not use file path when matching filename.
 # nopath = 0
 
 # Default field values.
-# default_artist = ""
-# default_title = ""
-# default_album = ""
-# default_number = ""
-# default_genre = ""
-# default_year = ""
-# default_comment = ""
+# default_ARTIST = ""
+# default_TITLE = ""
+# default_ALBUM = ""
+# default_NUMBER = ""
+# default_GENRE = ""
+# default_DATE = ""
+# default_COMMENT = ""
+
+# Additional tag.
+# Might be used multiple times.
+# tag = "TAG=value"
 
 # Allow no or multiple spaces.
 # spaces = 0
@@ -38,10 +42,10 @@
 # Force mp3, ogg of flac instead of by-extension detection.
 # type = <mp3|ogg|flac|none>
 
-# Clear all tags of audio files when possible.
+# Clear all tags of audio files.
 # clear_tags = 0
 
-# Append tags only instead of replacing old ones when possible.
+# Append tags only instead of replacing old ones.
 # append_tags = 0
 
 # Do not actually tag files.
@@ -67,8 +71,8 @@
 # Do nothing but show what would have been done.
 # dry_run = 0
 
-# Tag without asking for confirmation when guessing.
-# Rename without asking for confirmation
+# Tag without asking for confirmation when guessing
+# and rename without asking for confirmation.
 # yes = 0
 
 # Always ask for confirmation before tagging.

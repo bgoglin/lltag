@@ -79,12 +79,49 @@ if ($term->Features->{preput}) {
 
 #######################################################
 # format parameters
-# (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year)
-my @field_name = ('artist', 'title', 'album', 'number', 'genre', 'year', 'comment') ;
-my @field_trailing_spaces = (' ', '  ', '  ', ' ', '  ', '   ', '') ;
-my @field_letter = ('a', 't', 'A', 'n', 'g', 'y', 'c') ;
-my @field_default = (undef, undef, undef, undef, undef, undef, undef) ;
-my $fields = $#field_name + 1 ;
+
+my @field_names = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+my @field_letters = ('a', 't', 'A', 'n', 'g', 'd', 'c') ;
+
+my $ignore_letter = 'i' ;
+my $ignore_name = 'IGNORE' ;
+
+my %field_name_letter =
+    (
+     'ARTIST'  => 'a',
+     'TITLE'   => 't',
+     'ALBUM'   => 'A',
+     'NUMBER'  => 'n',
+     'GENRE'   => 'g',
+     'DATE'    => 'd',
+     'COMMENT' => 'c',
+     ) ;
+
+my %field_name_trailing_spaces =
+    (
+     'ARTIST' => '  ',
+     'TITLE' => '   ',
+     'ALBUM' => '   ',
+     'NUMBER' => '  ',
+     'GENRE' => '   ',
+     'DATE' => '    ',
+     'COMMENT' => ' ',
+     ) ;
+
+my %field_default = () ;
+
+my %additional_values = () ;
+
+my %field_letter_name =
+    (
+     'a' => 'ARTIST',
+     't' => 'TITLE',
+     'A' => 'ALBUM',
+     'n' => 'NUMBER',
+     'g' => 'GENRE',
+     'd' => 'DATE',
+     'c' => 'COMMENT',
+     ) ;
 
 #######################################################
 # version
@@ -104,9 +141,9 @@ sub usage {
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -p, --nopath           Remove the path from filenames when matching\n" ;
-    print map { "  -".$field_letter[$_].", --".$field_name[$_].$field_trailing_spaces[$_]
-		    ." <val>    Set the default value for "
-		    .ucfirst($field_name[$_])."\n" } ( 0 .. $fields-1 ) ;
+    print map { "  -". $field_name_letter{$_} .", --". $_.$field_name_trailing_spaces{$_}
+		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @field_names ;
+    print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
@@ -137,8 +174,8 @@ sub usage {
     print "  -V, --version          Show lltag version\n" ;
     print "  -h, --help             Show this help\n" ;
     print " Format is composed of anything you want with special fields:\n" ;
-    print map { "  %".$field_letter[$_]." means ".ucfirst($field_name[$_])."\n" } ( 0 .. $fields-1 ) ;
-    print "  %d means Dummy text\n" ;
+    print map { "  %". $field_name_letter{$_} ." means ". ucfirst($_) ."\n" } @field_names ;
+    print "  %$ignore_letter means that the text has to be ignored\n" ;
     print "  %% means %\n" ;
     print "\n" ;
     print "Author:    Brice Goglin\n" ;
@@ -175,6 +212,8 @@ my $list_formats_opt = 0 ;
 my $show_tags_opt = "" ;
 my $no_tagging_opt = 0 ;
 
+my @additional_tags = () ;
+
 my $ask_opt = 0 ;
 my $guess_opt = 0 ;
 my $nopath_opt = 0 ;
@@ -201,7 +240,7 @@ my $flac_ext = "flac" ;
 my $gencfg_file = undef ;
 
 # parsers
-my @format_strings = () ;
+my @user_format_strings = () ;
 
 #######################################################
 # parse config files first
@@ -221,17 +260,19 @@ sub process_option {
     $_ = shift ;
     chomp $_ ;
     if (/^format\s*=\s*"(.+)"$/) {
-	push (@format_strings, $1) ;
+	push (@user_format_strings, $1) ;
     } elsif (/^guess\s*=\s*(.+)$/) {
 	$guess_opt = $1 ;
     } elsif (/^nopath\s*=\s*(.+)$/) {
 	$nopath_opt = $1 ;
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
-	my @indices = grep { $field_name[$_] eq $1 } ( 0 .. $fields-1 ) ;
         die "Unrecognized option line #$.: \"$_\"\n"
-	    if ! @indices ;
-	my $indice = $indices[0] ;
-	$field_default[$indice]	= $2 ;
+	    # TODO: drop non-capitalized field name support on september 20 2006
+	    unless defined $field_name_letter{uc ($1)} ;
+	# TODO: drop filename support on september 20 2006
+	$field_default{uc ($1)} = $2 ;
+    } elsif (/^tag\s*=\s*"(.+)"$/) {
+	push @additional_tags, $1 ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
 	$spaces_opt = $1 ;
     } elsif (/^maj\s*=\s*(.+)$/) {
@@ -318,7 +359,7 @@ foreach my $file (@additional_config_files) {
 
 # parse options
 GetOptions(
-	   'F|format=s'   => \@format_strings,
+	   'F|format=s'   => \@user_format_strings,
 	   'G|guess'      => \$guess_opt,
 	   'p|nopath'     => \$nopath_opt,
 	   'spaces'       => \$spaces_opt,
@@ -347,9 +388,11 @@ GetOptions(
 	   'L|list'       => \$list_formats_opt,
 	   'show-tags=s'  => \$show_tags_opt,
 	   'S'            => sub { $show_tags_opt = "all" ; },
-	   map { my $i = $_; $field_letter[$i].'|'.$field_name[$i].'=s'
-		=> sub { shift ; $field_default[$i] = shift ; $default_opt = 1 ; },
-	  	} ( 0 .. $fields-1 )
+	   'tag=s'        => \@additional_tags,
+	   map { my $field = $_ ;
+		 $field_name_letter{$field} .'|'. $field .'=s'
+		     => sub { shift ; $field_default{$field} = shift ; $default_opt = 1 ; },
+	       } @field_names ,
 	   ) or usage () ;
 
 # yes/ask option status may vary with user confirmation replies
@@ -363,7 +406,10 @@ my $current_rename_yes_opt = $yes_opt ;
 $match_limit = $match_space = $match_spaces if $spaces_opt ;
 
 # if no parsers and no guess, force guess
-$guess_opt = 1 unless @format_strings or $default_opt or $list_formats_opt ;
+$guess_opt = 1 unless @user_format_strings or $default_opt or $list_formats_opt ;
+
+# forward declarations
+sub apply_parser ;
 
 #######################################################
 # Tagging return values
@@ -416,29 +462,110 @@ sub system_with_output {
 }
 
 #######################################################
-# files to process
+# extract file type and parsename
 
-# process remaining command-line arguments as files
+sub extract_parsename_and_type {
+    my $file = shift ;
 
-my @files = () ;
-while ( @ARGV ) {
-    if ($recursive_opt) {
-	my $dir = shift @ARGV ;
-	open FIND, "find \"$dir\" |" ;
-	my @dirfiles = <FIND> ;
-	close FIND ;
-	foreach my $file (@dirfiles) {
-	    chomp $file ;
-	    if (-f $file) {
-		push (@files, $file) ;
-	    }
+    # split into parsename and extension, and remove the path if asked
+    my @parts = split (/\./, $file) ;
+    my $extension = pop @parts ;
+    my $parsename = join (".", @parts) ;
+    if ($nopath_opt) {
+	my @parts = split (/\//, $parsename) ;
+	$parsename = pop @parts ;
+    }
+
+    my $file_type = $type_opt ;
+    if (not defined $type_opt) {
+    # if not forced, get the type from the extension
+	if ($extension =~ /$mp3_ext/i) {
+	    $file_type = $mp3_type ;
+	} elsif ($extension =~ /$ogg_ext/i) {
+	    $file_type = $ogg_type ;
+	} elsif ($extension =~ /$flac_ext/i) {
+	    $file_type = $flac_type ;
 	}
+    }
+
+    return ($parsename, $file_type) ;
+}
+
+#######################################################
+# handle hashes of tags
+
+# add a value to a field, creating an array if required
+sub append_tag_value {
+    my $values = shift ;
+    my $field = shift ;
+    my $value = shift ;
+    if (not defined $values->{$field}) {
+	$values->{$field} = $value ;
+    } elsif (ref($values->{$field}) ne 'ARRAY') {
+	@{$values->{$field}} = ($values->{$field}, $value) ;
     } else {
-	my $file = shift @ARGV ;
-	if (-f $file) {
-	    push (@files, $file) ;
+	push @{$values->{$field}}, $value ;
+    }
+}
+
+# append a set of unique values into and old hashes, depending of clear/append options
+sub append_tag_values {
+    my $old_values = shift ;
+    my $new_values = shift ;
+
+    if ($clear_opt) {
+	$old_values = () ;
+    }
+
+    foreach my $field (keys %{$new_values}) {
+	$old_values->{$field} = undef
+	    if defined $old_values->{$field} and !$append_opt ;
+	append_tag_value $old_values, $field, $new_values->{$field} ;
+    }
+
+    return $old_values ;
+}
+
+
+# return values for a field as an array
+sub get_tag_value_array {
+    my $values = shift ;
+    my $field = shift ;
+    if (not defined $values->{$field}) {
+	return () ;
+    } elsif (ref ($values->{$field}) eq 'ARRAY') {
+	return @{$values->{$field}} ;
+    } else {
+	return ($values->{$field}) ;
+    }
+}
+
+# return a unique value for a field
+sub get_tag_unique_value {
+    my $values = shift ;
+    my $field = shift ;
+    my @array = get_tag_value_array $values, $field ;
+    die "Trying to return a unique tag value on an empty array.\n"
+	if ! @array ;
+    return $array[0] ;
+}
+
+# return non-regular keys whose value is defined
+sub get_values_non_regular_keys {
+    my $values = shift ;
+    return grep {
+	my $key = $_ ;
+	!(grep { $_ eq $key } @field_names)
+    } (keys %{$values}) ;
+}
+
+# handle additional tags
+sub get_additional_tag_values {
+    foreach my $string (@additional_tags) {
+	if ($string =~ /^([^=]+)=(.*)$/) {
+	    append_tag_value \%additional_values, $1, $2 ;
 	} else {
-	    print "Skipping the non-file '$file'\n" ;
+	    die "Additional tags must be given as 'TAG=value'.\n" ;
 	}
     }
 }
@@ -446,91 +573,73 @@ while ( @ARGV ) {
 #######################################################
 # show existing tags if --show-tags was passed
 
-sub mp3_show_tags {
-    my $filename = shift ;
+sub mp3_read_tags {
+    my $file = shift ;
     my ($status, @output) = system_with_output
-	("mp3info", "-p", "Artist=%a\nAlbum=%l\nTitle=%t\nNumber=%n\nGenre=%g\nYear=%y\nComment=%c\n", $filename) ;
+	("mp3info", "-p", "ARTIST=%a\nALBUM=%l\nTITLE=%t\nNUMBER=%n\nGENRE=%g\nDATE=%y\nCOMMENT=%c\n", $file) ;
     return ($status)
 	if $status ;
     return ($status, @output) ;
 }
 
-sub ogg_show_tags {
-    my $filename = shift ;
+sub ogg_read_tags {
+    my $file = shift ;
     my ($status, @output) = system_with_output
-	("vorbiscomment", "-l", $filename) ;
+	("vorbiscomment", "-l", $file) ;
     return ($status)
 	if $status ;
+    @output = map {
+	my $line = $_ ;
+	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
+	$line
+	} @output ;
     return ($status, @output) ;
 }
 
-sub flac_show_tags {
-    my $filename = shift ;
+sub flac_read_tags {
+    my $file = shift ;
     my ($status, @output) = system_with_output
-	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $filename) ;
+	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $file) ;
     return ($status)
 	if $status ;
-    @output = map { my $line =$_ ; $line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ; $line } ( grep { /comment\[\d+\]/ } @output ) ;
+    @output = map {
+	my $line = $_ ;
+	$line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ;
+	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
+	$line
+	} ( grep { /comment\[\d+\]/ } @output ) ;
     return ($status, @output) ;
 }
 
-if ($show_tags_opt) {
-    my @fields_to_show = split (/,/, $show_tags_opt) ;
-    foreach my $filename (@files) {
-	# split into filename and extension
-	my @parts = split (/\./, $filename) ;
-	my $extension = pop @parts ;
+sub read_tags {
+    my $file = shift ;
+    my $file_type = shift ;
 
-	print "$filename:\n"
-	    if @files ;
-
-	# find out file type
-	my $tag_type = $type_opt ;
-	if (not defined $tag_type) {
-	    # use the extension to find the type
-	    if ($extension =~ /$mp3_ext/i) {
-		$tag_type = $mp3_type ;
-	    } elsif ($extension =~ /$ogg_ext/i) {
-		$tag_type = $ogg_type ;
-	    } elsif ($extension =~ /$flac_ext/i) {
-		$tag_type = $flac_type ;
-	    } else {
-		print "  Skipping this unknown-type file.\n" ;
-		next ;
-	    }
-	}
-
-	# get the tags
-	my $status ;
-	my @output ;
-	if ($tag_type eq $mp3_type) {
-	    ($status, @output) = mp3_show_tags $filename ;
-	} elsif ($tag_type eq $ogg_type) {
-	    ($status, @output) = ogg_show_tags $filename ;
-	} elsif ($tag_type eq $flac_type) {
-	    ($status, @output) = flac_show_tags $filename ;
-	}
-	if ($status) {
-	    print "  Failed to get tags from file.\n" ;
-	    next ;
-	}
-
-	my @lines = () ;
-	while (my $line = shift @output) {
-	    chomp $line ;
-	    $line =~ s/^tracknumber=/number=/i ;
-	    my ($first, $remaining, $value) = ($line =~ /(.)(.*)=(.*)/) ;
-	    next if !$value ;
-	    $first = uc($first) ;
-	    $remaining = lc($remaining) ;
-	    next unless grep { /^all$/ } @fields_to_show
-		or grep { /^$first$remaining$/i } @fields_to_show ;
-	    push (@lines, "$first$remaining=$value") ;
-	}
-
-	map { print "  $_\n" } @lines ;
+    # extract tags as a stream
+    my $status ;
+    my @output ;
+    if ($file_type eq $mp3_type) {
+	($status, @output) = mp3_read_tags $file ;
+    } elsif ($file_type eq $ogg_type) {
+	($status, @output) = ogg_read_tags $file ;
+    } elsif ($file_type eq $flac_type) {
+	($status, @output) = flac_read_tags $file ;
     }
-    exit 0 ;
+    if ($status) {
+	print "  Failed to get tags from file.\n" ;
+	next ;
+    }
+
+    # extract tags from the stream
+    my $values = {} ;
+    while (my $line = shift @output) {
+	chomp $line ;
+	my ($field, $value) = ($line =~ /^(.*)=(.*)$/) ;
+	next if !$value ;
+	append_tag_value $values, $field, $value ;
+    }
+
+    return $values ;
 }
 
 #######################################################
@@ -559,10 +668,10 @@ sub apply_regexp_to_tag {
 #######################################################
 # internal parsers
 
-my @internal_filename_parsers = () ;
+my @internal_basename_parsers = () ;
 my @internal_path_parsers = () ;
 
-if ($guess_opt or $list_formats_opt) {
+sub read_internal_parsers {
     # get parsers from configuration files
     my $file ;
     if (open FORMAT, "$user_lltag_dir/$lltag_format_filename") {
@@ -578,37 +687,36 @@ if ($guess_opt or $list_formats_opt) {
     my $type = undef ;
     my $title = undef ;
     my $regexp = undef ;
-    my @indice_table = () ;
+    my @field_table = () ;
 
     while (<FORMAT>) {
 	chomp $_ ;
 	next if /^#/ ;
 	next if /^$/ ;
 	if (/^\[(.*)\]$/) {
-	    if ($type and $title and $regexp and @indice_table) {
+	    if ($type and $title and $regexp and @field_table) {
 		my $parser ;
 		$parser->{title} = $title ;
 		$parser->{regexp} = $regexp ;
-		$parser->{indices} = @indice_table ;
-		for(my $i = 0; $i < @indice_table; $i++) {
-		    $parser->{$i} = $indice_table[$i] ;
-		}
-		if ($type eq "filename") {
-		    print "  Got filename format '$title'\n" if $verbose_opt ;
-		    push (@internal_filename_parsers, $parser) ;
+		@{$parser->{field_table}} = @field_table ;
+		if ($type eq "basename" or $type eq "filename") {
+		    # TODO: drop filename support on september 20 2006
+		    print "  Got basename format '$title'\n" if $verbose_opt ;
+		    push (@internal_basename_parsers, $parser) ;
 		} elsif ($type eq "path") {
 		    print "  Got path format '$title'\n" if $verbose_opt ;
 		    push (@internal_path_parsers, $parser) ;
 		}
-	    } elsif ($type or $title or $regexp or @indice_table) {
+	    } elsif ($type or $title or $regexp or @field_table) {
 		die "Incomplete format at line $. in file '$file'\n" ;
 	    }
-	    $type = undef ; $regexp = undef ; @indice_table = () ;
+	    $type = undef ; $regexp = undef ; @field_table = () ;
 	    $title = $1 ;
 	    # stocker la ligne ?
 	} elsif (/^type = (.*)$/) {
 	    die "Unsupported format type '$1' at line $. in file '$file'\n"
-		if $1 ne "filename" and $1 ne "path" ;
+		if $1 ne "basename" and $1 ne "filename" and $1 ne "path" ;
+	    # TODO: drop filename support on september 20 2006
 	    $type = $1 ;
 	} elsif (/^regexp = (.*)$/) {
 	    $regexp = $1 ;
@@ -632,16 +740,21 @@ if ($guess_opt or $list_formats_opt) {
 		}
 	    }
 	} elsif (/^indices = (.*)$/) {
-	    @indice_table = split (/,/, $1) ;
-	    for(my $i = 0; $i < @indice_table; $i++) {
-		my $indice = ( grep { $field_letter[$_] eq $indice_table[$i] } ( 0 .. $fields-1 ) ) [0] ;
-		if (not defined $indice) {
-		    die "Unrecognized field letter '$indice_table[$i]' on line $. in file '$file'\n"
-			if $indice_table[$i] ne 'd' ;
-		    $indice = -1 ;
+	    @field_table = map {
+		my $field ;
+		if (defined $field_name_letter{$_} or $_ eq $ignore_name) {
+		    # full field name, keep as it is
+		    $field = $_
+		} elsif (defined $field_letter_name{$_}) {
+		    # field letter
+		    $field = $field_letter_name{$_} ;
+		} elsif ($_ eq $ignore_letter) {
+		    # ignore letter
+		    $field = $ignore_name ;
+		} else {
+		    die "Unrecognized field '$_' on line $. in file '$file'\n" ;
 		}
-		$indice_table[$i] = $indice ;
-	    }
+		$field } split (/,/, $1) ;
 	} else {
 	    die "Unrecognized line $. in file '$file': '$_'\n" ;
 	}
@@ -649,128 +762,95 @@ if ($guess_opt or $list_formats_opt) {
     close FORMAT ;
 
     # save the last format
-    if ($type and $title and $regexp and @indice_table) {
+    if ($type and $title and $regexp and @field_table) {
 	my $parser ;
 	$parser->{title} = $title ;
 	$parser->{regexp} = $regexp ;
-	$parser->{indices} = @indice_table ;
-	for(my $i = 0; $i < @indice_table; $i++) {
-	    $parser->{$i} = $indice_table[$i] ;
-	}
-	if ($type eq "filename") {
-	    print "  Got filename format '$title'\n" if $verbose_opt ;
-	    push (@internal_filename_parsers, $parser) ;
+	@{$parser->{field_table}} = @field_table ;
+	if ($type eq "basename" or $type eq "filename") {
+		    # TODO: drop filename support on september 20 2006
+	    print "  Got basename format '$title'\n" if $verbose_opt ;
+	    push (@internal_basename_parsers, $parser) ;
 	} elsif ($type eq "path") {
 	    print "  Got path format '$title'\n" if $verbose_opt ;
 	    push (@internal_path_parsers, $parser) ;
 	}
-    } elsif ($type or $title or $regexp or @indice_table) {
+    } elsif ($type or $title or $regexp or @field_table) {
 	die "Incomplete format at line $. in file '$file'\n" ;
     }
   NO_FORMATS_FILE_FOUND:
 }
 
-# if -L was passed, show formats and exit
-if ($list_formats_opt) {
-    print "Listing internal parsers:\n" ;
-    foreach my $path_parser (@internal_path_parsers) {
-	foreach my $filename_parser (@internal_filename_parsers) {
-	    print "  $path_parser->{title}/$filename_parser->{title}\n" ;
+sub apply_internal_basename_parsers {
+    my $file = shift ;
+    my $parsename = shift ;
+    my $file_type = shift ;
+
+    # no path, only try each basename parser
+    foreach my $basename_parser (@internal_basename_parsers) {
+	# try to tag, with confirmation
+	my ($res, $values) = apply_parser $file, $parsename, $file_type, $basename_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
+	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
+	    if ($res == $TAG_SUCCESS_PREFERRED) {
+		$preferred_parser = $basename_parser ;
+	    }
+	    return ($res, $values) ;
 	}
+	# try next parser
+	die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
     }
-    exit 0 ;
+    return ($TAG_NO_MATCH, undef) ;
 }
 
-#######################################################
-# merge path and filename internal parsers
-sub merge_internal_parsers
-{
+sub merge_internal_parsers {
     my $path_parser = shift ;
-    my $filename_parser = shift ;
+    my $basename_parser = shift ;
     my $parser ;
-    $parser->{title} = "$path_parser->{title}/$filename_parser->{title}" ;
-    $parser->{regexp} = "$path_parser->{regexp}/$filename_parser->{regexp}" ;
-    $parser->{indices} = $path_parser->{indices} + $filename_parser->{indices} ;
-    for(my $i=0; $i < $path_parser->{indices}; $i++) {
-	$parser->{$i} = $path_parser->{$i} ;
-    }
-    for(my $i=0; $i < $filename_parser->{indices}; $i++) {
-	$parser->{$i+$path_parser->{indices}} = $filename_parser->{$i} ;
-    }
+    $parser->{title} = "$path_parser->{title}/$basename_parser->{title}" ;
+    $parser->{regexp} = "$path_parser->{regexp}/$basename_parser->{regexp}" ;
+    @{$parser->{field_table}} = (@{$path_parser->{field_table}}, @{$basename_parser->{field_table}}) ;
     return $parser ;
 }
 
-# parse
-sub parse_file_with_internal_parsers
-{
+sub apply_internal_path_basename_parsers {
     my $file = shift ;
-    my $filename = shift ;
-    my $tag_type = shift ;
+    my $parsename = shift ;
+    my $file_type = shift ;
 
-    print "  with internal formats...\n" ;
-
-    # split into path and parts if possible
-    my @parts = split (/\//, $filename) ;
-    $filename = pop @parts ;
-
-    if (!$nopath_opt and @parts) {
-	# try each path parser and each filename parser
-	my $path = join ("/", @parts) ;
-	foreach my $path_parser (@internal_path_parsers) {
-	    if ($path =~ /^$path_parser->{regexp}$/) {
-		foreach my $filename_parser (@internal_filename_parsers) {
-		    # match the whole path+filename to get a clean @_ for tag_with_parser
-		    if ("$path/$filename" =~ m/^$path_parser->{regexp}\/$filename_parser->{regexp}$/) {
-			print "    '$path_parser->{title}/$filename_parser->{title}' matches this file\n" ;
-			my $whole_parser = merge_internal_parsers ($path_parser, $filename_parser) ;
-			# try to tag, with confirmation
-			my $res = match_fields_with_parser ($file, $tag_type, $whole_parser,
-							    1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER, @_) ;
-			if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
-			    if ($res == $TAG_SUCCESS_PREFERRED) {
-				$preferred_parser = $whole_parser ;
-			    }
-			    return $res ;
-			}
-			# try next path parser if asked
-			if ($res == $TAG_SKIP_PATH_PARSER) {
-			    goto NEXT_PATH_PARSER;
-			}
-			# try next parser
-			die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
-		    }
-		}
-	    }
-	  NEXT_PATH_PARSER:
-	}
-    } else {
-	# no path, only try each filename parser
-	foreach my $filename_parser (@internal_filename_parsers) {
-	    if ($filename =~ /^$filename_parser->{regexp}$/) {
-		print "    '$filename_parser->{title}' matches this file\n" ;
+    # try each path parser and each basename parser
+    foreach my $path_parser (@internal_path_parsers) {
+	if ($parsename =~ /^$path_parser->{regexp}\/[^\/]+$/) {
+	    foreach my $basename_parser (@internal_basename_parsers) {
+		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
-		my $res = match_fields_with_parser ($file, $tag_type, $filename_parser,
-						    1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
+		my ($res, $values) = apply_parser $file, $parsename, $file_type, $whole_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER ;
 		if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
 		    if ($res == $TAG_SUCCESS_PREFERRED) {
-			$preferred_parser = $filename_parser ;
+			$preferred_parser = $whole_parser ;
 		    }
-		    return $res ;
+		    return ($res, $values) ;
 		}
+		# try next path parser if asked
+		goto NEXT_PATH_PARSER
+		    if $res == $TAG_SKIP_PATH_PARSER ;
+
 		# try next parser
 		die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
 	    }
 	}
+      NEXT_PATH_PARSER:
     }
-    # no parser was found or used
-    return $TAG_NO_MATCH ;
+    return ($TAG_NO_MATCH, undef) ;
 }
 
 #######################################################
 # user parsers
 
+# list of user-provided parsers
+my @user_parsers ;
+
 # change format names into a parsing string
-my $field_letters = (join '|', @field_letter) ;
+my $field_letters_union = (join '|', @field_letters) ;
 
 # change a format strings into usable infos
 sub generate_user_parser {
@@ -788,7 +868,7 @@ sub generate_user_parser {
 
     # create the regexp and store indice fields
     my @array = split(//, $format_string) ;
-    my $j = 0 ;
+    my @field_table = () ;
     for(my $i = 0; $i < @array - 1; $i++) {
 
 	my $char = $array[$i] ;
@@ -819,20 +899,19 @@ sub generate_user_parser {
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$field_letters|d/) {
+	} elsif ($array[$i] =~ /$field_letters_union|$ignore_letter/) {
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
 	}
 	# store the indice
-	if ($char eq "d") {
-	    $parser->{$j} = -1 ;
+	if ($char eq $ignore_letter) {
+	    push @field_table, $ignore_name ;
 	} else {
-	    my @indices = grep { $char eq $field_letter[$_] } ( 0 .. $fields-1 ) ;
-	    $parser->{$j} = $indices[0] ;
+	    push @field_table, $field_letter_name{$char} ;
 	}
-	$j++ ;
     }
+    @{$parser->{field_table}} = @field_table ;
 
     # done
     if ($spaces_opt) {
@@ -840,7 +919,6 @@ sub generate_user_parser {
     } else {
 	$parser->{regexp} = join("", @array) ;
     }
-    $parser->{indices} = $j ;
 
     # check insolvable regexp
     for(my $i = 0; $i < @array - 1; $i++) {
@@ -856,130 +934,44 @@ sub generate_user_parser {
 
     if ($verbose_opt) {
 	print "  Format string will parse with: ". $parser->{regexp} ."\n" ;
-	print "    Fields are: ". (join ';',
-				 map ( $parser->{$_} ."(".
-				       ( $parser->{$_} == -1 ? "d" : $field_letter[$parser->{$_}] )
-				       .")" , (0..$j-1) )
-				 )."\n" ;
+	print "    Fields are: ". (join ',', @field_table) ."\n" ;
     }
 
     return $parser ;
 }
 
-# user parsers
-my @parsers = map ( generate_user_parser ($_), @format_strings ) ;
+sub generate_user_parsers {
+    @user_parsers = map ( generate_user_parser ($_), @user_format_strings ) ;
+}
 
-sub parse_file_with_user_parsers
-{
+sub apply_user_parsers {
     my $file = shift ;
-    my $filename = shift ;
-    my $tag_type = shift ;
+    my $parsename = shift ;
+    my $file_type = shift ;
 
     # try each format until one works
-    foreach my $parser (@parsers) {
-	print "  with format '". $parser->{title} ."'... " ;
-
-	if ($filename =~ /^$parser->{regexp}$/) {
-	    print "\n" ;
-	    # try to tag, without confirmation
-	    my $res = match_fields_with_parser ($file, $tag_type, $parser, 0,
-						$TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER, @_) ;
-	    if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
-		if ($res == $TAG_SUCCESS_PREFERRED) {
-		    $preferred_parser = $parser ;
-		}
-		return $res ;
+    foreach my $parser (@user_parsers) {
+	# try to tag, without confirmation
+	my ($res, $values) = apply_parser $file, $parsename, $file_type, $parser, 0, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
+	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
+	    if ($res == $TAG_SUCCESS_PREFERRED) {
+		$preferred_parser = $parser ;
 	    }
-	    # try next parser
-	    die "Unknown tag return value: $res.\n" if $res != $TAG_SKIP_PARSER ;
-
-	} else {
-	    print "Does not match.\n" ;
+	    return ($res, $values) ;
 	}
+	print "    '". $parser->{title} ."' does not match.\n" ;
+	# try next parser
+	die "Unknown tag return value: $res.\n" if $res != $TAG_SKIP_PARSER ;
     }
-    return $TAG_NO_MATCH ;
+    return ($TAG_NO_MATCH, undef) ;
 }
 
 #######################################################
-# process files
+# parsing confirmation
 
-while ( @files ) {
-    my $file = shift @files ;
-    my $res ;
-
-    print "Processing file \"".$file."\"...\n" ;
-
-    # removing path if asked, only in $filename, keep $file complete
-    my $filename = $file ;
-    if ($nopath_opt && $filename =~ /\//) {
-	$filename =~ s/.*\/([^\/]+)/$1/ ;
-    }
-
-    # split into filename and extension
-    my @parts = split (/\./, $filename) ;
-    my $extension = pop @parts ;
-    $filename = join (".", @parts) ;
-
-    # split into filename and extension
-    my $tag_type = $type_opt ;
-    if (not defined $tag_type) {
-	if ($extension =~ /$mp3_ext/i) {
-	    $tag_type = $mp3_type ;
-	} elsif ($extension =~ /$ogg_ext/i) {
-	    $tag_type = $ogg_type ;
-	} elsif ($extension =~ /$flac_ext/i) {
-	    $tag_type = $flac_type ;
-	} else {
-	    print "  Skipping this unknown-type file '$file'\n" ;
-	    goto NEXT_FILE ;
-	}
-    }
-
-    # try the preferred parser first
-    if (defined $preferred_parser) {
-	if ($filename =~ /^$preferred_parser->{regexp}$/) {
-	    $res = tag_with_parser ($file, $tag_type, $preferred_parser, 0, 0, @_) ;
-	    # there can't be any confirmation here, SKIP is not possible
-	    # only SUCCESS if possible
-	    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS ;
-	    goto NEXT_FILE ;
-	} else {
-	    print "  Preferred parser '$preferred_parser->{title}' does not match this file\n" ;
-	    print "    Returning to original mode\n" ;
-	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
-	}
-	$preferred_parser = undef ;
-    }
-
-    # try user provided parsers then
-    $res = parse_file_with_user_parsers($file, $filename, $tag_type) ;
-    goto NEXT_FILE if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
-
-    # try to guess my internal format database then
-    if ($guess_opt) {
-	$res = parse_file_with_internal_parsers($file, $filename, $tag_type) ;
-	goto NEXT_FILE if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
-    }
-
-    # tag with default values only
-    my @field = @field_default ;
-    $#field = $fields-1 ;
-    if ($guess_opt or @parsers) {
-	print "  Didn't find any parser!\n" ;
-    }
-    $res = confirm_fields ($file, $tag_type, 1, 0, @field) ;
-    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
-
-  NEXT_FILE:
-    shift ;
-}
-
-#######################################################
-# fields confirmation
-
-sub confirm_letters {
+sub tags_confirm_letters {
     my $behaviors = shift ;
-    my $string = "[Yv" ;
+    my $string = "[<y>v" ;
     $string .= "u" if $behaviors & $TAG_MAY_PREFER ;
     $string .= "ae" ;
     $string .= "n" if $behaviors & $TAG_MAY_SKIP_PARSER ;
@@ -988,7 +980,7 @@ sub confirm_letters {
     return $string ;
 }
 
-sub confirm_tag_usage {
+sub tags_confirm_usage {
     my $behaviors = shift ;
     print "    y => Yes, use this matching (default)\n" ;
     print "    v => View which fields were matched\n" ;
@@ -1004,67 +996,84 @@ sub confirm_tag_usage {
     print "    h => Show this help\n" ;
 }
 
-sub confirm_fields {
+sub tags_confirm_fields {
     my $file = shift ;
-    my $tag_type = shift ;
+    my $file_type = shift ;
     my $confirm = shift ;
     my $behaviors = shift ;
-
-    # remaining args are fields
-    my @field ;
-    for(my $i = 0; $i < $fields; $i++) {
-	$field[$i] = shift;
-    }
+    my $values = shift ;
 
     # prefer this type of tagging ?
     my $preferred = 0 ;
 
+    # are we only tagging default values ?
+    my $only_defaults = 0 ;
+    if (not defined $values) {
+	$values = () ;
+	$only_defaults = 1 ;
+    }
+
+    # add defaults
+    foreach my $field (@field_names) {
+	$values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
+    }
+
+    # is there something to do ?
+    my $nothing_to_do = (scalar (keys %{$values}) == 0) ;
+
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
       ASK_CONFIRM:
-	print "  Use this matching ".(confirm_letters ($behaviors))." ? " ;
+	print "  ".
+	    ($nothing_to_do ? "Do not change any tag"
+	     : ($only_defaults ? "Apply defaults"
+		: "Use this matching"))
+	    ." ".(tags_confirm_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
-	    goto TAG_IT ;
+	    goto OK ;
 	} elsif ($reply eq "v") {
-	    for(my $i = 0; $i < $fields; $i++) {
-		print "    ".ucfirst($field_name[$i]).$field_trailing_spaces[$i].": ".$field[$i]."\n" if defined $field[$i] ;
+	    foreach my $field (@field_names) {
+		print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
+		    if defined $values->{$field} ;
 	    }
+	    # TODO: show other fields ? not possible until we edit existing tags
 	    goto ASK_CONFIRM ;
 	} elsif ($reply =~ /^a/i) {
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
-	    goto TAG_IT ;
+	    goto OK ;
 	} elsif ($behaviors & $TAG_MAY_PREFER and $reply =~ /^u/i) {
 	    $preferred = 1 ;
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
-	    goto TAG_IT ;
+	    goto OK ;
 	} elsif ($behaviors & $TAG_MAY_SKIP_PARSER and $reply =~ /^n/i) {
-	    return $TAG_SKIP_PARSER ;
+	    return ($TAG_SKIP_PARSER, undef) ;
 	} elsif ($behaviors & $TAG_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
-	    return $TAG_SKIP_PATH_PARSER ;
+	    return ($TAG_SKIP_PATH_PARSER, undef) ;
 	} elsif ($reply =~ /^s/i) {
-	    return $TAG_SKIP_FILE ;
+	    return ($TAG_SKIP_FILE, undef) ;
 	} elsif ($reply =~ /^e/i) {
 
-	    my @edit_field = @field ;
-	    $#edit_field = $fields-1 ;
+	    my $edit_values = {} ;
+	    foreach (keys %{$values}) { $edit_values->{$_} = $values->{$_} } ;
 	  ASK_EDIT:
-	    print "    Edit a field [atAngycEC,(h)elp] ? " ;
+	    print "    Edit a field [atAngycEC,<h>elp] ? " ;
 	    my $edit_reply = <> ;
 	    chomp $edit_reply ;
-	    if ($edit_reply =~ /^($field_letters)$/) {
-		my $i = ( grep { $edit_reply eq $field_letter[$_] } ( 0 .. $fields-1 ) ) [0] ;
-		$edit_field[$i] = &$myreadline ("      ", ucfirst($field_name[$i])." field", $edit_field[$i], 1) ;
+	    if ($edit_reply =~ /^($field_letters_union)$/) {
+		my $field = $field_letter_name{$edit_reply} ;
+		$edit_values->{$field} = &$myreadline ("      ", ucfirst($field)." field", $edit_values->{$field}, 1) ;
 		goto ASK_EDIT ;
 	    } elsif ($edit_reply eq "E") {
-		@field = @edit_field ;
-		goto TAG_IT ;
+		$values = $edit_values ;
+		goto OK ;
 	    } elsif ($edit_reply eq "C") {
 		goto ASK_CONFIRM ;
 	    } else {
-		for(my $i = 0; $i < $fields; $i++) {
-		    my $val = $edit_field[$i];
+		# print all fields, including the undefined ones
+		foreach my $field (@field_names) {
+		    my $val = $edit_values->{$field} ;
 		    if (not defined $val) {
 			$val = "<not defined>" ;
 		    } elsif ($val eq "") {
@@ -1072,153 +1081,249 @@ sub confirm_fields {
 		    } else {
 			$val = "'".$val."'" ;
 		    }
-		    print "      ".$field_letter[$i]
-			." => Edit ".ucfirst($field_name[$i]).$field_trailing_spaces[$i]
+		    print "      ".$field_name_letter{$field}
+		    ." => Edit ".ucfirst($field).$field_name_trailing_spaces{$field}
 			." (=".$val.")\n" ;
 		}
+		# TODO: show other fields ? not possible until we edit existing tags
 		print "      E => End edition and process the file\n" ;
 		print "      C => Cancel edition\n" ;
 		goto ASK_EDIT ;
 	    }
 
 	} else {
-	    confirm_tag_usage ($behaviors) ;
+	    tags_confirm_usage $behaviors ;
 	    goto ASK_CONFIRM ;
 	}
     }
 
-  TAG_IT:
-    my $res = tag_with_fields ($file, $tag_type, @field) ;
-    return $TAG_SUCCESS_PREFERRED if $preferred and $res == $TAG_SUCCESS ;
-    return $res ;
+  OK:
+    if ($preferred) {
+	return ($TAG_SUCCESS_PREFERRED, $values) ;
+    } else {
+	return ($TAG_SUCCESS, $values) ;
+    }
 }
 
-sub match_fields_with_parser {
+sub apply_parser {
     my $file = shift ;
-    my $tag_type = shift ;
+    my $parsename = shift ;
+    my $file_type = shift ;
     my $parser = shift ;
     my $confirm = shift ;
     my $behaviors = shift ;
 
-    # get default fields (without modifying the original)
-    my @field = @field_default ;
-    $#field = $fields-1 ;
+    if ($parsename =~ /^$parser->{regexp}$/) {
+	print "    '$parser->{title}' matches this file...\n" ;
 
-    # set to 1 when the field is defined (not by default)
-    my @field_set = () ;
-    $#field_set = $fields-1 ;
+	my @field_table = @{$parser->{field_table}} ;
+	my $values = {} ;
+	my $i = 1 ;
 
-    # get fields and show them if asked
-    my $i = 1 ;
-    while ( $i <= $parser->{indices} ) {
-        my $indice = $parser->{$i-1};
-	if ( $indice >= 0 ) {
-	    my $val = ${$i} ;
-	    $val =~ s/\b(.)/uc $1/eg if $maj_opt ;
-	    $val =~ s/($sep_opt)/ /g if defined $sep_opt ;
-	    map { $val = apply_regexp_to_tag ($val, $_, $field_name[$indice]) } @regexp_opts ;
-	    if ($field_set[$indice]) {
-		print "    WARNING: ".ucfirst($field_name[$indice])." already set to '".$field[$indice]
-		    ."', skipping new value '$val'.\n" if ($field[$indice] ne $val) ;
-		goto NEXT_FIELD ;
-	    }
-	    $field[$indice] = $val ;
-	    $field_set[$indice] = 1 ;
-	    if ($verbose_opt or $confirm or $current_ask_opt) {
-		print "    ". ucfirst($field_name[$indice])
-		    .$field_trailing_spaces[$indice]
+	# traverse matched values (stored in ${$i}
+	while ( $i <= @field_table ) {
+	    my $field = $field_table[$i-1] ;
+	    if ($field ne $ignore_name) {
+		my $val = ${$i} ;
+		$val =~ s/\b(.)/uc $1/eg if $maj_opt ;
+		$val =~ s/($sep_opt)/ /g if defined $sep_opt ;
+		map { $val = apply_regexp_to_tag ($val, $_, $field) } @regexp_opts ;
+		if (defined $values->{$field}) {
+		    print "    WARNING: ".ucfirst($field)." already set to '".$values->{$field}
+		    ."', skipping new value '$val'.\n" if defined $values->{$field} and $values->{$field} ne $val ;
+		    goto NEXT_FIELD ;
+		}
+		$values->{$field} = $val ;
+		if ($verbose_opt or $confirm or $current_ask_opt) {
+		    print "    ". ucfirst($field)
+			.$field_name_trailing_spaces{$field}
 		    .": ". $val ."\n" ;
+		}
 	    }
+	  NEXT_FIELD:
+	    $i++ ;
 	}
-     NEXT_FIELD:
-	$i++ ;
+
+	return tags_confirm_fields ($file, $file_type, $confirm, $behaviors, $values) ;
+    } else {
+	return ($TAG_SKIP_PARSER, undef) ;
+    }
+}
+
+sub try_to_parse {
+    my $file = shift ;
+    my $parsename = shift ;
+    my $file_type = shift ;
+
+    my $values = undef ;
+    my $res ;
+
+    # try the preferred parser first
+    if (defined $preferred_parser) {
+	print "  with the previous matching parser...\n" ;
+	# there can't be any confirmation here, SKIP is not possible
+	($res, $values) = apply_parser $file, $parsename, $file_type, $preferred_parser, 0, 0 ;
+	if ($res != $TAG_SKIP_PARSER) {
+	    # only SUCCESS if possible
+	    die "Unknown tag return value: $res.\n"
+		if $res != $TAG_SUCCESS ;
+	    return ($res, $values) ;
+	} else {
+	    print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
+	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
+	    $preferred_parser = undef ;
+	}
     }
 
-    return confirm_fields ($file, $tag_type, $confirm, $behaviors, @field) ;
+    # try user provided parsers then
+    if (@user_parsers) {
+	print "  with user-provided formats...\n" ;
+	($res, $values) = apply_user_parsers $file, $parsename, $file_type ;
+	return ($res, $values)
+	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+    }
+
+    # try to guess my internal format database then
+    if ($guess_opt) {
+	print "  with internal formats...\n" ;
+
+	if ($nopath_opt or not ($parsename =~ /\//)) {
+	    ($res, $values) = apply_internal_basename_parsers $file, $parsename, $file_type ;
+	} else {
+	    ($res, $values) = apply_internal_path_basename_parsers $file, $parsename, $file_type ;
+	}
+	return ($res, $values)
+	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+    }
+
+    if ($guess_opt or @user_parsers) {
+	print "  Didn't find any parser!\n" ;
+    }
+
+    # tag with default values only
+    ($res, $values) = tags_confirm_fields $file, $file_type, 1, 0, undef ;
+    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
+    return ($res, $values) ;
 }
 
 #######################################################
-# tagging
+# real tagging
 
 sub mp3_tagging_system_args {
-    my @field = @_ ;
-    my @field_mp3info_option = ('a', 't', 'l', 'n', 'g', 'y', 'c') ;
+    my $values = shift ;
+    my %field_name_mp3info_option =
+	(
+	 'ARTIST'  => 'a',
+	 'TITLE'   => 't',
+	 'ALBUM'   => 'l',
+	 'NUMBER'  => 'n',
+	 'GENRE'   => 'g',
+	 'DATE'    => 'y',
+	 'COMMENT' => 'c'
+	 ) ;
     my @mp3_tagging_cmd = ( 'mp3info' ) ;
-    my @mp3_tagging_clear_option = map { ( "-".$field_mp3info_option[$_] , "" ) } ( 0 .. $fields-1 ) ;
-    # append is not supported by id3 tags
+    my @mp3_tagging_clear_option = map { ( "-$_" , "" ) } (values %field_name_mp3info_option) ;
+
+    map {
+	print "    WARNING: Cannot set $_ in mp3 tags.\n"
+    } (get_values_non_regular_keys $values) ;
 
     return ( @mp3_tagging_cmd ,
-	     $clear_opt ? @mp3_tagging_clear_option : () ,
-	     ( map { ( "-".$field_mp3info_option[$_] , $field[$_] ) }
-	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-	       ) ,
+	     # clear all tags
+	     @mp3_tagging_clear_option ,
+	     # apply new tags
+	     ( map {
+		 # only one tag is allowed, use the first one
+		 ( "-".$field_name_mp3info_option{$_} , (get_tag_unique_value $values, $_) )
+		 } ( grep { defined $values->{$_} } @field_names )
+	       ),
 	     ) ;
 }
 
 sub ogg_tagging_system_args {
-    my @field = @_ ;
-    my @field_vorbiscomment_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my $values = shift ;
+    my %field_name_ogg_translations =
+	(
+	 'NUMBER'  => 'TRACKNUMBER',
+	 ) ;
     my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
     my @ogg_tagging_clear_option = ( '-w' ) ;
-    my @ogg_tagging_append_option = ( '-a' ) ;
 
     return ( @ogg_tagging_cmd ,
-	     $append_opt ? @ogg_tagging_append_option : @ogg_tagging_clear_option ,
-	     ( map { ( "-t" , $field_vorbiscomment_option[$_]."=".$field[$_] ) }
-	       ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-	       ) ,
+	     # clear all tags
+	     @ogg_tagging_clear_option ,
+	     # apply new tags
+	     ( map {
+		 my $oggname = $_ ;
+		 $oggname = $field_name_ogg_translations{$_} if defined $field_name_ogg_translations{$_} ;
+		 my @tags = get_tag_value_array $values, $_ ;
+		 map { ( "-t" , $oggname."=".$_ ) } @tags
+		 } @field_names
+	       ),
+	     # apply non-regular tags
+	     ( map {
+		 my $oggname = $_ ;
+		 my @tags = get_tag_value_array $values, $_ ;
+		 map { ( "-t" , $oggname."=".$_ ) } @tags
+		 } (get_values_non_regular_keys $values)
+	       ),
 	     ) ;
 }
 
 sub flac_tagging_system_args {
-    my @field = @_ ;
-    my @field_metaflac_option = ('ARTIST', 'TITLE', 'ALBUM', 'TRACKNUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+    my $values = shift ;
+    my %field_name_flac_translations =
+	(
+	 'NUMBER'  => 'TRACKNUMBER',
+	 ) ;
     my @flac_tagging_cmd = ( 'metaflac' ) ;
     my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
 
-    return (@flac_tagging_cmd ,
-	    $clear_opt ? @flac_tagging_clear_option : () ,
-	    !$append_opt ? ( map { ( "--remove-tag", $field_metaflac_option[$_] ) }
-			     ( grep { defined $field[$_] } ( 0 .. $fields-1 ) ) ) : () ,
-	    ( map { ( "--set-tag", $field_metaflac_option[$_]."=".$field[$_] ) }
-	      ( grep { defined $field[$_] } ( 0 .. $fields-1 ) )
-	      ) ,
-	    ) ;
+    return ( @flac_tagging_cmd ,
+	     # clear all tags
+	     @flac_tagging_clear_option ,
+	     # apply new tags
+	     ( map {
+		 my $flacname = $_ ;
+		 $flacname = $field_name_flac_translations{$_} if defined $field_name_flac_translations{$_} ;
+		 my @tags = get_tag_value_array $values, $_ ;
+		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
+		 } @field_names
+	       ),
+	     # apply non-regular tags
+	     ( map {
+		 my $flacname = $_ ;
+		 my @tags = get_tag_value_array $values, $_ ;
+		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
+		 } (get_values_non_regular_keys $values)
+	       ),
+	     ) ;
 }
 
 sub tag_with_fields {
     my $file = shift ;
-    my $tag_type = shift ;
-
-    # remaining args are fields
-    my @field ;
-    for(my $i = 0; $i < $fields; $i++) {
-	$field[$i] = shift;
-    }
-
-    # do we have to tag ?
-    goto SUCCESS
-	if $no_tagging_opt ;
+    my $file_type = shift ;
+    my $values = shift ;
 
     # is there actually something to do ?
-    if ( ! grep { defined $field[$_] } ( 0 ... $fields-1 ) ) {
+    if ( !(keys %{$values}) ) {
 	print "    Nothing to do.\n" ;
-	goto SUCCESS ;
+	return ;
     }
 
     # tagging command line
     my @system_args ;
-    if ($tag_type eq $mp3_type) {
-	@system_args = ( (mp3_tagging_system_args @field), $file) ;
-    } elsif ($tag_type eq $ogg_type) {
-	@system_args = ( (ogg_tagging_system_args @field), $file) ;
-    } elsif ($tag_type eq $flac_type) {
-	@system_args = ( (flac_tagging_system_args @field), $file) ;
+    if ($file_type eq $mp3_type) {
+	@system_args = ( (mp3_tagging_system_args $values), $file) ;
+    } elsif ($file_type eq $ogg_type) {
+	@system_args = ( (ogg_tagging_system_args $values), $file) ;
+    } elsif ($file_type eq $flac_type) {
+	@system_args = ( (flac_tagging_system_args $values), $file) ;
     }
 
     # show command line and really tag if asked
     if ($dry_run_opt or $verbose_opt) {
-	print "      ". +(join "' '", @system_args) ."\n" ;
+	print "      '". +(join "' '", @system_args) ."'\n" ;
     }
     if (!$dry_run_opt) {
 	print "    Tagging.\n" ;
@@ -1230,19 +1335,12 @@ sub tag_with_fields {
 	    }
 	}
     }
-
-  SUCCESS:
-    if (defined $rename_opt) {
-	rename_with_tags ($file, $tag_type, @field) ;
-    }
-
-    return $TAG_SUCCESS ;
 }
 
 #############################################
 # renaming
 
-sub confirm_rename_usage {
+sub rename_confirm_usage {
     my $behaviors = shift ;
     print "      y => Yes, rename this file (default)\n" ;
     print "      a => Always rename without asking\n" ;
@@ -1253,22 +1351,23 @@ sub confirm_rename_usage {
 
 sub rename_with_tags {
     my $file = shift ;
-    my $tag_type = shift ;
+    my $file_type = shift ;
+    my $values = shift ;
+
+    my $rename_values = {} ;
     my $undefined = 0 ;
 
     print "  Renaming with format '$rename_opt'...\n" ;
-    # remaining args are fields
-    my @field ;
-    for(my $i = 0; $i < $fields; $i++) {
-	my $val = shift ;
-	if (defined $val) {
-	    $val = lc ($val)
-		if $rename_min_opt ;
-	    $val =~ s/ /$rename_sep_opt/g
-		if $rename_sep_opt ;
-	    map { $val = apply_regexp_to_tag ($val, $_, $field_name[$i]) } @rename_regexp_opts ;
-	}
-	$field[$i] = $val ;
+
+    foreach my $field (keys %{$values}) {
+	# use the first tag for renaming
+	my $val = get_tag_unique_value $values, $field ;
+	$val = lc ($val)
+	    if $rename_min_opt ;
+	$val =~ s/ /$rename_sep_opt/g
+	    if $rename_sep_opt ;
+	map { $val = apply_regexp_to_tag ($val, $_, $field) } @rename_regexp_opts ;
+	$rename_values->{$field} = $val ;
     }
 
     my $format_string = $rename_opt ;
@@ -1283,13 +1382,13 @@ sub rename_with_tags {
 	# replace the char with the matching
 	my $char = $array[$i] ;
 	next if $char eq "%" ;
-	if ($char =~ /$field_letters/) {
-	    my $letter = $array[$i] ;
-	    my @indices = grep { $char eq $field_letter[$_] } ( 0 .. $fields-1 ) ;
-	    my $val = $field[$indices[0]] ;
+	if ($char =~ /$field_letters_union/) {
+	    my $field = $field_letter_name{$char} ;
+	    my $val = $rename_values->{$field} ;
+	    # rename does not contain an array anymore
 	    if (not defined $val) {
 		$undefined++ ;
-		print "    WARNING: Undefined field '".$field_name[$indices[0]]."'.\n" ;
+		print "    WARNING: Undefined field '".$field."'.\n" ;
 		$val = "" ;
 	    }
 	    if ($char eq 'n') {
@@ -1306,11 +1405,11 @@ sub rename_with_tags {
 
     my $new_name = join ("", @array) ;
     if (!$rename_ext_opt) {
-	if ($tag_type eq $mp3_type) {
+	if ($file_type eq $mp3_type) {
 	    $new_name .= ".". $mp3_ext ;
-	} elsif ($tag_type eq $ogg_type) {
+	} elsif ($file_type eq $ogg_type) {
 	    $new_name .= ".". $ogg_ext ;
-	} elsif ($tag_type eq $flac_type) {
+	} elsif ($file_type eq $flac_type) {
 	    $new_name .= ".". $flac_ext ;
 	}
     }
@@ -1320,7 +1419,7 @@ sub rename_with_tags {
     # confirm if required or if any field undefined
     if ($undefined or !$current_rename_yes_opt) {
       ASK_CONFIRM:
-	print "    Really rename the file [Yaen,(h)elp] ? " ;
+	print "    Really rename the file [<y>aen,(h)elp] ? " ;
 	my $reply = <> ;
 	chomp $reply ;
         if ($reply eq "" or $reply =~ /^y/i) {
@@ -1334,7 +1433,7 @@ sub rename_with_tags {
 	    $new_name = &$myreadline ("      ", "New filename", $new_name, 0) ;
 	    goto ASK_CONFIRM ;
 	} else {
-	    confirm_rename_usage ;
+	    rename_confirm_usage ;
 	    goto ASK_CONFIRM ;
 	}
     }
@@ -1342,6 +1441,11 @@ sub rename_with_tags {
   RENAME_IT:
     if ($new_name eq $file) {
 	print "    Filename would not change, not renaming\n" ;
+	return ;
+    }
+
+    if (-e $new_name) {
+	print "    File $new_name already exists, not renaming\n" ;
 	return ;
     }
 
@@ -1367,6 +1471,119 @@ sub rename_with_tags {
 	or print "    ERROR: Failed to rename ($!)\n" ;
 }
 
+#######################################################
+# main process
+
+# read internal parsers
+read_internal_parsers
+    if $guess_opt or $list_formats_opt ;
+
+# if -L was passed, show formats and exit
+if ($list_formats_opt) {
+    print "Listing internal parsers:\n" ;
+    foreach my $path_parser (@internal_path_parsers) {
+	foreach my $basename_parser (@internal_basename_parsers) {
+	    print "  $path_parser->{title}/$basename_parser->{title}\n" ;
+	}
+    }
+    exit 0 ;
+}
+
+# read additional tags
+get_additional_tag_values () ;
+
+# process remaining command-line arguments as files
+my @files = () ;
+while ( @ARGV ) {
+    if ($recursive_opt) {
+	my $dir = shift @ARGV ;
+	open FIND, "find \"$dir\" |" ;
+	my @dirfiles = <FIND> ;
+	close FIND ;
+	foreach my $file (@dirfiles) {
+	    chomp $file ;
+	    if (-f $file) {
+		push (@files, $file) ;
+	    }
+	}
+    } else {
+	my $file = shift @ARGV ;
+	if (-f $file) {
+	    push (@files, $file) ;
+	} else {
+	    print "Skipping the non-file '$file'\n" ;
+	}
+    }
+}
+
+if ($show_tags_opt) {
+    my @fields_to_show = split (/,/, $show_tags_opt) ;
+    foreach my $file (@files) {
+	print "$file:\n"
+	    if @files ;
+
+	my ($parsename, $file_type) = extract_parsename_and_type $file ;
+	if (not defined $file_type) {
+	    print "  Skipping this unknown-type file.\n" ;
+	    next ;
+	}
+
+	my $values = read_tags $file, $file_type ;
+
+	foreach my $field (@field_names, get_values_non_regular_keys $values) {
+	    next if not defined $values->{$field} ;
+	    next unless grep { /^all$/ } @fields_to_show
+		or grep { /^$field$/i } @fields_to_show ;
+	    map { print "  $field=$_\n" } (get_tag_value_array $values, $field) ;
+	}
+    }
+
+    exit 0 ;
+}
+
+# generate user parsers
+generate_user_parsers ;
+
+# main loop
+while ( @files ) {
+    my $file = shift @files ;
+
+    print "Processing file \"".$file."\"...\n" ;
+
+    my ($parsename, $file_type) = extract_parsename_and_type $file ;
+    if (not defined $file_type) {
+	print "  Skipping this unknown-type file '$file'\n" ;
+	goto NEXT_FILE ;
+    }
+
+    # read old tags
+    my $old_values = read_tags $file, $file_type ;
+
+    # try to parse this file
+    my ($res, $values) = try_to_parse $file, $parsename, $file_type ;
+    goto NEXT_FILE
+	if $res == $TAG_SKIP_FILE ;
+    die "Unknown tag return value: $res.\n"
+	if $res != $TAG_SUCCESS and $res != $TAG_SUCCESS_PREFERRED ;
+
+    # add new values to the old ones, depending on clear/append options
+    my $new_values = append_tag_values $old_values, $values ;
+    # append additional tags too
+    $new_values = append_tag_values $new_values, \%additional_values ;
+
+    # actually tagging
+    tag_with_fields $file, $file_type, $new_values
+	unless $no_tagging_opt ;
+
+    # renaming
+    rename_with_tags $file, $file_type, $new_values
+	if defined $rename_opt ;
+
+    # next file
+  NEXT_FILE:
+    shift ;
+}
+
 #############################################
 # generate configuration file
 
@@ -1382,13 +1599,14 @@ sub generate_config {
     print NEWCFG "# You may modify and reuse it as you want.\n" ;
     print NEWCFG "\n" ;
 
-    map { print NEWCFG "format = \"$_\"\n" ; } @format_strings ;
+    map { print NEWCFG "format = \"$_\"\n" ; } @user_format_strings ;
 
     print NEWCFG "guess = $guess_opt\n" ;
     print NEWCFG "nopath = $nopath_opt\n" ;
 
-    map { print NEWCFG "default_$field_name[$_] = \"$field_default[$_]\"\n" ; }
-	(grep { defined $field_default[$_] } (0 .. $fields-1 )) ;
+    map { print NEWCFG "default_$_ = \"$field_default{$_}\"\n" ; } (keys %field_default) ;
+
+    map { print NEWCFG "tag = \"$_\"\n" ; } @additional_tags ;
 
     print NEWCFG "spaces = $spaces_opt\n" ;
     print NEWCFG "maj = $maj_opt\n" ;

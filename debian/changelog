@@ -1,3 +1,10 @@
+lltag (0.11-1) unstable; urgency=low
+
+  * New upstream release.
+  * Update the description.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 19 Mar 2006 00:01:41 -0500
+
 lltag (0.10-1) unstable; urgency=low
 
   * New upstream release.
