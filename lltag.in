@@ -84,6 +84,9 @@ if ($term->Features->{preput}) {
 my @field_names = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'YEAR', 'COMMENT') ;
 my @field_letters = ('a', 't', 'A', 'n', 'g', 'y', 'c') ;
 
+my $ignore_letter = 'd' ;
+my $ignore_name = 'ignore' ;
+
 my %field_name_letter =
     (
      'ARTIST'  => 'a',
@@ -170,7 +173,7 @@ sub usage {
     print "  -h, --help             Show this help\n" ;
     print " Format is composed of anything you want with special fields:\n" ;
     print map { "  %". $field_name_letter{$_} ." means ". ucfirst($_) ."\n" } @field_names ;
-    print "  %d means Dummy text\n" ;
+    print "  %$ignore_letter means Dummy text\n" ;
     print "  %% means %\n" ;
     print "\n" ;
     print "Author:    Brice Goglin\n" ;
@@ -725,8 +728,8 @@ sub read_internal_parsers {
 		my $field ;
 		if (defined $field_letter_name{$_}) {
 		    $field = $field_letter_name{$_} ;
-		} elsif ($_ eq 'd') {
-		    $field = '' ;
+		} elsif ($_ eq $ignore_letter) {
+		    $field = $ignore_name ;
 		} else {
 		    die "Unrecognized field letter '$_' on line $. in file '$file'\n" ;
 		}
@@ -875,14 +878,14 @@ sub generate_user_parser {
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$field_letters_union|d/) {
+	} elsif ($array[$i] =~ /$field_letters_union|$ignore_letter/) {
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
 	}
 	# store the indice
-	if ($char eq "d") {
-	    push @field_table, '' ;
+	if ($char eq $ignore_letter) {
+	    push @field_table, $ignore_name ;
 	} else {
 	    push @field_table, $field_letter_name{$char} ;
 	}
@@ -1099,7 +1102,7 @@ sub apply_parser {
 	# traverse matched values (stored in ${$i}
 	while ( $i <= @field_table ) {
 	    my $field = $field_table[$i-1] ;
-	    if ($field) { # to discard '' (for dummy)
+	    if ($field ne $ignore_name) {
 		my $val = ${$i} ;
 		$val =~ s/\b(.)/uc $1/eg if $maj_opt ;
 		$val =~ s/($sep_opt)/ /g if defined $sep_opt ;
