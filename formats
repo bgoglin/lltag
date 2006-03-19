@@ -21,6 +21,7 @@
 #				g for GENRE
 #				n for NUMBER
 #				y for YEAR
+#				i for IGNORE
 
 [%n - %a - %t]
 type = basename

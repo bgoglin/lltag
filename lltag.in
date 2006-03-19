@@ -84,8 +84,8 @@ if ($term->Features->{preput}) {
 my @field_names = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'YEAR', 'COMMENT') ;
 my @field_letters = ('a', 't', 'A', 'n', 'g', 'y', 'c') ;
 
-my $ignore_letter = 'd' ;
-my $ignore_name = 'ignore' ;
+my $ignore_letter = 'i' ;
+my $ignore_name = 'IGNORE' ;
 
 my %field_name_letter =
     (
@@ -173,7 +173,7 @@ sub usage {
     print "  -h, --help             Show this help\n" ;
     print " Format is composed of anything you want with special fields:\n" ;
     print map { "  %". $field_name_letter{$_} ." means ". ucfirst($_) ."\n" } @field_names ;
-    print "  %$ignore_letter means Dummy text\n" ;
+    print "  %$ignore_letter means that the text has to be ignored\n" ;
     print "  %% means %\n" ;
     print "\n" ;
     print "Author:    Brice Goglin\n" ;
@@ -736,7 +736,7 @@ sub read_internal_parsers {
 		    # ignore letter
 		    $field = $ignore_name ;
 		} else {
-		    die "Unrecognized field letter '$_' on line $. in file '$file'\n" ;
+		    die "Unrecognized field '$_' on line $. in file '$file'\n" ;
 		}
 		$field } split (/,/, $1) ;
 	} else {
