@@ -16,6 +16,8 @@
   * Fix reading/tagging the date of ogg/flac files.
   * Use all-capitals tag names to match ogg/flac.
     + default_<non-capitalized-name> option still supported in the config.
+  * Allow the indices in the format file to use full field names instead
+    of letters.
   * Print default letter in <> instead of capital when confirming/editing.
   * Add EDITING TAGS in the manpage.
   * Add configuration option of the config file in the manpage.

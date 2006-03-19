@@ -726,9 +726,14 @@ sub read_internal_parsers {
 	} elsif (/^indices = (.*)$/) {
 	    @field_table = map {
 		my $field ;
-		if (defined $field_letter_name{$_}) {
+		if (defined $field_name_letter{$_} or $_ eq $ignore_name) {
+		    # full field name, keep as it is
+		    $field = $_
+		} elsif (defined $field_letter_name{$_}) {
+		    # field letter
 		    $field = $field_letter_name{$_} ;
 		} elsif ($_ eq $ignore_letter) {
+		    # ignore letter
 		    $field = $ignore_name ;
 		} else {
 		    die "Unrecognized field letter '$_' on line $. in file '$file'\n" ;

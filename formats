@@ -12,71 +12,73 @@
 #				%P for any path (alphanumeric string with /)
 #				%% for %
 #				any other character will remain unchanged
-#   indices = list of comma-separed letter indicated what %N or %A means
-#	      in the regexp:	a for author
-#				A for album
-#				g for genre
-#				n for track number
-#				t for title
-#				y for year
+#   indices = list of comma-separed tag name indicating the corresponding
+#	      %N or %A means in the regexp.
+#	      the field name may be replaced by the corresponding letter:
+#				a for ARTIST
+#				t for TITLE
+#				A for ALBUM
+#				g for GENRE
+#				n for NUMBER
+#				y for YEAR
 
 [%n - %a - %t]
 type = basename
 regexp = %L%N%S-%S%A%S-%S%A%L
-indices = n,a,t
+indices = NUMBER,ARTIST,TITLE
 
 [%n - %t]
 type = basename
 regexp = %L%N%S-%S%A%L
-indices = n,t
+indices = NUMBER,TITLE
 
 [%n. %t]
 type = basename
 regexp = %L%N.%S%A%L
-indices = n,t
+indices = NUMBER,TITLE
 
 [%n) %t]
 type = basename
 regexp = %L%N)%S%A%L
-indices = n,t
+indices = NUMBER,TITLE
 
 [%a - %n - %t]
 type = basename
 regexp = %L%A%S-%S%N%S-%S%A%L
-indices = a,n,t
+indices = ARTIST,NUMBER,TITLE
 
 [%a - %t]
 type = basename
 regexp = %L%A%S-%S%A%L
-indices = a,t
+indices = ARTIST,TITLE
 
 [%t]
 type = basename
 regexp = %L%A%L
-indices = t
+indices = TITLE
 
 [%a/%a - %A]
 type = path
 regexp = %P%L%A%L/%L%A%S-%S%A%L
-indices = a,a,A
+indices = ARTIST,ARTIST,ALBUM
 
 [%a/%A]
 type = path
 regexp = %P%L%A%L/%L%A%L
-indices = a,A
+indices = ARTIST,ALBUM
 
 [%a - %A]
 type = path
 regexp = %P%L%A%S-%S%A%L
-indices = a,A
+indices = ARTIST,ALBUM
 
 [%a]
 type = path
 regexp = %P%L%A%L
-indices = a
+indices = ARTIST
 
 [%A]
 type = path
 regexp = %P%L%A%L
-indices = A
+indices = ALBUM
 
