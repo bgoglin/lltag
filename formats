@@ -4,7 +4,7 @@
 #	format will be shown when matching
 #   type = basename or path
 #	does this format apply to the wall path or only the basename ?
-#   regexp = 
+#   regexp =
 #	internal regexp with	%L for limiting space
 #				%S for a space
 #				%N for a numeric string
@@ -21,6 +21,7 @@
 #				g for GENRE
 #				n for NUMBER
 #				y for YEAR
+#				c for COMMENT
 #				i for IGNORE
 
 [%n - %a - %t]
