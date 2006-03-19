@@ -22,6 +22,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ "-g <genre>" ]
 .RB [ "-d <date>" ]
 .RB [ "-c <comment>" ]
+.RB [ "--tag <TAG=value>" ]
 .RB [ --spaces ]
 .RB [ --maj ]
 .RB [ "--sep\ <s1|s2|...>" ]
@@ -268,7 +269,7 @@ for a more general replace feature.
 Instead of tagging, lltag shows tags that are currently set in files.
 The argument is a comma separated list of tag types
 .RI ( artist ", " title ", " album ", " number ", "
-.IR genre ", " date ", " comment " or " all).
+.IR genre ", " date ", " comment " or " all ).
 See also
 .B -B
 to show all tags.
@@ -281,6 +282,13 @@ Also allow spaces limiting path elements.
 .TP
 .BI "-t, --title" " <title>"
 Set the default value of the \fITITLE\fR tag.
+
+.TP
+.BI "--tag" " <TAG=value>"
+Add an additional tag.
+Might be used several times.
+Note that mp3 tags do not support whatever
+.IR TAG .
 
 .TP
 .B "-v, --verbose"
@@ -554,6 +562,12 @@ Default is
 Default field value
 .RB [ -a ", " -t ", " -A ", " -n ", " -g ", " -d " and " -c ].
 Default is to not set any default value.
+.RE
+.I tag = <TAG=value>
+.RS
+Add an additional tag
+.RB [ --tag ].
+Might be used multiple times.
 .RE
 .I spaces = <0/1>
 .RS

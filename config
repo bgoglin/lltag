@@ -21,6 +21,10 @@
 # default_DATE = ""
 # default_COMMENT = ""
 
+# Additional tag.
+# Might be used multiple times.
+# tag = "TAG=value"
+
 # Allow no or multiple spaces.
 # spaces = 0
 

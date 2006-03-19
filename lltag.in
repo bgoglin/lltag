@@ -110,6 +110,8 @@ my %field_name_trailing_spaces =
 
 my %field_default = () ;
 
+my %additional_values = () ;
+
 my %field_letter_name =
     (
      'a' => 'ARTIST',
@@ -141,6 +143,7 @@ sub usage {
     print "  -p, --nopath           Remove the path from filenames when matching\n" ;
     print map { "  -". $field_name_letter{$_} .", --". $_.$field_name_trailing_spaces{$_}
 		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @field_names ;
+    print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
@@ -209,6 +212,8 @@ my $list_formats_opt = 0 ;
 my $show_tags_opt = "" ;
 my $no_tagging_opt = 0 ;
 
+my @additional_tags = () ;
+
 my $ask_opt = 0 ;
 my $guess_opt = 0 ;
 my $nopath_opt = 0 ;
@@ -266,6 +271,8 @@ sub process_option {
 	    unless defined $field_name_letter{uc ($1)} ;
 	# TODO: drop filename support on september 20 2006
 	$field_default{uc ($1)} = $2 ;
+    } elsif (/^tag\s*=\s*"(.+)"$/) {
+	push @additional_tags, $1 ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
 	$spaces_opt = $1 ;
     } elsif (/^maj\s*=\s*(.+)$/) {
@@ -381,6 +388,7 @@ GetOptions(
 	   'L|list'       => \$list_formats_opt,
 	   'show-tags=s'  => \$show_tags_opt,
 	   'S'            => sub { $show_tags_opt = "all" ; },
+	   'tag=s'        => \@additional_tags,
 	   map { my $field = $_ ;
 		 $field_name_letter{$field} .'|'. $field .'=s'
 		     => sub { shift ; $field_default{$field} = shift ; $default_opt = 1 ; },
@@ -483,7 +491,7 @@ sub extract_parsename_and_type {
     return ($parsename, $file_type) ;
 }
 
- #######################################################
+#######################################################
 # handle hashes of tags
 
 # add a value to a field, creating an array if required
@@ -549,6 +557,17 @@ sub get_values_non_regular_keys {
 	my $key = $_ ;
 	!(grep { $_ eq $key } @field_names)
     } (keys %{$values}) ;
+}
+
+# handle additional tags
+sub get_additional_tag_values {
+    foreach my $string (@additional_tags) {
+	if ($string =~ /^([^=]+)=(.*)$/) {
+	    append_tag_value \%additional_values, $1, $2 ;
+	} else {
+	    die "Additional tags must be given as 'TAG=value'.\n" ;
+	}
+    }
 }
 
 #######################################################
@@ -1205,6 +1224,10 @@ sub mp3_tagging_system_args {
     my @mp3_tagging_cmd = ( 'mp3info' ) ;
     my @mp3_tagging_clear_option = map { ( "-$_" , "" ) } (values %field_name_mp3info_option) ;
 
+    map {
+	print "    WARNING: Cannot set $_ in mp3 tags.\n"
+    } (get_values_non_regular_keys $values) ;
+
     return ( @mp3_tagging_cmd ,
 	     # clear all tags
 	     @mp3_tagging_clear_option ,
@@ -1214,7 +1237,6 @@ sub mp3_tagging_system_args {
 		 ( "-".$field_name_mp3info_option{$_} , (get_tag_unique_value $values, $_) )
 		 } ( grep { defined $values->{$_} } @field_names )
 	       ),
-	     # TODO: drop other fields, say something ?
 	     ) ;
 }
 
@@ -1467,6 +1489,9 @@ if ($list_formats_opt) {
     exit 0 ;
 }
 
+# read additional tags
+get_additional_tag_values () ;
+
 # process remaining command-line arguments as files
 my @files = () ;
 while ( @ARGV ) {
@@ -1543,6 +1568,8 @@ while ( @files ) {
 
     # add new values to the old ones, depending on clear/append options
     my $new_values = append_tag_values $old_values, $values ;
+    # append additional tags too
+    $new_values = append_tag_values $new_values, \%additional_values ;
 
     # actually tagging
     tag_with_fields $file, $file_type, $new_values
@@ -1578,6 +1605,8 @@ sub generate_config {
     print NEWCFG "nopath = $nopath_opt\n" ;
 
     map { print NEWCFG "default_$_ = \"$field_default{$_}\"\n" ; } (keys %field_default) ;
+
+    map { print NEWCFG "tag = \"$_\"\n" ; } @additional_tags ;
 
     print NEWCFG "spaces = $spaces_opt\n" ;
     print NEWCFG "maj = $maj_opt\n" ;

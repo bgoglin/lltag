@@ -8,6 +8,7 @@
       - Appending is useless for mp3 since only one occurence
         (the first one) may be stored in the file.
       - Remove the CLEARING, REPLACING OR APPENDING manpage section.
+  * Add --tag for additional tags, and warn when not storable in in mp3 files.
   * Now use %d, -d and DATE instead of %y, -y and YEAR since ogg/flac
     tags are dates.
   * Use %i instead of %d to ignore some text during matching.
