@@ -79,10 +79,9 @@ if ($term->Features->{preput}) {
 
 #######################################################
 # format parameters
-# (%a = artist, %t = title, %A = album, %n = number, %g = genre, %y = year, %c = comment)
 
-my @field_names = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'YEAR', 'COMMENT') ;
-my @field_letters = ('a', 't', 'A', 'n', 'g', 'y', 'c') ;
+my @field_names = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+my @field_letters = ('a', 't', 'A', 'n', 'g', 'd', 'c') ;
 
 my $ignore_letter = 'i' ;
 my $ignore_name = 'IGNORE' ;
@@ -94,7 +93,7 @@ my %field_name_letter =
      'ALBUM'   => 'A',
      'NUMBER'  => 'n',
      'GENRE'   => 'g',
-     'YEAR'    => 'y',
+     'DATE'    => 'd',
      'COMMENT' => 'c',
      ) ;
 
@@ -105,7 +104,7 @@ my %field_name_trailing_spaces =
      'ALBUM' => '   ',
      'NUMBER' => '  ',
      'GENRE' => '   ',
-     'YEAR' => '    ',
+     'DATE' => '    ',
      'COMMENT' => ' ',
      ) ;
 
@@ -118,7 +117,7 @@ my %field_letter_name =
      'A' => 'ALBUM',
      'n' => 'NUMBER',
      'g' => 'GENRE',
-     'y' => 'YEAR',
+     'd' => 'DATE',
      'c' => 'COMMENT',
      ) ;
 
@@ -558,7 +557,7 @@ sub get_values_non_regular_keys {
 sub mp3_read_tags {
     my $file = shift ;
     my ($status, @output) = system_with_output
-	("mp3info", "-p", "ARTIST=%a\nALBUM=%l\nTITLE=%t\nNUMBER=%n\nGENRE=%g\nYEAR=%y\nCOMMENT=%c\n", $file) ;
+	("mp3info", "-p", "ARTIST=%a\nALBUM=%l\nTITLE=%t\nNUMBER=%n\nGENRE=%g\nDATE=%y\nCOMMENT=%c\n", $file) ;
     return ($status)
 	if $status ;
     return ($status, @output) ;
@@ -573,7 +572,6 @@ sub ogg_read_tags {
     @output = map {
 	my $line = $_ ;
 	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
-	$line =~ s/^DATE=/YEAR=/ ;
 	$line
 	} @output ;
     return ($status, @output) ;
@@ -589,7 +587,6 @@ sub flac_read_tags {
 	my $line = $_ ;
 	$line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ;
 	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
-	$line =~ s/^DATE=/YEAR=/ ;
 	$line
 	} ( grep { /comment\[\d+\]/ } @output ) ;
     return ($status, @output) ;
@@ -1202,7 +1199,7 @@ sub mp3_tagging_system_args {
 	 'ALBUM'   => 'l',
 	 'NUMBER'  => 'n',
 	 'GENRE'   => 'g',
-	 'YEAR'    => 'y',
+	 'DATE'    => 'y',
 	 'COMMENT' => 'c'
 	 ) ;
     my @mp3_tagging_cmd = ( 'mp3info' ) ;
@@ -1226,7 +1223,6 @@ sub ogg_tagging_system_args {
     my %field_name_ogg_translations =
 	(
 	 'NUMBER'  => 'TRACKNUMBER',
-	 'YEAR'    => 'DATE',
 	 ) ;
     my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
     my @ogg_tagging_clear_option = ( '-w' ) ;
@@ -1257,7 +1253,6 @@ sub flac_tagging_system_args {
     my %field_name_flac_translations =
 	(
 	 'NUMBER'  => 'TRACKNUMBER',
-	 'YEAR'    => 'DATE',
 	 ) ;
     my @flac_tagging_cmd = ( 'metaflac' ) ;
     my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;

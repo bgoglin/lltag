@@ -18,7 +18,7 @@
 # default_ALBUM = ""
 # default_NUMBER = ""
 # default_GENRE = ""
-# default_YEAR = ""
+# default_DATE = ""
 # default_COMMENT = ""
 
 # Allow no or multiple spaces.

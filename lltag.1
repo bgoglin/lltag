@@ -20,7 +20,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ "-A <album>" ]
 .RB [ "-n <number>" ]
 .RB [ "-g <genre>" ]
-.RB [ "-y <year>" ]
+.RB [ "-d <date>" ]
 .RB [ "-c <comment>" ]
 .RB [ --spaces ]
 .RB [ --maj ]
@@ -126,6 +126,11 @@ Parse additional configuration file.
 See
 .B CONFIGURATION FILES
 below for details.
+
+.TP
+.BI "-d, --date" " <date>"
+Set the default value of the \fIDate\fR tag.
+Note that mp3 tags may only store 4 characters (for a year).
 
 .TP
 .B --dry-run
@@ -263,7 +268,7 @@ for a more general replace feature.
 Instead of tagging, lltag shows tags that are currently set in files.
 The argument is a comma separated list of tag types
 .RI ( artist ", " title ", " album ", " number ", "
-.IR genre ", " year ", " comment " or " all).
+.IR genre ", " date ", " comment " or " all).
 See also
 .B -B
 to show all tags.
@@ -284,10 +289,6 @@ Show verbose messages.
 .TP
 .B "-V, --version"
 Show the version.
-
-.TP
-.BI "-y, --year" " <year>"
-Set the default value of the \fIYear\fR tag.
 
 .TP
 .B --yes
@@ -319,8 +320,8 @@ to match the track number.
 .I "%t"
 to match the title.
 
-.I "%y"
-to match the year.
+.I "%d"
+to match the date.
 
 .I "%c"
 to match the comment.
@@ -546,12 +547,12 @@ Default is
 .RE
 .I default_GENRE = \fI"string"
 .RE
-.I default_YEAR = \fI"string"
+.I default_DATE = \fI"string"
 .RE
 .I default_COMMENT = \fI"string"
 .RS
 Default field value
-.RB [ -a ", " -t ", " -A ", " -n ", " -g ", " -y " and " -c ].
+.RB [ -a ", " -t ", " -A ", " -n ", " -g ", " -d " and " -c ].
 Default is to not set any default value.
 .RE
 .I spaces = <0/1>

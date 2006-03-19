@@ -8,7 +8,9 @@
       - Appending is useless for mp3 since only one occurence
         (the first one) may be stored in the file.
       - Remove the CLEARING, REPLACING OR APPENDING manpage section.
-  * Now use %i instead of %d to ignore some text during matching.
+  * Now use %d, -d and DATE instead of %y, -y and YEAR since ogg/flac
+    tags are dates.
+  * Use %i instead of %d to ignore some text during matching.
   * Fix 'u' confirmation to try the current parser first for next files
     (was broken since 0.10).
   * 'basename' is now used instead of 'filename' for 'type' in the format
