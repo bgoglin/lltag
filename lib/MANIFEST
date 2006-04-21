@@ -1,0 +1,7 @@
+MANIFEST
+Makefile.PL
+Lltag/Tags.pm
+Lltag/Misc.pm
+Lltag/MP3.pm
+Lltag/OGG.pm
+Lltag/FLAC.pm

@@ -3,6 +3,12 @@
 use strict ;
 no strict "refs" ;
 
+require Lltag::Tags ;
+require Lltag::Misc ;
+require Lltag::MP3 ;
+require Lltag::OGG ;
+require Lltag::FLAC ;
+
 use Getopt::Long ;
 Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 
@@ -15,6 +21,10 @@ my $user_lltag_dir = "$ENV{HOME}/.lltag" ;
 my $lltag_format_filename = "formats" ;
 my $lltag_config_filename = "config" ;
 my $lltag_edit_history_filename = "edit_history" ;
+
+#######################################################
+# main hash for globals and config
+my $self = {} ;
 
 #######################################################
 # configure readline depending on the features provided by the installation
@@ -191,6 +201,10 @@ my $mp3_type = "mp3" ;
 my $ogg_type = "ogg" ;
 my $flac_type = "flac" ;
 
+my $mp3_ext = "mp3" ;
+my $ogg_ext = "ogg" ;
+my $flac_ext = "flac" ;
+
 # subregexp
 my $match_path = '(?:[^/]*\/)*' ;
 my $match_any = '((?:[^ /]+ +)*[^ /]+)' ;
@@ -205,42 +219,42 @@ my $preferred_parser = undef ;
 #######################################################
 # options
 
-my $dry_run_opt = 0 ;
-my $verbose_opt = 0 ;
-my $recursive_opt = 0 ;
-my $list_formats_opt = 0 ;
-my $show_tags_opt = "" ;
-my $no_tagging_opt = 0 ;
+$self->{dry_run_opt} = 0 ;
+$self->{verbose_opt} = 0 ;
+$self->{recursive_opt} = 0 ;
+$self->{list_formats_opt} = 0 ;
+$self->{show_tags_opt} = "" ;
+$self->{no_tagging_opt} = 0 ;
 
-my @additional_tags = () ;
+%{$self->{additional_values}} = () ;
+@{$self->{additional_tags}} = () ;
 
-my $ask_opt = 0 ;
-my $guess_opt = 0 ;
-my $nopath_opt = 0 ;
-my $maj_opt = 0 ;
-my $sep_opt = undef ;
-my $spaces_opt = 0 ;
-my $type_opt = undef ;
-my $yes_opt = 0 ;
-my $default_opt = 0 ;
-my $clear_opt = 0 ;
-my $append_opt = 0 ;
-my @regexp_opts = () ;
+$self->{ask_opt} = 0 ;
+$self->{guess_opt} = 0 ;
+$self->{nopath_opt} = 0 ;
+$self->{maj_opt} = 0 ;
+$self->{sep_opt} = undef ;
+$self->{spaces_opt} = 0 ;
+$self->{type_opt} = undef ;
+$self->{yes_opt} = 0 ;
+$self->{default_opt} = 0 ;
+$self->{clear_opt} = 0 ;
+$self->{append_opt} = 0 ;
+@{$self->{regexp_opts}} = () ;
 
-my $rename_opt = undef ;
-my $rename_min_opt = 0 ;
-my $rename_sep_opt = " " ;
-my $rename_ext_opt = 0 ;
-my @rename_regexp_opts = () ;
+$self->{rename_opt} = undef ;
+$self->{rename_min_opt} = 0 ;
+$self->{rename_sep_opt} = " " ;
+$self->{rename_ext_opt} = 0 ;
+@{$self->{rename_regexp_opts}} = () ;
 
-my $mp3_ext = "mp3" ;
-my $ogg_ext = "ogg" ;
-my $flac_ext = "flac" ;
+$self->{gencfg_file} = undef ;
 
-my $gencfg_file = undef ;
+@{$self->{user_format_strings}} = () ;
 
-# parsers
-my @user_format_strings = () ;
+#######################################################
+# add field_names to self for the other modules
+@{$self->{field_names}} = @field_names ;
 
 #######################################################
 # parse config files first
@@ -260,11 +274,11 @@ sub process_option {
     $_ = shift ;
     chomp $_ ;
     if (/^format\s*=\s*"(.+)"$/) {
-	push (@user_format_strings, $1) ;
+	push (@{$self->{user_format_strings}}, $1) ;
     } elsif (/^guess\s*=\s*(.+)$/) {
-	$guess_opt = $1 ;
+	$self->{guess_opt} = $1 ;
     } elsif (/^nopath\s*=\s*(.+)$/) {
-	$nopath_opt = $1 ;
+	$self->{nopath_opt} = $1 ;
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
         die "Unrecognized option line #$.: \"$_\"\n"
 	    # TODO: drop non-capitalized field name support on september 20 2006
@@ -272,55 +286,55 @@ sub process_option {
 	# TODO: drop filename support on september 20 2006
 	$field_default{uc ($1)} = $2 ;
     } elsif (/^tag\s*=\s*"(.+)"$/) {
-	push @additional_tags, $1 ;
+	push @{$self->{additional_tags}}, $1 ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
-	$spaces_opt = $1 ;
+	$self->{spaces_opt} = $1 ;
     } elsif (/^maj\s*=\s*(.+)$/) {
-	$maj_opt = $1 ;
+	$self->{maj_opt} = $1 ;
     } elsif (/^sep\s*=\s*"(.*)"$/) {
-	$sep_opt = $1 ;
+	$self->{sep_opt} = $1 ;
     } elsif (/^type\s*=\s*(.+)$/) {
 	if ($1 eq "none") {
-	    $type_opt = undef ;
+	    $self->{type_opt} = undef ;
 	} elsif ($1 ne $mp3_type and $1 ne $ogg_type and $1 ne $flac_type) {
 	    die "Unrecognized type '$1' line #$\n" ;
 	} else {
-	    $type_opt = $1 ;
+	    $self->{type_opt} = $1 ;
 	}
     } elsif (/^regexp\s*=\s*"(.+)"$/) {
-	push (@regexp_opts, $1) ;
+	push (@{$self->{regexp_opts}}, $1) ;
     } elsif (/^clear_tags\s*=\s*(.+)$/) {
-	$clear_opt = $1 ;
+	$self->{clear_opt} = $1 ;
     } elsif (/^append_tags\s*=\s*(.+)$/) {
-	$append_opt = $1 ;
+	$self->{append_opt} = $1 ;
     } elsif (/^no_tagging\s*=\s*(.+)$/) {
-	$no_tagging_opt = $1 ;
+	$self->{no_tagging_opt} = $1 ;
     } elsif (/^rename_format\s*=\s*"(.*)"$/) {
 	if ($1 eq "") {
-	    $rename_opt = undef ;
+	    $self->{rename_opt} = undef ;
 	} else {
-	    $rename_opt = $1 ;
+	    $self->{rename_opt} = $1 ;
 	}
     } elsif (/^rename_min\s*=\s*(.+)$/) {
-	$rename_min_opt = $1 ;
+	$self->{rename_min_opt} = $1 ;
     } elsif (/^rename_sep\s*=\s*"(.*)"$/) {
-	$rename_sep_opt = $1 ;
+	$self->{rename_sep_opt} = $1 ;
     } elsif (/^rename_regexp\s*=\s*"(.+)"$/) {
-	push (@rename_regexp_opts, $1) ;
+	push (@{$self->{rename_regexp_opts}}, $1) ;
     } elsif (/^rename_ext\s*=\s*(.+)$/) {
-	$rename_ext_opt = $1 ;
+	$self->{rename_ext_opt} = $1 ;
     } elsif (/^dry_run\s*=\s*(.+)$/) {
-	$dry_run_opt = $1 ;
+	$self->{dry_run_opt} = $1 ;
     } elsif (/^yes\s*=\s*(.+)$/) {
-	$yes_opt = $1 ;
-	$ask_opt = 0 if $1 ;
+	$self->{yes_opt} = $1 ;
+	$self->{ask_opt} = 0 if $1 ;
     } elsif (/^ask\s*=\s*(.+)$/) {
-	$ask_opt = $1 ;
-	$yes_opt = 0 if $1 ;
+	$self->{ask_opt} = $1 ;
+	$self->{yes_opt} = 0 if $1 ;
     } elsif (/^recursive\s*=\s*(.+)$/) {
-	$recursive_opt = $1 ;
+	$self->{recursive_opt} = $1 ;
     } elsif (/^verbose\s*=\s*(.+)$/) {
-	$verbose_opt = $1 ;
+	$self->{verbose_opt} = $1 ;
 # Error
     } elsif (/^[^#]/ && !/^(\s*)$/) {
         die "Unrecognized option line #$.: \"$_\"\n" ;
@@ -359,54 +373,54 @@ foreach my $file (@additional_config_files) {
 
 # parse options
 GetOptions(
-	   'F|format=s'   => \@user_format_strings,
-	   'G|guess'      => \$guess_opt,
-	   'p|nopath'     => \$nopath_opt,
-	   'spaces'       => \$spaces_opt,
-	   'maj'          => \$maj_opt,
-	   'sep=s'        => \$sep_opt,
-	   'regexp=s'     => \@regexp_opts,
-	   'mp3'          => sub { $type_opt = $mp3_type ; },
-	   'ogg'          => sub { $type_opt = $ogg_type ; },
-	   'flac'         => sub { $type_opt = $flac_type ; },
-	   'clear'        => \$clear_opt,
-	   'append'       => \$append_opt,
-	   'no-tagging'   => \$no_tagging_opt,
-	   'rename=s'     => \$rename_opt,
-	   'rename-min'   => \$rename_min_opt,
-	   'rename-sep=s' => \$rename_sep_opt,
-	   'rename-regexp=s' => \@rename_regexp_opts,
-	   'rename-ext'   => \$rename_ext_opt,
-	   'dry-run'      => \$dry_run_opt,
-	   'R|recursive'  => \$recursive_opt,
-	   'yes'          => sub { $yes_opt = 1 ; $ask_opt = 0 ; },
-	   'ask'          => sub { $ask_opt = 1 ; $yes_opt = 0 ; },
-	   'v|verbose'    => \$verbose_opt,
-	   'gencfg=s'     => \$gencfg_file,
+	   'F|format=s'   => \@{$self->{user_format_strings}},
+	   'G|guess'      => \$self->{guess_opt},
+	   'p|nopath'     => \$self->{nopath_opt},
+	   'spaces'       => \$self->{spaces_opt},
+	   'maj'          => \$self->{maj_opt},
+	   'sep=s'        => \$self->{sep_opt},
+	   'regexp=s'     => \@{$self->{regexp_opts}},
+	   'mp3'          => sub { $self->{type_opt} = $mp3_type ; },
+	   'ogg'          => sub { $self->{type_opt} = $ogg_type ; },
+	   'flac'         => sub { $self->{type_opt} = $flac_type ; },
+	   'clear'        => \$self->{clear_opt},
+	   'append'       => \$self->{append_opt},
+	   'no-tagging'   => \$self->{no_tagging_opt},
+	   'rename=s'     => \$self->{rename_opt},
+	   'rename-min'   => \$self->{rename_min_opt},
+	   'rename-sep=s' => \$self->{rename_sep_opt},
+	   'rename-regexp=s' => \@{$self->{rename_regexp_opts}},
+	   'rename-ext'   => \$self->{rename_ext_opt},
+	   'dry-run'      => \$self->{dry_run_opt},
+	   'R|recursive'  => \$self->{recursive_opt},
+	   'yes'          => sub { $self->{yes_opt} = 1 ; $self->{ask_opt} = 0 ; },
+	   'ask'          => sub { $self->{ask_opt} = 1 ; $self->{yes_opt} = 0 ; },
+	   'v|verbose'    => \$self->{verbose_opt},
+	   'gencfg=s'     => \$self->{gencfg_file},
 	   'h|help'       => sub { usage () ; },
 	   'V|version'    => sub { version () ; },
-	   'L|list'       => \$list_formats_opt,
-	   'show-tags=s'  => \$show_tags_opt,
-	   'S'            => sub { $show_tags_opt = "all" ; },
-	   'tag=s'        => \@additional_tags,
+	   'L|list'       => \$self->{list_formats_opt},
+	   'show-tags=s'  => \$self->{show_tags_opt},
+	   'S'            => sub { $self->{show_tags_opt} = "all" ; },
+	   'tag=s'        => \@{$self->{additional_tags}},
 	   map { my $field = $_ ;
 		 $field_name_letter{$field} .'|'. $field .'=s'
-		     => sub { shift ; $field_default{$field} = shift ; $default_opt = 1 ; },
+		     => sub { shift ; $field_default{$field} = shift ; $self->{default_opt} = 1 ; },
 	       } @field_names ,
 	   ) or usage () ;
 
 # yes/ask option status may vary with user confirmation replies
-my $current_yes_opt = $yes_opt ;
-my $current_ask_opt = $ask_opt ;
+my $current_yes_opt = $self->{yes_opt} ;
+my $current_ask_opt = $self->{ask_opt} ;
 
 # confirmation when renaming
-my $current_rename_yes_opt = $yes_opt ;
+my $current_rename_yes_opt = $self->{yes_opt} ;
 
 # spaces_opt changes matching regexps
-$match_limit = $match_space = $match_spaces if $spaces_opt ;
+$match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
 
 # if no parsers and no guess, force guess
-$guess_opt = 1 unless @user_format_strings or $default_opt or $list_formats_opt ;
+$self->{guess_opt} = 1 unless @{$self->{user_format_strings}} or $self->{default_opt} or $self->{list_formats_opt} ;
 
 # forward declarations
 sub apply_parser ;
@@ -427,41 +441,6 @@ my $TAG_MAY_SKIP_PATH_PARSER = 2 ;
 my $TAG_MAY_PREFER = 4 ;
 
 #######################################################
-# rewrite of system which returns a descriptor of a stream
-# containing both stdout and stderr
-sub system_with_output {
-    pipe (my $pipe_out, my $pipe_in) ;
-    my $pid = fork() ;
-    if ($pid < 0) {
-	# in the father, when fork failed
-	close $pipe_in ;
-	close $pipe_out ;
-	return (-1, "Failed to fork to execute command line: ". join (" ", @_) ."\n") ;
-    } elsif ($pid > 0) {
-	# in the father, when fork done
-	close $pipe_in ;
-	waitpid($pid, 0);
-	my $status = $? >> 8 ;
-	$status = -1
-	    if $status == 255 ;
-	my @lines = <$pipe_out> ;
-	close $pipe_out ;
-	return ( $status , @lines ) ;
-    } else {
-	# in the child
-	close $pipe_out ;
-	open STDERR, ">&", $pipe_in ;
-	open STDOUT, ">&", $pipe_in ;
-	{ exec @_ } ;
-	print $pipe_in "Failed to execute command line: ". join (" ", @_) ."\n" ;
-	print $pipe_in "Please install $_[0] properly (see README).\n"
-	    if $!{ENOENT} or $!{EPERM} ;
-	close $pipe_in ;
-	exit -1 ;
-    }
-}
-
-#######################################################
 # extract file type and parsename
 
 sub extract_parsename_and_type {
@@ -471,13 +450,13 @@ sub extract_parsename_and_type {
     my @parts = split (/\./, $file) ;
     my $extension = pop @parts ;
     my $parsename = join (".", @parts) ;
-    if ($nopath_opt) {
+    if ($self->{nopath_opt}) {
 	my @parts = split (/\//, $parsename) ;
 	$parsename = pop @parts ;
     }
 
-    my $file_type = $type_opt ;
-    if (not defined $type_opt) {
+    my $file_type = $self->{type_opt} ;
+    if (not defined $self->{type_opt}) {
     # if not forced, get the type from the extension
 	if ($extension =~ /$mp3_ext/i) {
 	    $file_type = $mp3_type ;
@@ -492,124 +471,7 @@ sub extract_parsename_and_type {
 }
 
 #######################################################
-# handle hashes of tags
-
-# add a value to a field, creating an array if required
-sub append_tag_value {
-    my $values = shift ;
-    my $field = shift ;
-    my $value = shift ;
-    if (not defined $values->{$field}) {
-	$values->{$field} = $value ;
-    } elsif (ref($values->{$field}) ne 'ARRAY') {
-	@{$values->{$field}} = ($values->{$field}, $value) ;
-    } else {
-	push @{$values->{$field}}, $value ;
-    }
-}
-
-# append a set of unique values into and old hashes, depending of clear/append options
-sub append_tag_values {
-    my $old_values = shift ;
-    my $new_values = shift ;
-
-    if ($clear_opt) {
-	$old_values = () ;
-    }
-
-    foreach my $field (keys %{$new_values}) {
-	$old_values->{$field} = undef
-	    if defined $old_values->{$field} and !$append_opt ;
-	append_tag_value $old_values, $field, $new_values->{$field} ;
-    }
-
-    return $old_values ;
-}
-
-
-# return values for a field as an array
-sub get_tag_value_array {
-    my $values = shift ;
-    my $field = shift ;
-    if (not defined $values->{$field}) {
-	return () ;
-    } elsif (ref ($values->{$field}) eq 'ARRAY') {
-	return @{$values->{$field}} ;
-    } else {
-	return ($values->{$field}) ;
-    }
-}
-
-# return a unique value for a field
-sub get_tag_unique_value {
-    my $values = shift ;
-    my $field = shift ;
-    my @array = get_tag_value_array $values, $field ;
-    die "Trying to return a unique tag value on an empty array.\n"
-	if ! @array ;
-    return $array[0] ;
-}
-
-# return non-regular keys whose value is defined
-sub get_values_non_regular_keys {
-    my $values = shift ;
-    return grep {
-	my $key = $_ ;
-	!(grep { $_ eq $key } @field_names)
-    } (keys %{$values}) ;
-}
-
-# handle additional tags
-sub get_additional_tag_values {
-    foreach my $string (@additional_tags) {
-	if ($string =~ /^([^=]+)=(.*)$/) {
-	    append_tag_value \%additional_values, $1, $2 ;
-	} else {
-	    die "Additional tags must be given as 'TAG=value'.\n" ;
-	}
-    }
-}
-
-#######################################################
 # show existing tags if --show-tags was passed
-
-sub mp3_read_tags {
-    my $file = shift ;
-    my ($status, @output) = system_with_output
-	("mp3info", "-p", "ARTIST=%a\nALBUM=%l\nTITLE=%t\nNUMBER=%n\nGENRE=%g\nDATE=%y\nCOMMENT=%c\n", $file) ;
-    return ($status)
-	if $status ;
-    return ($status, @output) ;
-}
-
-sub ogg_read_tags {
-    my $file = shift ;
-    my ($status, @output) = system_with_output
-	("vorbiscomment", "-l", $file) ;
-    return ($status)
-	if $status ;
-    @output = map {
-	my $line = $_ ;
-	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
-	$line
-	} @output ;
-    return ($status, @output) ;
-}
-
-sub flac_read_tags {
-    my $file = shift ;
-    my ($status, @output) = system_with_output
-	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $file) ;
-    return ($status)
-	if $status ;
-    @output = map {
-	my $line = $_ ;
-	$line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ;
-	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
-	$line
-	} ( grep { /comment\[\d+\]/ } @output ) ;
-    return ($status, @output) ;
-}
 
 sub read_tags {
     my $file = shift ;
@@ -619,11 +481,11 @@ sub read_tags {
     my $status ;
     my @output ;
     if ($file_type eq $mp3_type) {
-	($status, @output) = mp3_read_tags $file ;
+	($status, @output) = Lltag::MP3::read_tags ($self, $file) ;
     } elsif ($file_type eq $ogg_type) {
-	($status, @output) = ogg_read_tags $file ;
+	($status, @output) = Lltag::OGG::read_tags ($self, $file) ;
     } elsif ($file_type eq $flac_type) {
-	($status, @output) = flac_read_tags $file ;
+	($status, @output) = Lltag::FLAC::read_tags ($self, $file) ;
     }
     if ($status) {
 	print "  Failed to get tags from file.\n" ;
@@ -636,7 +498,7 @@ sub read_tags {
 	chomp $line ;
 	my ($field, $value) = ($line =~ /^(.*)=(.*)$/) ;
 	next if !$value ;
-	append_tag_value $values, $field, $value ;
+	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
     }
 
     return $values ;
@@ -682,7 +544,7 @@ sub read_internal_parsers {
 	print "Did not find any format file.\n" ;
 	goto NO_FORMATS_FILE_FOUND;
     }
-    print "Reading format file '$file'...\n" if $verbose_opt ;
+    print "Reading format file '$file'...\n" if $self->{verbose_opt} ;
 
     my $type = undef ;
     my $title = undef ;
@@ -701,10 +563,10 @@ sub read_internal_parsers {
 		@{$parser->{field_table}} = @field_table ;
 		if ($type eq "basename" or $type eq "filename") {
 		    # TODO: drop filename support on september 20 2006
-		    print "  Got basename format '$title'\n" if $verbose_opt ;
+		    print "  Got basename format '$title'\n" if $self->{verbose_opt} ;
 		    push (@internal_basename_parsers, $parser) ;
 		} elsif ($type eq "path") {
-		    print "  Got path format '$title'\n" if $verbose_opt ;
+		    print "  Got path format '$title'\n" if $self->{verbose_opt} ;
 		    push (@internal_path_parsers, $parser) ;
 		}
 	    } elsif ($type or $title or $regexp or @field_table) {
@@ -769,10 +631,10 @@ sub read_internal_parsers {
 	@{$parser->{field_table}} = @field_table ;
 	if ($type eq "basename" or $type eq "filename") {
 		    # TODO: drop filename support on september 20 2006
-	    print "  Got basename format '$title'\n" if $verbose_opt ;
+	    print "  Got basename format '$title'\n" if $self->{verbose_opt} ;
 	    push (@internal_basename_parsers, $parser) ;
 	} elsif ($type eq "path") {
-	    print "  Got path format '$title'\n" if $verbose_opt ;
+	    print "  Got path format '$title'\n" if $self->{verbose_opt} ;
 	    push (@internal_path_parsers, $parser) ;
 	}
     } elsif ($type or $title or $regexp or @field_table) {
@@ -862,7 +724,7 @@ sub generate_user_parser {
     $parser->{title} = $format_string ;
 
     # merge spaces if --spaces was passed
-    if ($spaces_opt) {
+    if ($self->{spaces_opt}) {
 	$format_string =~ s/ +/ /g ;
     }
 
@@ -914,7 +776,7 @@ sub generate_user_parser {
     @{$parser->{field_table}} = @field_table ;
 
     # done
-    if ($spaces_opt) {
+    if ($self->{spaces_opt}) {
 	$parser->{regexp} = $match_limit. join("", @array) .$match_limit ;
     } else {
 	$parser->{regexp} = join("", @array) ;
@@ -932,7 +794,7 @@ sub generate_user_parser {
 	}
     }
 
-    if ($verbose_opt) {
+    if ($self->{verbose_opt}) {
 	print "  Format string will parse with: ". $parser->{regexp} ."\n" ;
 	print "    Fields are: ". (join ',', @field_table) ."\n" ;
     }
@@ -941,7 +803,7 @@ sub generate_user_parser {
 }
 
 sub generate_user_parsers {
-    @user_parsers = map ( generate_user_parser ($_), @user_format_strings ) ;
+    @user_parsers = map ( generate_user_parser ($_), @{$self->{user_format_strings}} ) ;
 }
 
 sub apply_user_parsers {
@@ -1125,16 +987,16 @@ sub apply_parser {
 	    my $field = $field_table[$i-1] ;
 	    if ($field ne $ignore_name) {
 		my $val = ${$i} ;
-		$val =~ s/\b(.)/uc $1/eg if $maj_opt ;
-		$val =~ s/($sep_opt)/ /g if defined $sep_opt ;
-		map { $val = apply_regexp_to_tag ($val, $_, $field) } @regexp_opts ;
+		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
+		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
+		map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
 		if (defined $values->{$field}) {
 		    print "    WARNING: ".ucfirst($field)." already set to '".$values->{$field}
 		    ."', skipping new value '$val'.\n" if defined $values->{$field} and $values->{$field} ne $val ;
 		    goto NEXT_FIELD ;
 		}
 		$values->{$field} = $val ;
-		if ($verbose_opt or $confirm or $current_ask_opt) {
+		if ($self->{verbose_opt} or $confirm or $current_ask_opt) {
 		    print "    ". ucfirst($field)
 			.$field_name_trailing_spaces{$field}
 		    .": ". $val ."\n" ;
@@ -1170,7 +1032,7 @@ sub try_to_parse {
 	    return ($res, $values) ;
 	} else {
 	    print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
-	    $current_ask_opt = $ask_opt ; $current_yes_opt = $yes_opt ;
+	    $current_ask_opt = $self->{ask_opt} ; $current_yes_opt = $self->{yes_opt} ;
 	    $preferred_parser = undef ;
 	}
     }
@@ -1184,10 +1046,10 @@ sub try_to_parse {
     }
 
     # try to guess my internal format database then
-    if ($guess_opt) {
+    if ($self->{guess_opt}) {
 	print "  with internal formats...\n" ;
 
-	if ($nopath_opt or not ($parsename =~ /\//)) {
+	if ($self->{nopath_opt} or not ($parsename =~ /\//)) {
 	    ($res, $values) = apply_internal_basename_parsers $file, $parsename, $file_type ;
 	} else {
 	    ($res, $values) = apply_internal_path_basename_parsers $file, $parsename, $file_type ;
@@ -1196,7 +1058,7 @@ sub try_to_parse {
 	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
 
-    if ($guess_opt or @user_parsers) {
+    if ($self->{guess_opt} or @user_parsers) {
 	print "  Didn't find any parser!\n" ;
     }
 
@@ -1208,97 +1070,6 @@ sub try_to_parse {
 
 #######################################################
 # real tagging
-
-sub mp3_tagging_system_args {
-    my $values = shift ;
-    my %field_name_mp3info_option =
-	(
-	 'ARTIST'  => 'a',
-	 'TITLE'   => 't',
-	 'ALBUM'   => 'l',
-	 'NUMBER'  => 'n',
-	 'GENRE'   => 'g',
-	 'DATE'    => 'y',
-	 'COMMENT' => 'c'
-	 ) ;
-    my @mp3_tagging_cmd = ( 'mp3info' ) ;
-    my @mp3_tagging_clear_option = map { ( "-$_" , "" ) } (values %field_name_mp3info_option) ;
-
-    map {
-	print "    WARNING: Cannot set $_ in mp3 tags.\n"
-    } (get_values_non_regular_keys $values) ;
-
-    return ( @mp3_tagging_cmd ,
-	     # clear all tags
-	     @mp3_tagging_clear_option ,
-	     # apply new tags
-	     ( map {
-		 # only one tag is allowed, use the first one
-		 ( "-".$field_name_mp3info_option{$_} , (get_tag_unique_value $values, $_) )
-		 } ( grep { defined $values->{$_} } @field_names )
-	       ),
-	     ) ;
-}
-
-sub ogg_tagging_system_args {
-    my $values = shift ;
-    my %field_name_ogg_translations =
-	(
-	 'NUMBER'  => 'TRACKNUMBER',
-	 ) ;
-    my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
-    my @ogg_tagging_clear_option = ( '-w' ) ;
-
-    return ( @ogg_tagging_cmd ,
-	     # clear all tags
-	     @ogg_tagging_clear_option ,
-	     # apply new tags
-	     ( map {
-		 my $oggname = $_ ;
-		 $oggname = $field_name_ogg_translations{$_} if defined $field_name_ogg_translations{$_} ;
-		 my @tags = get_tag_value_array $values, $_ ;
-		 map { ( "-t" , $oggname."=".$_ ) } @tags
-		 } @field_names
-	       ),
-	     # apply non-regular tags
-	     ( map {
-		 my $oggname = $_ ;
-		 my @tags = get_tag_value_array $values, $_ ;
-		 map { ( "-t" , $oggname."=".$_ ) } @tags
-		 } (get_values_non_regular_keys $values)
-	       ),
-	     ) ;
-}
-
-sub flac_tagging_system_args {
-    my $values = shift ;
-    my %field_name_flac_translations =
-	(
-	 'NUMBER'  => 'TRACKNUMBER',
-	 ) ;
-    my @flac_tagging_cmd = ( 'metaflac' ) ;
-    my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
-
-    return ( @flac_tagging_cmd ,
-	     # clear all tags
-	     @flac_tagging_clear_option ,
-	     # apply new tags
-	     ( map {
-		 my $flacname = $_ ;
-		 $flacname = $field_name_flac_translations{$_} if defined $field_name_flac_translations{$_} ;
-		 my @tags = get_tag_value_array $values, $_ ;
-		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
-		 } @field_names
-	       ),
-	     # apply non-regular tags
-	     ( map {
-		 my $flacname = $_ ;
-		 my @tags = get_tag_value_array $values, $_ ;
-		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
-		 } (get_values_non_regular_keys $values)
-	       ),
-	     ) ;
-}
 
 sub tag_with_fields {
     my $file = shift ;
@@ -1314,20 +1085,20 @@ sub tag_with_fields {
     # tagging command line
     my @system_args ;
     if ($file_type eq $mp3_type) {
-	@system_args = ( (mp3_tagging_system_args $values), $file) ;
+	@system_args = ( (Lltag::MP3::tagging_system_args ($self, $values)), $file) ;
     } elsif ($file_type eq $ogg_type) {
-	@system_args = ( (ogg_tagging_system_args $values), $file) ;
+	@system_args = ( (Lltag::OGG::tagging_system_args ($self, $values)), $file) ;
     } elsif ($file_type eq $flac_type) {
-	@system_args = ( (flac_tagging_system_args $values), $file) ;
+	@system_args = ( (Lltag::FLAC::tagging_system_args ($self, $values)), $file) ;
     }
 
     # show command line and really tag if asked
-    if ($dry_run_opt or $verbose_opt) {
+    if ($self->{dry_run_opt} or $self->{verbose_opt}) {
 	print "      '". +(join "' '", @system_args) ."'\n" ;
     }
-    if (!$dry_run_opt) {
+    if (!$self->{dry_run_opt}) {
 	print "    Tagging.\n" ;
-	my ($status, @output) = system_with_output @system_args ;
+	my ($status, @output) = Lltag::Misc::system_with_output (@system_args) ;
 	if ($status) {
 	    print "      Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
 	    while (my $line = shift @output) {
@@ -1357,20 +1128,20 @@ sub rename_with_tags {
     my $rename_values = {} ;
     my $undefined = 0 ;
 
-    print "  Renaming with format '$rename_opt'...\n" ;
+    print "  Renaming with format '$self->{rename_opt}'...\n" ;
 
     foreach my $field (keys %{$values}) {
 	# use the first tag for renaming
-	my $val = get_tag_unique_value $values, $field ;
+	my $val = LLtag::Misc::get_tag_unique_value ($self, $values, $field) ;
 	$val = lc ($val)
-	    if $rename_min_opt ;
-	$val =~ s/ /$rename_sep_opt/g
-	    if $rename_sep_opt ;
-	map { $val = apply_regexp_to_tag ($val, $_, $field) } @rename_regexp_opts ;
+	    if $self->{rename_min_opt} ;
+	$val =~ s/ /$self->{rename_sep_opt}/g
+	    if $self->{rename_sep_opt} ;
+	map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{rename_regexp_opts}} ;
 	$rename_values->{$field} = $val ;
     }
 
-    my $format_string = $rename_opt ;
+    my $format_string = $self->{rename_opt} ;
     my @array = split(//, $format_string) ;
     for(my $i = 0; $i < @array - 1; $i++) {
 
@@ -1404,7 +1175,7 @@ sub rename_with_tags {
     }
 
     my $new_name = join ("", @array) ;
-    if (!$rename_ext_opt) {
+    if (!$self->{rename_ext_opt}) {
 	if ($file_type eq $mp3_type) {
 	    $new_name .= ".". $mp3_ext ;
 	} elsif ($file_type eq $ogg_type) {
@@ -1450,7 +1221,7 @@ sub rename_with_tags {
     }
 
     return
-	if $dry_run_opt ;
+	if $self->{dry_run_opt} ;
 
     my $remain = $new_name ;
     my $path = '' ;
@@ -1476,10 +1247,10 @@ sub rename_with_tags {
 
 # read internal parsers
 read_internal_parsers
-    if $guess_opt or $list_formats_opt ;
+    if $self->{guess_opt} or $self->{list_formats_opt} ;
 
 # if -L was passed, show formats and exit
-if ($list_formats_opt) {
+if ($self->{list_formats_opt}) {
     print "Listing internal parsers:\n" ;
     foreach my $path_parser (@internal_path_parsers) {
 	foreach my $basename_parser (@internal_basename_parsers) {
@@ -1490,12 +1261,12 @@ if ($list_formats_opt) {
 }
 
 # read additional tags
-get_additional_tag_values () ;
+Lltag::Tags::get_additional_tag_values ($self) ;
 
 # process remaining command-line arguments as files
 my @files = () ;
 while ( @ARGV ) {
-    if ($recursive_opt) {
+    if ($self->{recursive_opt}) {
 	my $dir = shift @ARGV ;
 	open FIND, "find \"$dir\" |" ;
 	my @dirfiles = <FIND> ;
@@ -1516,8 +1287,8 @@ while ( @ARGV ) {
     }
 }
 
-if ($show_tags_opt) {
-    my @fields_to_show = split (/,/, $show_tags_opt) ;
+if ($self->{show_tags_opt}) {
+    my @fields_to_show = split (/,/, $self->{show_tags_opt}) ;
     foreach my $file (@files) {
 	print "$file:\n"
 	    if @files ;
@@ -1530,11 +1301,11 @@ if ($show_tags_opt) {
 
 	my $values = read_tags $file, $file_type ;
 
-	foreach my $field (@field_names, get_values_non_regular_keys $values) {
+	foreach my $field (@field_names, (Lltag::Tags::get_values_non_regular_keys ($self, $values))) {
 	    next if not defined $values->{$field} ;
 	    next unless grep { /^all$/ } @fields_to_show
 		or grep { /^$field$/i } @fields_to_show ;
-	    map { print "  $field=$_\n" } (get_tag_value_array $values, $field) ;
+	    map { print "  $field=$_\n" } (Lltag::Tags::get_tag_value_array ($self, $values, $field)) ;
 	}
     }
 
@@ -1567,17 +1338,17 @@ while ( @files ) {
 	if $res != $TAG_SUCCESS and $res != $TAG_SUCCESS_PREFERRED ;
 
     # add new values to the old ones, depending on clear/append options
-    my $new_values = append_tag_values $old_values, $values ;
+    my $new_values = Lltag::Tags::append_tag_values ($self, $old_values, $values) ;
     # append additional tags too
-    $new_values = append_tag_values $new_values, \%additional_values ;
+    $new_values = Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # actually tagging
     tag_with_fields $file, $file_type, $new_values
-	unless $no_tagging_opt ;
+	unless $self->{no_tagging_opt} ;
 
     # renaming
     rename_with_tags $file, $file_type, $new_values
-	if defined $rename_opt ;
+	if defined $self->{rename_opt} ;
 
     # next file
   NEXT_FILE:
@@ -1599,42 +1370,42 @@ sub generate_config {
     print NEWCFG "# You may modify and reuse it as you want.\n" ;
     print NEWCFG "\n" ;
 
-    map { print NEWCFG "format = \"$_\"\n" ; } @user_format_strings ;
+    map { print NEWCFG "format = \"$_\"\n" ; } @{$self->{user_format_strings}} ;
 
-    print NEWCFG "guess = $guess_opt\n" ;
-    print NEWCFG "nopath = $nopath_opt\n" ;
+    print NEWCFG "guess = $self->{guess_opt}\n" ;
+    print NEWCFG "nopath = $self->{nopath_opt}\n" ;
 
     map { print NEWCFG "default_$_ = \"$field_default{$_}\"\n" ; } (keys %field_default) ;
 
-    map { print NEWCFG "tag = \"$_\"\n" ; } @additional_tags ;
+    map { print NEWCFG "tag = \"$_\"\n" ; } @{$self->{additional_tags}} ;
 
-    print NEWCFG "spaces = $spaces_opt\n" ;
-    print NEWCFG "maj = $maj_opt\n" ;
-    print NEWCFG "sep = \"$sep_opt\"\n"
-	if defined $sep_opt ;
-    map { print NEWCFG "regexp = \"$_\"\n" ; } @regexp_opts ;
-    print NEWCFG "type = ". (defined $type_opt?$type_opt:"none") ."\n" ;
-    print NEWCFG "clear_tags = $clear_opt\n" ;
-    print NEWCFG "append_tags = $append_opt\n" ;
-    print NEWCFG "no_tagging = $no_tagging_opt\n" ;
+    print NEWCFG "spaces = $self->{spaces_opt}\n" ;
+    print NEWCFG "maj = $self->{maj_opt}\n" ;
+    print NEWCFG "sep = \"$self->{sep_opt}\"\n"
+	if defined $self->{sep_opt} ;
+    map { print NEWCFG "regexp = \"$_\"\n" ; } @{$self->{regexp_opts}} ;
+    print NEWCFG "type = ". (defined $self->{type_opt} ? $self->{type_opt} : "none") ."\n" ;
+    print NEWCFG "clear_tags = $self->{clear_opt}\n" ;
+    print NEWCFG "append_tags = $self->{append_opt}\n" ;
+    print NEWCFG "no_tagging = $self->{no_tagging_opt}\n" ;
 
-    print NEWCFG "rename_format = \"" .($rename_opt?$rename_opt:""). "\"\n" ;
-    print NEWCFG "rename_min = $rename_min_opt\n" ;
-    print NEWCFG "rename_sep = \"$rename_sep_opt\"\n" ;
-    map { print NEWCFG "rename_regexp = \"$_\"\n" ; } @rename_regexp_opts ;
-    print NEWCFG "rename_ext = $rename_ext_opt\n" ;
+    print NEWCFG "rename_format = \"" .($self->{rename_opt} ? $self->{rename_opt} : ""). "\"\n" ;
+    print NEWCFG "rename_min = $self->{rename_min_opt}\n" ;
+    print NEWCFG "rename_sep = \"$self->{rename_sep_opt}\"\n" ;
+    map { print NEWCFG "rename_regexp = \"$_\"\n" ; } @{$self->{rename_regexp_opts}} ;
+    print NEWCFG "rename_ext = $self->{rename_ext_opt}\n" ;
 
-    print NEWCFG "dry_run = $dry_run_opt\n" ;
-    print NEWCFG "yes = $yes_opt\n" ;
-    print NEWCFG "ask = $ask_opt\n" ;
-    print NEWCFG "recursive = $recursive_opt\n" ;
-    print NEWCFG "verbose = $verbose_opt\n" ;
+    print NEWCFG "dry_run = $self->{dry_run_opt}\n" ;
+    print NEWCFG "yes = $self->{yes_opt}\n" ;
+    print NEWCFG "ask = $self->{ask_opt}\n" ;
+    print NEWCFG "recursive = $self->{recursive_opt}\n" ;
+    print NEWCFG "verbose = $self->{verbose_opt}\n" ;
 
     close NEWCFG ;
 }
 
-generate_config $gencfg_file
-    if defined $gencfg_file ;
+generate_config $self->{gencfg_file}
+    if defined $self->{gencfg_file} ;
 
 #######################################################
 # save readline history if supported by the installation
