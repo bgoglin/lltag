@@ -237,7 +237,6 @@ $self->{sep_opt} = undef ;
 $self->{spaces_opt} = 0 ;
 $self->{type_opt} = undef ;
 $self->{yes_opt} = 0 ;
-$self->{default_opt} = 0 ;
 $self->{clear_opt} = 0 ;
 $self->{append_opt} = 0 ;
 @{$self->{regexp_opts}} = () ;
@@ -404,8 +403,7 @@ GetOptions(
 	   'S'            => sub { $self->{show_tags_opt} = "all" ; },
 	   'tag=s'        => \@{$self->{additional_tags}},
 	   map { my $field = $_ ;
-		 $field_name_letter{$field} .'|'. $field .'=s'
-		     => sub { shift ; $field_default{$field} = shift ; $self->{default_opt} = 1 ; },
+		 $field_name_letter{$field} .'|'. $field .'=s' => \$field_default{$field},
 	       } @field_names ,
 	   ) or usage () ;
 
@@ -420,7 +418,10 @@ my $current_rename_yes_opt = $self->{yes_opt} ;
 $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
 
 # if no parsers and no guess, force guess
-$self->{guess_opt} = 1 unless @{$self->{user_format_strings}} or $self->{default_opt} or $self->{list_formats_opt} ;
+$self->{guess_opt} = 1
+    unless @{$self->{user_format_strings}}
+    or (grep { defined $field_default{$_} } (keys %field_default))
+    or $self->{list_formats_opt} ;
 
 # forward declarations
 sub apply_parser ;
