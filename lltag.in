@@ -417,11 +417,11 @@ my $current_rename_yes_opt = $self->{yes_opt} ;
 # spaces_opt changes matching regexps
 $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
 
-# if no parsers and no guess, force guess
-$self->{guess_opt} = 1
-    unless @{$self->{user_format_strings}}
-    or (grep { defined $field_default{$_} } (keys %field_default))
-    or $self->{list_formats_opt} ;
+# if no user parsers, no defaults and no guess, force guess
+$self->{try_internals_opt} = 1
+    if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
+			       and !(grep { defined $field_default{$_} } (keys %field_default))
+			       and !$self->{list_formats_opt} ) ;
 
 # forward declarations
 sub apply_parser ;
@@ -1047,7 +1047,7 @@ sub try_to_parse {
     }
 
     # try to guess my internal format database then
-    if ($self->{guess_opt}) {
+    if ($self->{try_internals_opt}) {
 	print "  with internal formats...\n" ;
 
 	if ($self->{nopath_opt} or not ($parsename =~ /\//)) {
@@ -1059,7 +1059,7 @@ sub try_to_parse {
 	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
     }
 
-    if ($self->{guess_opt} or @user_parsers) {
+    if ($self->{try_internals_opt} or @user_parsers) {
 	print "  Didn't find any parser!\n" ;
     }
 
@@ -1248,7 +1248,7 @@ sub rename_with_tags {
 
 # read internal parsers
 read_internal_parsers
-    if $self->{guess_opt} or $self->{list_formats_opt} ;
+    if $self->{try_internals_opt} or $self->{list_formats_opt} ;
 
 # if -L was passed, show formats and exit
 if ($self->{list_formats_opt}) {
