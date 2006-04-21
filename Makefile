@@ -21,8 +21,9 @@ DEBIAN_TARBALL	=	$(NAME)_$(VERSION).orig
 
 .PHONY: lltag clean install uninstall tarball
 
-lltag:: build-lib
-	sed -e 's!@SYSCONFDIR@!$(DESTDIR)$(SYSCONFDIR)!g' -e 's!@VERSION@!$(DESTDIR)$(VERSION)!g' < lltag.in > lltag
+lltag:: lltag.in VERSION build-lib
+	sed -e 's!@SYSCONFDIR@!$(DESTDIR)$(SYSCONFDIR)!g' -e 's!@VERSION@!$(DESTDIR)$(VERSION)!g' \
+		< lltag.in > lltag
 	chmod 755 lltag
 
 clean:: clean-lib
