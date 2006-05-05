@@ -1,4 +1,4 @@
-  * Do not change write guess_opt in the generated configuration file
+  * Do not change write guess in the generated configuration file
     unless explicitely asked by the user.
   * Perl modularization.
 
