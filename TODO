@@ -1,0 +1,40 @@
+NEXT RELEASE
+============
+* include tutorial in doc/
+
+PENDING
+=======
+* handle errors gracefully
+
+* debtags
+
+* prevent arbitrary code execution
+* prevent perl error because of bad format regexp ?
+
+* read/write tags to a file, with filename, or not (matching fields ?)
+* write from cddb to a file
+* query cddb by cd id, or by keywords/http
+
+* display exiting tags with new one, with a special flag
+* edit existing tags
+* edit multiple values tags
+* add a way to undefine a field during edition
+
+* support id3 v2.3/4, use MP3::Tag ?
+* no way to only recommend, we'll have to depend on it
+
+* change "apply defaults" to something better named
+* display old tags during confirmation
+
+* --sep _ applied before matching ?
+
+OBSOLETE
+========
+* allow space at the beginning/end of fields, even without --spaces
+* match without file extension and then with. add an option?
+* --flac-ext
+* allow -_ in command line options to match configuration file option names
+* -o option
+* --mp3-o mp3info option
+* --ogg-o vorbiscomment option
+* buggy perl command line parsing complains about option 'p' unknown when --prout is passed
