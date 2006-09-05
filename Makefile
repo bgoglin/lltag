@@ -6,6 +6,7 @@ else
 endif
 
 LIB_SUBDIR	=	lib
+DOC_SUBDIR	=	doc
 
 DESTDIR	=	
 PREFIX	=	/usr/local
@@ -54,6 +55,7 @@ tarball::
 	cp README /tmp/$(TARBALL)
 	cp VERSION /tmp/$(TARBALL)
 	cp Changes /tmp/$(TARBALL)
+	cp -a $(DOC_SUBDIR)/ /tmp/$(TARBALL)
 	cp -a $(LIB_SUBDIR) /tmp/$(TARBALL)
 	cd /tmp && tar cfz $(DEBIAN_TARBALL).tar.gz $(TARBALL)
 	cd /tmp && tar cfj $(TARBALL).tar.bz2 $(TARBALL)

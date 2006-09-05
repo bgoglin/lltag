@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+<head>
+ <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+ <title>lltag - Automatic command-line mp3/ogg/flac file tagger and renamer - How-To?</title>
+ <link rel="stylesheet" type="text/css" href="main.css"/>
+</head>
+<body>
+
+<h1 class="title">lltag How-To?</h1>
+
+<div class="howto">
+
+
+
+<h2 class="section">Basics</h2>
+
+
+
+<h3 class="question">How do I use lltag?</h3>
+
+<pre>
+  lltag myfile1.mp3 myfile2.ogg
+</pre>
+
+It is also possible to tag all file in subdirectories with:
+<pre>
+  lltag -R mymusic/
+</pre>
+
+All mp3, ogg and flac are processed, depending on their extension.
+If the extension is wrong, it is possible to force the file processing type:
+<pre>
+  lltag --ogg myfile.mp3
+</pre>
+
+
+
+<h2 class="section">Disabling, Confirming, Forcing</h2>
+
+
+
+<h3 class="question">How do I try lltag without actually tagging?</h3>
+
+<pre>
+  lltag --dry-run
+</pre>
+
+
+
+<h3 class="question">How do I change what confirmation lltag wants?</h3>
+
+It is possible to remove any need for confirmation when no problem occurs:
+<pre>
+  lltag --yes myfile.flac
+</pre>
+
+It is also possible to force confirmation when <tt>lltag</tt> guesses the filename
+format with internal formats:
+<pre>
+  lltag --ask myfile.ogg
+</pre>
+
+Finally, during confirmation, it is possible to use <tt>Always</tt> to enable
+<tt>--yes</tt> at runtime.
+
+
+
+<h2 class="section">Parsing</h2>
+
+
+
+<h3 class="question">How do I see how lltag parses filename?</h3>
+
+<tt>lltag</tt> uses internal format that are defined in <tt>/etc/lltag/formats/</tt>.
+You might see them with:
+<pre>
+  lltag -L
+</pre>
+
+
+
+<h3 class="question">How do I force lltag to use another format?</h3>
+
+If internal formats do not fit the way your filename is written, you may pass
+additional formats with:
+<pre>
+  lltag -F "%a-%t" -F "%n)%a-%t" myfile1.mp3 myfile2.flac
+</pre>
+
+It is also possible to try user-provided formats and then try internal formats:
+<pre>
+  lltag -F "%a-%t" -F "%n)%a-%t" -G myfile1.mp3 myfile2.flac
+</pre>
+
+
+
+<h2 class="section">Managing tags</h2>
+
+
+
+<h3 class="question">How do I set default values?</h3>
+
+Each tag field may receive a default value even if it is not defined
+when parsing the filename:
+<pre>
+  lltag -a MyArtist -y 1990 myfile.mp3
+</pre>
+
+
+
+<h3 class="question">How do I cleanup tags?</h3>
+
+If your filenames are dirty, it is possible to ask <tt>lltag</tt> to be flexible
+with spaces. Any space in the format might be matched with 0 or several spaces
+with:
+<pre>
+  lltag --spaces myfile.mp3
+</pre>
+
+The first letter of each word in each tag might be upcased with:
+<pre>
+  lltag --maj myfile.mp3
+</pre>
+
+If the filename contains special characters that have to be translated into
+spaces for tags:
+<pre>
+  lltag --sep _|-|: myfile.mp3
+</pre>
+
+
+
+<h2 class="section">Renaming</h2>
+
+
+
+<h3 class="question">How do I rename files after tagging?</h3>
+
+Files might be renamed using the tags that were gotten from original filename parsing:
+<pre>
+  lltag myfile.mp3 --rename "%a - %t.mp3"
+</pre>
+
+Tags might be lowcased before renaming, and spaces might be replaced with another character:
+<pre>
+  lltag myfile.mp3 --rename "%a - %t.mp3" --rename-min --rename-sep _
+</pre>
+
+
+
+<h3 class="question">How do I rename files without tagging?</h3>
+
+<tt>lltag</tt> may also be used as a renaming program without any tagging:
+
+<pre>
+  lltag --no-tagging -F "%A/%n. %a - %t" --rename "%a - %A/%n - %t" */*.ogg
+</pre>
+
+Note that <tt>lltag</tt> may rename using existing tags even if the old filename
+is useless. Matching with <tt>"%i"</tt> to ignore the old filename might be useful
+in this case.
+
+<pre>
+  lltag --no-tagging -F "%i" --rename "%a - %A/%n - %t" */*.ogg
+</pre>
+
+
+</div>
+
+<hr />
+
+<p style="text-align: center">
+<a href="http://validator.w3.org/check/referer">
+ <img src="http://www.w3.org/Icons/valid-xhtml11" alt="Valid XHTML 1.1!" class="icon" />
+</a>
+
+<a href="http://jigsaw.w3.org/css-validator/check/referer">
+ <img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!" class="icon" />
+</a>
+
+<a href="http://validator.loulous.org/check?uri=referer">
+ <img style="border:0;width:88px;height:31px;" src="http://loulous.org/loulous.png" alt="Loulous Compliant" />
+</a>
+</p>
+
+<address id="addr">
+ The <a href="mailto:lltag-users AT gna.org">lltag team</a>.
+</address>
+
+<div id="modif">
+ $Id: howto.html,v 1.2 2006/05/07 00:57:26 bgoglin Exp $
+</div>
+
+</body>
+</html>

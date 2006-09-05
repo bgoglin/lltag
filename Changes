@@ -1,6 +1,9 @@
   * Do not change write guess in the generated configuration file
     unless explicitely asked by the user.
+  * Add a doc/ subdirectory:
+    + The How-To is now also included in the tarball.
   * Perl modularization.
+
 
 lltag (0.11)
 
