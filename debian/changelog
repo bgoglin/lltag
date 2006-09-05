@@ -1,5 +1,6 @@
 
   * Install HTML files from the new upstream doc/ subdirectory.
+  * Update debian/rules to pass PERL_INSTALLDIRS=vendor.
   * Update Standards-Version to 3.7.2.
 
 

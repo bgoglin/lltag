@@ -14,7 +14,7 @@
 build: build-stamp
 build-stamp:
 	dh_testdir
-	make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
+	make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man PERL_INSTALLDIRS=vendor
 	touch build-stamp
 
 clean:
@@ -22,13 +22,13 @@ clean:
 	dh_testroot
 	rm -f build-stamp
 	dh_clean
-	make clean PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
+	make clean PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man PERL_INSTALLDIRS=vendor
 
 install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k
-	make install DESTDIR=$(CURDIR)/debian/lltag PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
+	make install DESTDIR=$(CURDIR)/debian/lltag PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man PERL_INSTALLDIRS=vendor
 
 # Build architecture-independent files here.
 binary-indep: build install
