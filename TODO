@@ -1,6 +1,12 @@
 NEXT RELEASE
 ============
 * include tutorial in doc/
+* Use !~ and =~ m@@ and s@@@ when there are a lot of slashes
+* Add CDDB to look for id/misc depending on keywords (taken from the actually filename/tags),
+  let the user choose one, get the tracks, let the user choose one (propose by looking at
+  the track number in filename/tags), and use it to tag/rename
+* Change "apply defaults" to something better named
+* Display old tags during confirmation, the ones untouched, the ones modified
 
 PENDING
 =======
@@ -12,8 +18,6 @@ PENDING
 * prevent perl error because of bad format regexp ?
 
 * read/write tags to a file, with filename, or not (matching fields ?)
-* write from cddb to a file
-* query cddb by cd id, or by keywords/http
 
 * display exiting tags with new one, with a special flag
 * edit existing tags
@@ -21,10 +25,7 @@ PENDING
 * add a way to undefine a field during edition
 
 * support id3 v2.3/4, use MP3::Tag ?
-* no way to only recommend, we'll have to depend on it
-
-* change "apply defaults" to something better named
-* display old tags during confirmation
+* loaded at runtime with require, with a distribution specific message asking to install a perl module
 
 * --sep _ applied before matching ?
 
