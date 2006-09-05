@@ -1,6 +1,5 @@
 NEXT RELEASE
 ============
-* include tutorial in doc/
 * Use !~ and =~ m@@ and s@@@ when there are a lot of slashes
 * Add CDDB to look for id/misc depending on keywords (taken from the actually filename/tags),
   let the user choose one, get the tracks, let the user choose one (propose by looking at
