@@ -30,6 +30,9 @@ install: build
 	dh_clean -k
 	make install DESTDIR=$(CURDIR)/debian/lltag PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man PERL_INSTALLDIRS=vendor
 
+# Build architecture-dependent files here.
+binary-arch: build install
+
 # Build architecture-independent files here.
 binary-indep: build install
 	dh_testdir
@@ -44,5 +47,5 @@ binary-indep: build install
 	dh_md5sums
 	dh_builddeb
 
-binary: binary-indep
-.PHONY: build clean binary-indep binary install configure
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
