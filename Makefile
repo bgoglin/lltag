@@ -1,6 +1,6 @@
 NAME	=	lltag
 ifeq ($(shell [ -d .svn ] && echo 1),1)
-	VERSION	=	$(shell cat VERSION)+svn
+	VERSION	=	$(shell cat VERSION)+svn.$(shell date +%Y%m%d)
 else
 	VERSION	=	$(shell cat VERSION)
 endif
