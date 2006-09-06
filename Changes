@@ -4,7 +4,6 @@
     + The How-To is now also included in the tarball.
   * Perl modularization.
   * Add the date to the program name when compiling it from SVN.
-  * Include TODO in the tarball.
 
 
 lltag (0.11)
