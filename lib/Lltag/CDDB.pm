@@ -1,14 +1,22 @@
-#!/usr/bin/perl -w
+package Lltag::CDDB ;
 
 use strict ;
 
 use IO::Socket;
 
+use vars qw(@EXPORT) ;
+
+@EXPORT = qw (
+	      get_cddb_tags
+	      ) ;
+
+my $TAG_SUCCESS = 0 ;
+my $TAG_NO_MATCH = -4 ;
+
 my $server_host = "www.freedb.org" ;
 my $server_port = 80 ;
 
-sub cddb_query_cd_by_keywords
-{
+sub cddb_query_cd_by_keywords {
     my $keywords = shift ;
     my $socket = IO::Socket::INET->new(PeerAddr => $server_host,
 				       PeerPort => $server_port,
@@ -47,8 +55,7 @@ sub cddb_query_cd_by_keywords
     return \@cdids ;
 }
 
-sub cddb_query_tracks_by_id
-{
+sub cddb_query_tracks_by_id {
     my $cat = shift ;
     my $id = shift ;
     my $name = shift ;
@@ -91,18 +98,20 @@ sub cddb_query_tracks_by_id
     return $cd ;
 }
 
-while (1) {
+sub get_cddb_tags {
+
     my $reply ;
 
     # enter keywords for a query
   KEYWORDS:
-    print "Enter CDDB query: " ;
+    print "Enter CDDB query (e to exit CDDB): " ;
     my $keywords = <> ;
     chomp $keywords ;
     next unless length $keywords ;
-    $keywords =~ s/ /+/g ;
+    return ($TAG_NO_MATCH, undef) if $keywords eq 'e' ;
 
     # do the actual query for CD id with keywords
+    $keywords =~ s/ /+/g ;
     my $cdids = cddb_query_cd_by_keywords $keywords ;
     goto KEYWORDS unless @{$cdids} ;
 
@@ -116,12 +125,13 @@ while (1) {
 
     # choose a CD id
   CD:
-    print "Enter CD index (v to view the list, q to query again): " ;
+    print "Enter CD index (v to view the list, q to query again, e to exit CDDB): " ;
     $reply = <> ;
     chomp $reply ;
     goto CD unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;
     goto KEYWORDS_RESULTS if $reply eq 'v' ;
+    return ($TAG_NO_MATCH, undef) if $reply eq 'e' ;
     goto CD unless $reply =~ /^\d+$/ ;
     goto CD unless $reply >= 1 and $reply <= @{$cdids} ;
 
@@ -147,18 +157,19 @@ while (1) {
 
     # choose a track
   TRACK:
-    print "Enter track index (v to view the list, q to query again, c to change CD index): " ;
+    print "Enter track index (v to view the list, q to query again, c to change CD index, e to exit CDDB): " ;
     $reply = <> ;
     chomp $reply ;
     goto TRACK unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;
     goto CD if $reply eq 'c' ;
     goto CD_RESULTS if $reply eq 'v' ;
+    return ($TAG_NO_MATCH, undef) if $reply eq 'e' ;
     goto TRACK unless $reply =~ /^\d+$/ ;
     goto TRACK unless $reply >= 1 and $reply <= $cd->{TRACKS} ;
 
     # print the track tags
-    my $track = $cd->{$reply} ;
+    my $track = $cd->{$reply-1} ;
     my %values ;
     $values{ARTIST} = $cd->{ARTIST} ;
     $values{TITLE} = $track->{TITLE} ;
@@ -168,8 +179,10 @@ while (1) {
     $values{DATE} = $cd->{YEAR} if defined $cd->{YEAR} ;
 
     map {
-	print "  $_: $values{$_}\n"
+       print "  $_: $values{$_}\n"
     } (keys %values) ;
 
-    goto TRACK ;
+    return ($TAG_SUCCESS, \%values) ;
 }
+
+1 ;

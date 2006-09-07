@@ -8,6 +8,7 @@ require Lltag::Misc ;
 require Lltag::MP3 ;
 require Lltag::OGG ;
 require Lltag::FLAC ;
+require Lltag::CDDB ;
 
 use Getopt::Long ;
 Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
@@ -150,6 +151,7 @@ sub usage {
     print " Tagging options:\n" ;
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "  -G, --guess            Guess format (default)\n" ;
+    print "  -C, --cddb             Query tags in CDDB\n" ;
     print "  -p, --nopath           Remove the path from filenames when matching\n" ;
     print map { "  -". $field_name_letter{$_} .", --". $_.$field_name_trailing_spaces{$_}
 		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @field_names ;
@@ -231,6 +233,7 @@ $self->{no_tagging_opt} = 0 ;
 
 $self->{ask_opt} = 0 ;
 $self->{guess_opt} = 0 ;
+$self->{cddb_opt} = 0 ;
 $self->{nopath_opt} = 0 ;
 $self->{maj_opt} = 0 ;
 $self->{sep_opt} = undef ;
@@ -374,6 +377,7 @@ foreach my $file (@additional_config_files) {
 GetOptions(
 	   'F|format=s'   => \@{$self->{user_format_strings}},
 	   'G|guess'      => \$self->{guess_opt},
+	   'C|cddb'       => \$self->{cddb_opt},
 	   'p|nopath'     => \$self->{nopath_opt},
 	   'spaces'       => \$self->{spaces_opt},
 	   'maj'          => \$self->{maj_opt},
@@ -417,11 +421,11 @@ my $current_rename_yes_opt = $self->{yes_opt} ;
 # spaces_opt changes matching regexps
 $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
 
-# if no user parsers, no defaults and no guess, force guess
+# if no user parsers, no defaults, no guess and no cddb, force guess
 $self->{try_internals_opt} = 1
-    if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
-			       and !(grep { defined $field_default{$_} } (keys %field_default))
-			       and !$self->{list_formats_opt} ) ;
+    if $self->{guess_opt} or $self->{cddb_opt} or ( !@{$self->{user_format_strings}}
+						    and !(grep { defined $field_default{$_} } (keys %field_default))
+						    and !$self->{list_formats_opt} ) ;
 
 # forward declarations
 sub apply_parser ;
@@ -1319,6 +1323,8 @@ generate_user_parsers ;
 # main loop
 while ( @files ) {
     my $file = shift @files ;
+    my $values = undef ;
+    my $res ;
 
     print "Processing file \"".$file."\"...\n" ;
 
@@ -1331,13 +1337,27 @@ while ( @files ) {
     # read old tags
     my $old_values = read_tags $file, $file_type ;
 
+    # FIXME: parse first, to get the track number?
+
+    if ($self->{cddb_opt}) {
+	($res, $values) = Lltag::CDDB::get_cddb_tags () ;
+	# FIXME: skip file not return from anywhere, and ask/processed in this loop
+	goto NEXT_FILE
+	    if $res == $TAG_SKIP_FILE ;
+	goto FOUND_TAGS
+	    if $res == $TAG_SUCCESS ;
+	die "Unknown tag return value: $res.\n"
+	    if $res != $TAG_NO_MATCH ;
+    }
+
     # try to parse this file
-    my ($res, $values) = try_to_parse $file, $parsename, $file_type ;
+    ($res, $values) = try_to_parse $file, $parsename, $file_type ;
     goto NEXT_FILE
 	if $res == $TAG_SKIP_FILE ;
     die "Unknown tag return value: $res.\n"
 	if $res != $TAG_SUCCESS and $res != $TAG_SUCCESS_PREFERRED ;
 
+  FOUND_TAGS:
     # add new values to the old ones, depending on clear/append options
     my $new_values = Lltag::Tags::append_tag_values ($self, $old_values, $values) ;
     # append additional tags too
