@@ -2,7 +2,9 @@ package Lltag::CDDB ;
 
 use strict ;
 
-use IO::Socket;
+use IO::Socket ;
+
+use Lltag::Misc ;
 
 use vars qw(@EXPORT) ;
 
@@ -119,10 +121,9 @@ sub get_cddb_tags {
 
     # enter keywords for a query
   KEYWORDS:
-    print "Enter CDDB query (e to exit CDDB): " ;
-    my $keywords = <> ;
+    my $keywords = Lltag::Misc::readline ("", "Enter CDDB query (e to exit CDDB)", "", 1) ;
     chomp $keywords ;
-    next unless length $keywords ;
+    goto KEYWORDS unless length $keywords ;
     return ($TAG_NO_MATCH, undef) if $keywords eq 'e' ;
 
     # do the actual query for CD id with keywords
@@ -142,8 +143,7 @@ sub get_cddb_tags {
 
     # choose a CD id
   CD:
-    print "Enter CD index (v to view the list, q to query again, e to exit CDDB): " ;
-    $reply = <> ;
+    $reply = Lltag::Misc::readline ("", "Enter CD index (v to view the list, q to query again, e to exit CDDB)", "", 1) ;
     chomp $reply ;
     goto CD unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;
@@ -175,8 +175,7 @@ sub get_cddb_tags {
 
     # choose a track
   TRACK:
-    print "Enter track index (v to view the list, q to query again, c to change CD index, e to exit CDDB): " ;
-    $reply = <> ;
+    $reply = Lltag::Misc::readline ("", "Enter track index (v to view the list, q to query again, c to change CD index, e to exit CDDB)", "", 1) ;
     chomp $reply ;
     goto TRACK unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;

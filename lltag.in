@@ -13,8 +13,6 @@ require Lltag::CDDB ;
 use Getopt::Long ;
 Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 
-use Term::ReadLine;
-
 #######################################################
 # configuration file location
 my $common_lltag_dir = "@SYSCONFDIR@/lltag" ;
@@ -28,65 +26,7 @@ my $lltag_edit_history_filename = "edit_history" ;
 my $self = {} ;
 
 #######################################################
-# configure readline depending on the features provided by the installation
-
-my $term = Term::ReadLine->new('lltag editor');
-my $attribs = $term->Attribs;
-$term->ornaments('md,me,,');
-
-# read the history file
-eval {
-    if (-f $user_lltag_dir."/".$lltag_edit_history_filename) {
-	$term->ReadHistory ($user_lltag_dir."/".$lltag_edit_history_filename)
-	    or warn "Failed to open history file $user_lltag_dir/$lltag_edit_history_filename: $!\n" ;
-    }
-} unless $term->Features->{ReadHistory} ;
-
-my $readline_firsttime = 1 ;
-
-sub dummy_readline {
-    my $indent = shift ;
-    my $prompt = shift ;
-    my $preput = shift ;
-    my $clear_allowed = shift ;
-    $preput = "" if not defined $preput ;
-    print $indent."The current value is given in parenthesis, <ENTER> to keep it"
-	. ($clear_allowed ? ", <CLEAR> to clear it" : "")
-	. ".\n"
-	if $readline_firsttime ;
-    $readline_firsttime = 0 ;
-  ASK:
-    my $val = $term->readline ("$indent$prompt ($preput) ? ") ;
-    return $preput if !$val ;
-    $val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
-    if (!$val and !$clear_allowed) {
-	print "$indent  Clearing is not allowed here.\n" ;
-	goto ASK ;
-    }
-    return $val ;
-}
-
-sub real_readline {
-  my $indent = shift ;
-  my $prompt = shift ;
-  my $preput = shift ;
-  my $clear_allowed = shift ;
-  $preput = "" if not defined $preput ;
- ASK:
-  my $val = $term->readline ("$indent$prompt ? ", $preput) ;
-  if (!$val and !$clear_allowed) {
-      print "$indent  Clearing is not allowed here.\n" ;
-      goto ASK ;
-  }
-  return $val ;
-}
-
-my $myreadline ;
-if ($term->Features->{preput}) {
-    $myreadline = \&real_readline ;
-} else {
-    $myreadline = \&dummy_readline ;
-}
+Lltag::Misc::init_readline ($user_lltag_dir, $lltag_edit_history_filename) ;
 
 #######################################################
 # format parameters
@@ -930,7 +870,7 @@ sub tags_confirm_fields {
 	    chomp $edit_reply ;
 	    if ($edit_reply =~ /^($field_letters_union)$/) {
 		my $field = $field_letter_name{$edit_reply} ;
-		$edit_values->{$field} = &$myreadline ("      ", ucfirst($field)." field", $edit_values->{$field}, 1) ;
+		$edit_values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $edit_values->{$field}, 1) ;
 		goto ASK_EDIT ;
 	    } elsif ($edit_reply eq "E") {
 		$values = $edit_values ;
@@ -1206,7 +1146,7 @@ sub rename_with_tags {
 	} elsif ($reply =~ /^n/i) {
 	    return ;
 	} elsif ($reply =~ /^e/i) {
-	    $new_name = &$myreadline ("      ", "New filename", $new_name, 0) ;
+	    $new_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
 	    goto ASK_CONFIRM ;
 	} else {
 	    rename_confirm_usage ;
@@ -1428,21 +1368,4 @@ sub generate_config {
 generate_config $self->{gencfg_file}
     if defined $self->{gencfg_file} ;
 
-#######################################################
-# save readline history if supported by the installation
-
-# only keep the last 100 entries
-eval {
-  $term->StifleHistory (100);
-} unless $term->Features->{StifleHistory} ;
-
-# save the history file
-eval {
-    if (!-d $user_lltag_dir."/") {
-	mkdir $user_lltag_dir
-	    or warn "Failed to create $user_lltag_dir directory to store the history file: $!.\n" ;
-    }
-    $term->WriteHistory ($user_lltag_dir."/".$lltag_edit_history_filename)
-	or warn "Failed to write history file $user_lltag_dir/$lltag_edit_history_filename: $!.\n" ;
-} unless $term->Features->{WriteHistory} ;
-
+Lltag::Misc::exit_readline () ;
