@@ -121,7 +121,7 @@ sub get_cddb_tags {
 
     # enter keywords for a query
   KEYWORDS:
-    my $keywords = Lltag::Misc::readline ("", "Enter CDDB query (e to exit CDDB)", "", 1) ;
+    my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (e to exit CDDB)", "", 1) ;
     chomp $keywords ;
     goto KEYWORDS unless length $keywords ;
     return ($TAG_NO_MATCH, undef) if $keywords eq 'e' ;
@@ -135,7 +135,7 @@ sub get_cddb_tags {
 
   KEYWORDS_RESULTS:
     # print the resulting CDs
-    my $cdid_format = "  %0".(length (scalar @{$cdids}))."d: %s (cat=%s, id=%s)\n" ;
+    my $cdid_format = "    %0".(length (scalar @{$cdids}))."d: %s (cat=%s, id=%s)\n" ;
     for(my $i=0; $i < @{$cdids}; $i++) {
 	my $cdid = $cdids->[$i] ;
 	printf ($cdid_format, $i+1, $cdid->{NAME}, $cdid->{CAT}, $cdid->{ID}) ;
@@ -143,7 +143,8 @@ sub get_cddb_tags {
 
     # choose a CD id
   CD:
-    $reply = Lltag::Misc::readline ("", "Enter CD index (v to view the list, q to query again, e to exit CDDB)", "", 1) ;
+    print "  Enter CD index (v to view the list, q to query again, e to exit CDDB) ? " ;
+    $reply = <> ;
     chomp $reply ;
     goto CD unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;
@@ -158,16 +159,16 @@ sub get_cddb_tags {
     $previous_cd = $cd ;
 
     if (!$cd->{TRACKS}) {
-	print "  There is no tracks in this CD.\n" ;
+	print "    There is no tracks in this CD.\n" ;
 	goto CD ;
     }
 
   CD_RESULTS:
     # print the CD contents
     map {
-	print "  $_: $cd->{$_}\n" ;
+	print "    $_: $cd->{$_}\n" ;
     } grep { $_ !~ /^\d+$/ } (keys %{$cd}) ;
-    my $track_format = "  Track %0".(length $cd->{TRACKS})."d: %s (%s)\n" ;
+    my $track_format = "    Track %0".(length $cd->{TRACKS})."d: %s (%s)\n" ;
     for(my $i=0; $i < $cd->{TRACKS}; $i++) {
 	my $track = $cd->{$i+1} ;
 	printf ($track_format, $i+1, $track->{TITLE}, $track->{TIME}) ;
@@ -175,7 +176,8 @@ sub get_cddb_tags {
 
     # choose a track
   TRACK:
-    $reply = Lltag::Misc::readline ("", "Enter track index (v to view the list, q to query again, c to change CD index, e to exit CDDB)", "", 1) ;
+    print "  Enter track index (v to view the list, q to query again, c to change CD index, e to exit CDDB) ? " ;
+    $reply = <> ;
     chomp $reply ;
     goto TRACK unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;
