@@ -98,9 +98,24 @@ sub cddb_query_tracks_by_id {
     return $cd ;
 }
 
-sub get_cddb_tags {
+my $previous_cdids = undef ;
+my $previous_cd = undef ;
 
+sub get_cddb_tags {
     my $reply ;
+    my $cdids ;
+    my $cd ;
+
+    # FIXME: check additional parameter to start from scratch
+    if (defined $previous_cd) {
+	$cdids = $previous_cdids ;
+	$cd = $previous_cd ;
+	goto CD_RESULTS ;
+    }
+    if (defined $previous_cdids) {
+	$cdids = $previous_cdids ;
+	goto KEYWORDS_RESULTS ;
+    }
 
     # enter keywords for a query
   KEYWORDS:
@@ -112,7 +127,9 @@ sub get_cddb_tags {
 
     # do the actual query for CD id with keywords
     $keywords =~ s/ /+/g ;
-    my $cdids = cddb_query_cd_by_keywords $keywords ;
+    $cdids = cddb_query_cd_by_keywords $keywords ;
+    $previous_cdids = $cdids ;
+    $previous_cd = undef ;
     goto KEYWORDS unless @{$cdids} ;
 
   KEYWORDS_RESULTS:
@@ -137,7 +154,8 @@ sub get_cddb_tags {
 
     # do the actual query for CD contents
     my $cdid = $cdids->[$reply-1] ;
-    my $cd = cddb_query_tracks_by_id ($cdid->{CAT}, $cdid->{ID}, $cdid->{NAME}) ;
+    $cd = cddb_query_tracks_by_id ($cdid->{CAT}, $cdid->{ID}, $cdid->{NAME}) ;
+    $previous_cd = $cd ;
 
     if (!$cd->{TRACKS}) {
 	print "  There is no tracks in this CD.\n" ;
@@ -162,7 +180,7 @@ sub get_cddb_tags {
     chomp $reply ;
     goto TRACK unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;
-    goto CD if $reply eq 'c' ;
+    goto KEYWORDS_RESULTS if $reply eq 'c' ;
     goto CD_RESULTS if $reply eq 'v' ;
     return ($TAG_NO_MATCH, undef) if $reply eq 'e' ;
     goto TRACK unless $reply =~ /^\d+$/ ;
