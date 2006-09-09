@@ -12,8 +12,8 @@ use vars qw(@EXPORT) ;
 	      get_cddb_tags
 	      ) ;
 
-my $TAG_SUCCESS = 0 ;
-my $TAG_NO_MATCH = -4 ;
+my $CDDB_SUCCESS = 0 ;
+my $CDDB_ABORT = -1 ;
 
 my $server_host = "www.freedb.org" ;
 my $server_port = 80 ;
@@ -124,7 +124,9 @@ sub get_cddb_tags {
     my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (e to exit CDDB)", "", 1) ;
     chomp $keywords ;
     goto KEYWORDS unless length $keywords ;
-    return ($TAG_NO_MATCH, undef) if $keywords eq 'e' ;
+    return ($CDDB_ABORT, undef) if $keywords eq 'e' ;
+
+    # FIXME: support cat/id by matching m@^\s*(\w+)/([\da-f]+)\s*$@
 
     # do the actual query for CD id with keywords
     $keywords =~ s/ /+/g ;
@@ -149,7 +151,7 @@ sub get_cddb_tags {
     goto CD unless length $reply ;
     goto KEYWORDS if $reply eq 'q' ;
     goto KEYWORDS_RESULTS if $reply eq 'v' ;
-    return ($TAG_NO_MATCH, undef) if $reply eq 'e' ;
+    return ($CDDB_ABORT, undef) if $reply eq 'e' ;
     goto CD unless $reply =~ /^\d+$/ ;
     goto CD unless $reply >= 1 and $reply <= @{$cdids} ;
 
@@ -183,7 +185,7 @@ sub get_cddb_tags {
     goto KEYWORDS if $reply eq 'q' ;
     goto KEYWORDS_RESULTS if $reply eq 'c' ;
     goto CD_RESULTS if $reply eq 'v' ;
-    return ($TAG_NO_MATCH, undef) if $reply eq 'e' ;
+    return ($CDDB_ABORT, undef) if $reply eq 'e' ;
     goto TRACK unless $reply =~ /^\d+$/ ;
     goto TRACK unless $reply >= 1 and $reply <= $cd->{TRACKS} ;
 
@@ -198,10 +200,10 @@ sub get_cddb_tags {
     $values{DATE} = $cd->{YEAR} if defined $cd->{YEAR} ;
 
     map {
-       print "  $_: $values{$_}\n"
+	print "  $_: $values{$_}\n"
     } (keys %values) ;
 
-    return ($TAG_SUCCESS, \%values) ;
+    return ($CDDB_SUCCESS, \%values) ;
 }
 
 1 ;

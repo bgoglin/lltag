@@ -371,19 +371,22 @@ $self->{try_internals_opt} = 1
 sub apply_parser ;
 
 #######################################################
-# Tagging return values
-my $TAG_SUCCESS_PREFERRED = 1 ;
-my $TAG_SUCCESS = 0 ;
-my $TAG_SKIP_FILE = -1 ;
-my $TAG_SKIP_PARSER = -2 ;
-my $TAG_SKIP_PATH_PARSER = -3 ;
-my $TAG_NO_MATCH = -4 ;
+# Parsing return values
+my $PARSE_SUCCESS_PREFERRED = 1 ;
+my $PARSE_SUCCESS = 0 ;
+my $PARSE_ABORT = -1 ;
+my $PARSE_SKIP_PARSER = -2 ;
+my $PARSE_SKIP_PATH_PARSER = -3 ;
+my $PARSE_NO_MATCH = -4 ;
 
-#######################################################
-# Tagging acceptable behavior
-my $TAG_MAY_SKIP_PARSER = 1 ;
-my $TAG_MAY_SKIP_PATH_PARSER = 2 ;
-my $TAG_MAY_PREFER = 4 ;
+# Parsing acceptable behavior
+my $PARSE_MAY_SKIP_PARSER = 1 ;
+my $PARSE_MAY_SKIP_PATH_PARSER = 2 ;
+my $PARSE_MAY_PREFER = 4 ;
+
+# CDDB return values, must match the ones in CDDB.pm
+my $CDDB_SUCCESS = 0 ;
+my $CDDB_ABORT = -1 ;
 
 #######################################################
 # extract file type and parsename
@@ -596,17 +599,17 @@ sub apply_internal_basename_parsers {
     # no path, only try each basename parser
     foreach my $basename_parser (@internal_basename_parsers) {
 	# try to tag, with confirmation
-	my ($res, $values) = apply_parser $file, $parsename, $file_type, $basename_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
-	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
-	    if ($res == $TAG_SUCCESS_PREFERRED) {
+	my ($res, $values) = apply_parser $file, $parsename, $file_type, $basename_parser, 1, $PARSE_MAY_PREFER|$PARSE_MAY_SKIP_PARSER ;
+	if ($res == $PARSE_SUCCESS || $res == $PARSE_SUCCESS_PREFERRED || $res == $PARSE_ABORT) {
+	    if ($res == $PARSE_SUCCESS_PREFERRED) {
 		$preferred_parser = $basename_parser ;
 	    }
 	    return ($res, $values) ;
 	}
 	# try next parser
-	die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
+	die "Unknown tag return value: $res\n" if $res != $PARSE_SKIP_PARSER ;
     }
-    return ($TAG_NO_MATCH, undef) ;
+    return ($PARSE_NO_MATCH, undef) ;
 }
 
 sub merge_internal_parsers {
@@ -630,24 +633,24 @@ sub apply_internal_path_basename_parsers {
 	    foreach my $basename_parser (@internal_basename_parsers) {
 		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
-		my ($res, $values) = apply_parser $file, $parsename, $file_type, $whole_parser, 1, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER|$TAG_MAY_SKIP_PATH_PARSER ;
-		if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
-		    if ($res == $TAG_SUCCESS_PREFERRED) {
+		my ($res, $values) = apply_parser $file, $parsename, $file_type, $whole_parser, 1, $PARSE_MAY_PREFER|$PARSE_MAY_SKIP_PARSER|$PARSE_MAY_SKIP_PATH_PARSER ;
+		if ($res == $PARSE_SUCCESS || $res == $PARSE_SUCCESS_PREFERRED || $res == $PARSE_ABORT) {
+		    if ($res == $PARSE_SUCCESS_PREFERRED) {
 			$preferred_parser = $whole_parser ;
 		    }
 		    return ($res, $values) ;
 		}
 		# try next path parser if asked
 		goto NEXT_PATH_PARSER
-		    if $res == $TAG_SKIP_PATH_PARSER ;
+		    if $res == $PARSE_SKIP_PATH_PARSER ;
 
 		# try next parser
-		die "Unknown tag return value: $res\n" if $res != $TAG_SKIP_PARSER ;
+		die "Unknown tag return value: $res\n" if $res != $PARSE_SKIP_PARSER ;
 	    }
 	}
       NEXT_PATH_PARSER:
     }
-    return ($TAG_NO_MATCH, undef) ;
+    return ($PARSE_NO_MATCH, undef) ;
 }
 
 #######################################################
@@ -759,18 +762,18 @@ sub apply_user_parsers {
     # try each format until one works
     foreach my $parser (@user_parsers) {
 	# try to tag, without confirmation
-	my ($res, $values) = apply_parser $file, $parsename, $file_type, $parser, 0, $TAG_MAY_PREFER|$TAG_MAY_SKIP_PARSER ;
-	if ($res == $TAG_SUCCESS || $res == $TAG_SUCCESS_PREFERRED || $res == $TAG_SKIP_FILE) {
-	    if ($res == $TAG_SUCCESS_PREFERRED) {
+	my ($res, $values) = apply_parser $file, $parsename, $file_type, $parser, 0, $PARSE_MAY_PREFER|$PARSE_MAY_SKIP_PARSER ;
+	if ($res == $PARSE_SUCCESS || $res == $PARSE_SUCCESS_PREFERRED || $res == $PARSE_ABORT) {
+	    if ($res == $PARSE_SUCCESS_PREFERRED) {
 		$preferred_parser = $parser ;
 	    }
 	    return ($res, $values) ;
 	}
 	print "    '". $parser->{title} ."' does not match.\n" ;
 	# try next parser
-	die "Unknown tag return value: $res.\n" if $res != $TAG_SKIP_PARSER ;
+	die "Unknown tag return value: $res.\n" if $res != $PARSE_SKIP_PARSER ;
     }
-    return ($TAG_NO_MATCH, undef) ;
+    return ($PARSE_NO_MATCH, undef) ;
 }
 
 #######################################################
@@ -779,10 +782,10 @@ sub apply_user_parsers {
 sub tags_confirm_letters {
     my $behaviors = shift ;
     my $string = "[<y>v" ;
-    $string .= "u" if $behaviors & $TAG_MAY_PREFER ;
+    $string .= "u" if $behaviors & $PARSE_MAY_PREFER ;
     $string .= "ae" ;
-    $string .= "n" if $behaviors & $TAG_MAY_SKIP_PARSER ;
-    $string .= "p" if $behaviors & $TAG_MAY_SKIP_PATH_PARSER ;
+    $string .= "n" if $behaviors & $PARSE_MAY_SKIP_PARSER ;
+    $string .= "p" if $behaviors & $PARSE_MAY_SKIP_PATH_PARSER ;
     $string .= "s,(h)elp]" ;
     return $string ;
 }
@@ -792,13 +795,13 @@ sub tags_confirm_usage {
     print "    y => Yes, use this matching (default)\n" ;
     print "    v => View which fields were matched\n" ;
     print "    u => Use this format for all files until one does not match\n"
-	if $behaviors & $TAG_MAY_PREFER ;
+	if $behaviors & $PARSE_MAY_PREFER ;
     print "    a => Always yes, stop asking for a confirmation\n" ;
     print "    e => Edit these fields by hand\n" ;
     print "    n => No, try the next matching format\n"
-	if $behaviors & $TAG_MAY_SKIP_PARSER ;
+	if $behaviors & $PARSE_MAY_SKIP_PARSER ;
     print "    p => No, try the next path matching format\n"
-	if $behaviors & $TAG_MAY_SKIP_PATH_PARSER ;
+	if $behaviors & $PARSE_MAY_SKIP_PATH_PARSER ;
     print "    s => Skip this file, don't process it\n" ;
     print "    h => Show this help\n" ;
 }
@@ -850,16 +853,16 @@ sub tags_confirm_fields {
 	} elsif ($reply =~ /^a/i) {
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
 	    goto OK ;
-	} elsif ($behaviors & $TAG_MAY_PREFER and $reply =~ /^u/i) {
+	} elsif ($behaviors & $PARSE_MAY_PREFER and $reply =~ /^u/i) {
 	    $preferred = 1 ;
 	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
 	    goto OK ;
-	} elsif ($behaviors & $TAG_MAY_SKIP_PARSER and $reply =~ /^n/i) {
-	    return ($TAG_SKIP_PARSER, undef) ;
-	} elsif ($behaviors & $TAG_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
-	    return ($TAG_SKIP_PATH_PARSER, undef) ;
+	} elsif ($behaviors & $PARSE_MAY_SKIP_PARSER and $reply =~ /^n/i) {
+	    return ($PARSE_SKIP_PARSER, undef) ;
+	} elsif ($behaviors & $PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
+	    return ($PARSE_SKIP_PATH_PARSER, undef) ;
 	} elsif ($reply =~ /^s/i) {
-	    return ($TAG_SKIP_FILE, undef) ;
+	    return ($PARSE_ABORT, undef) ;
 	} elsif ($reply =~ /^e/i) {
 
 	    my $edit_values = {} ;
@@ -906,9 +909,9 @@ sub tags_confirm_fields {
 
   OK:
     if ($preferred) {
-	return ($TAG_SUCCESS_PREFERRED, $values) ;
+	return ($PARSE_SUCCESS_PREFERRED, $values) ;
     } else {
-	return ($TAG_SUCCESS, $values) ;
+	return ($PARSE_SUCCESS, $values) ;
     }
 }
 
@@ -953,7 +956,7 @@ sub apply_parser {
 
 	return tags_confirm_fields ($file, $file_type, $confirm, $behaviors, $values) ;
     } else {
-	return ($TAG_SKIP_PARSER, undef) ;
+	return ($PARSE_SKIP_PARSER, undef) ;
     }
 }
 
@@ -970,10 +973,10 @@ sub try_to_parse {
 	print "  with the previous matching parser...\n" ;
 	# there can't be any confirmation here, SKIP is not possible
 	($res, $values) = apply_parser $file, $parsename, $file_type, $preferred_parser, 0, 0 ;
-	if ($res != $TAG_SKIP_PARSER) {
+	if ($res != $PARSE_SKIP_PARSER) {
 	    # only SUCCESS if possible
 	    die "Unknown tag return value: $res.\n"
-		if $res != $TAG_SUCCESS ;
+		if $res != $PARSE_SUCCESS ;
 	    return ($res, $values) ;
 	} else {
 	    print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
@@ -987,7 +990,7 @@ sub try_to_parse {
 	print "  with user-provided formats...\n" ;
 	($res, $values) = apply_user_parsers $file, $parsename, $file_type ;
 	return ($res, $values)
-	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+	    if $res == $PARSE_SUCCESS or $res == $PARSE_SUCCESS_PREFERRED or $res == $PARSE_ABORT ;
     }
 
     # try to guess my internal format database then
@@ -1000,7 +1003,7 @@ sub try_to_parse {
 	    ($res, $values) = apply_internal_path_basename_parsers $file, $parsename, $file_type ;
 	}
 	return ($res, $values)
-	    if $res == $TAG_SUCCESS or $res == $TAG_SUCCESS_PREFERRED or $res == $TAG_SKIP_FILE ;
+	    if $res == $PARSE_SUCCESS or $res == $PARSE_SUCCESS_PREFERRED or $res == $PARSE_ABORT ;
     }
 
     if ($self->{try_internals_opt} or @user_parsers) {
@@ -1009,7 +1012,7 @@ sub try_to_parse {
 
     # tag with default values only
     ($res, $values) = tags_confirm_fields $file, $file_type, 1, 0, undef ;
-    die "Unknown tag return value: $res.\n" if $res != $TAG_SUCCESS and $res != $TAG_SKIP_FILE ;
+    die "Unknown tag return value: $res.\n" if $res != $PARSE_SUCCESS and $res != $PARSE_ABORT ;
     return ($res, $values) ;
 }
 
@@ -1283,19 +1286,18 @@ while ( @files ) {
 	($res, $values) = Lltag::CDDB::get_cddb_tags () ;
 	# FIXME: skip file not return from anywhere, and ask/processed in this loop
 	goto NEXT_FILE
-	    if $res == $TAG_SKIP_FILE ;
+	    if $res == $CDDB_ABORT ;
 	goto FOUND_TAGS
-	    if $res == $TAG_SUCCESS ;
-	die "Unknown tag return value: $res.\n"
-	    if $res != $TAG_NO_MATCH ;
+	    if $res == $CDDB_SUCCESS ;
+	die "Unknown CDDB return value: $res.\n" ;
     }
 
     # try to parse this file
     ($res, $values) = try_to_parse $file, $parsename, $file_type ;
     goto NEXT_FILE
-	if $res == $TAG_SKIP_FILE ;
+	if $res == $PARSE_ABORT ;
     die "Unknown tag return value: $res.\n"
-	if $res != $TAG_SUCCESS and $res != $TAG_SUCCESS_PREFERRED ;
+	if $res != $PARSE_SUCCESS and $res != $PARSE_SUCCESS_PREFERRED ;
 
   FOUND_TAGS:
     # add new values to the old ones, depending on clear/append options
