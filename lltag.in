@@ -885,51 +885,48 @@ sub confirm_parser {
 
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
-      ASK_CONFIRM:
-	print "  ".
-	    ($nothing_to_do ? "Do not change any tag"
-	     : ($only_defaults ? "Apply defaults"
-		: "Use this matching"))
-	    ." ".(confirm_parser_letters ($behaviors))." ? " ;
-	my $reply = <> ;
-	chomp $reply ;
-	if ($reply eq "" or $reply =~ /^y/i) {
-	    goto OK ;
-	} elsif ($reply eq "v") {
-	    foreach my $field (@field_names) {
-		print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
-		    if defined $values->{$field} ;
+	while (1) {
+	    print "  ".
+		($nothing_to_do ? "Do not change any tag"
+		: ($only_defaults ? "Apply defaults"
+		    : "Use this matching"))
+		." ".(confirm_parser_letters ($behaviors))." ? " ;
+	    my $reply = <> ;
+	    chomp $reply ;
+	    if ($reply eq "" or $reply =~ /^y/i) {
+		last ;
+	    } elsif ($reply eq "v") {
+		foreach my $field (@field_names) {
+		    print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
+			if defined $values->{$field} ;
+		}
+		# TODO: show other fields ? not possible until we edit existing tags
+	    } elsif ($reply =~ /^a/i) {
+		$current_ask_opt = 0 ; $current_yes_opt = 1 ;
+		last ;
+	    } elsif ($behaviors & $PARSE_MAY_PREFER and $reply =~ /^u/i) {
+		$preferred = 1 ;
+		$current_ask_opt = 0 ; $current_yes_opt = 1 ;
+		last ;
+	    } elsif ($behaviors & $PARSE_MAY_SKIP_PARSER and $reply =~ /^n/i) {
+		return ($PARSE_SKIP_PARSER, undef) ;
+	    } elsif ($behaviors & $PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
+		return ($PARSE_SKIP_PATH_PARSER, undef) ;
+	    } elsif ($reply =~ /^s/i) {
+		return ($PARSE_ABORT, undef) ;
+	    } elsif ($reply =~ /^e/i) {
+		my $new_values = () ;
+		map { $new_values->{$_} = $values->{$_} } (keys %{$values}) ;
+		$new_values = edit_values $new_values ;
+		next unless defined $new_values ;
+		$values = $new_values ;
+		last ;
+	    } else {
+		confirm_parser_usage $behaviors ;
 	    }
-	    # TODO: show other fields ? not possible until we edit existing tags
-	    goto ASK_CONFIRM ;
-	} elsif ($reply =~ /^a/i) {
-	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
-	    goto OK ;
-	} elsif ($behaviors & $PARSE_MAY_PREFER and $reply =~ /^u/i) {
-	    $preferred = 1 ;
-	    $current_ask_opt = 0 ; $current_yes_opt = 1 ;
-	    goto OK ;
-	} elsif ($behaviors & $PARSE_MAY_SKIP_PARSER and $reply =~ /^n/i) {
-	    return ($PARSE_SKIP_PARSER, undef) ;
-	} elsif ($behaviors & $PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
-	    return ($PARSE_SKIP_PATH_PARSER, undef) ;
-	} elsif ($reply =~ /^s/i) {
-	    return ($PARSE_ABORT, undef) ;
-	} elsif ($reply =~ /^e/i) {
-	    my $new_values = () ;
-	    map { $new_values->{$_} = $values->{$_} } (keys %{$values}) ;
-	    $new_values = edit_values $new_values ;
-	    goto ASK_CONFIRM
-		unless defined $new_values ;
-	    $values = $new_values ;
-	    goto OK ;
-	} else {
-	    confirm_parser_usage $behaviors ;
-	    goto ASK_CONFIRM ;
 	}
     }
 
-  OK:
     if ($preferred) {
 	return ($PARSE_SUCCESS_PREFERRED, $values) ;
     } else {
