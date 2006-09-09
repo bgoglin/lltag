@@ -779,7 +779,7 @@ sub apply_user_parsers {
 #######################################################
 # parsing confirmation
 
-sub tags_confirm_letters {
+sub confirm_parser_letters {
     my $behaviors = shift ;
     my $string = "[<y>v" ;
     $string .= "u" if $behaviors & $PARSE_MAY_PREFER ;
@@ -790,7 +790,7 @@ sub tags_confirm_letters {
     return $string ;
 }
 
-sub tags_confirm_usage {
+sub confirm_parser_usage {
     my $behaviors = shift ;
     print "    y => Yes, use this matching (default)\n" ;
     print "    v => View which fields were matched\n" ;
@@ -806,7 +806,7 @@ sub tags_confirm_usage {
     print "    h => Show this help\n" ;
 }
 
-sub tags_confirm_fields {
+sub confirm_parser {
     my $file = shift ;
     my $file_type = shift ;
     my $confirm = shift ;
@@ -838,7 +838,7 @@ sub tags_confirm_fields {
 	    ($nothing_to_do ? "Do not change any tag"
 	     : ($only_defaults ? "Apply defaults"
 		: "Use this matching"))
-	    ." ".(tags_confirm_letters ($behaviors))." ? " ;
+	    ." ".(confirm_parser_letters ($behaviors))." ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	if ($reply eq "" or $reply =~ /^y/i) {
@@ -902,7 +902,7 @@ sub tags_confirm_fields {
 	    }
 
 	} else {
-	    tags_confirm_usage $behaviors ;
+	    confirm_parser_usage $behaviors ;
 	    goto ASK_CONFIRM ;
 	}
     }
@@ -954,7 +954,7 @@ sub apply_parser {
 	    $i++ ;
 	}
 
-	return tags_confirm_fields ($file, $file_type, $confirm, $behaviors, $values) ;
+	return confirm_parser ($file, $file_type, $confirm, $behaviors, $values) ;
     } else {
 	return ($PARSE_SKIP_PARSER, undef) ;
     }
@@ -1011,7 +1011,7 @@ sub try_to_parse {
     }
 
     # tag with default values only
-    ($res, $values) = tags_confirm_fields $file, $file_type, 1, 0, undef ;
+    ($res, $values) = confirm_parser $file, $file_type, 1, 0, undef ;
     die "Unknown tag return value: $res.\n" if $res != $PARSE_SUCCESS and $res != $PARSE_ABORT ;
     return ($res, $values) ;
 }
