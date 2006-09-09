@@ -367,6 +367,9 @@ $self->{try_internals_opt} = 1
 						    and !(grep { defined $field_default{$_} } (keys %field_default))
 						    and !$self->{list_formats_opt} ) ;
 
+# change format names into a parsing string
+my $field_letters_union = (join '|', @field_letters) ;
+
 # forward declarations
 sub apply_parser ;
 
@@ -451,6 +454,58 @@ sub read_tags {
 
     return $values ;
 }
+
+#######################################################
+# edit current tags
+
+sub edit_values {
+    my $values = shift ;
+
+    while (1) {
+	print "    Edit a field [". (join '', @field_letters) ."ECV,<h>elp] ? " ;
+	my $edit_reply = <> ;
+	chomp $edit_reply ;
+
+	if ($edit_reply =~ /^($field_letters_union)$/) {
+	    my $field = $field_letter_name{$edit_reply} ;
+	    $values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+
+	} elsif ($edit_reply eq "E") {
+	    return $values ;
+
+	} elsif ($edit_reply eq "C") {
+	    return undef ;
+
+	} elsif ($edit_reply eq "V") {
+	    print "      Current tag values are:\n" ;
+	    foreach my $field (@field_names) {
+		print "        ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
+		    if defined $values->{$field} ;
+	    }
+
+	} else {
+	    # print all fields, including the undefined ones
+	    foreach my $field (@field_names) {
+		my $val = $values->{$field} ;
+		if (not defined $val) {
+		    $val = "<not defined>" ;
+		} elsif ($val eq "") {
+		    $val = "<CLEAR>" ;
+		} else {
+		    $val = "'".$val."'" ;
+		}
+		print "      ".$field_name_letter{$field}
+		." => Edit ".ucfirst($field).$field_name_trailing_spaces{$field}
+		." (=".$val.")\n" ;
+	    }
+	    # TODO: show other fields ? not possible until we edit existing tags
+	    print "      V => View current fields\n" ;
+	    print "      E => End edition and process the file\n" ;
+	    print "      C => Cancel edition\n" ;
+	}
+    }
+}
+
 
 #######################################################
 # apply user-given regexp
@@ -659,9 +714,6 @@ sub apply_internal_path_basename_parsers {
 # list of user-provided parsers
 my @user_parsers ;
 
-# change format names into a parsing string
-my $field_letters_union = (join '|', @field_letters) ;
-
 # change a format strings into usable infos
 sub generate_user_parser {
     my $format_string = shift ;
@@ -864,43 +916,13 @@ sub confirm_parser {
 	} elsif ($reply =~ /^s/i) {
 	    return ($PARSE_ABORT, undef) ;
 	} elsif ($reply =~ /^e/i) {
-
-	    my $edit_values = {} ;
-	    foreach (keys %{$values}) { $edit_values->{$_} = $values->{$_} } ;
-	  ASK_EDIT:
-	    print "    Edit a field [atAngycEC,<h>elp] ? " ;
-	    my $edit_reply = <> ;
-	    chomp $edit_reply ;
-	    if ($edit_reply =~ /^($field_letters_union)$/) {
-		my $field = $field_letter_name{$edit_reply} ;
-		$edit_values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $edit_values->{$field}, 1) ;
-		goto ASK_EDIT ;
-	    } elsif ($edit_reply eq "E") {
-		$values = $edit_values ;
-		goto OK ;
-	    } elsif ($edit_reply eq "C") {
-		goto ASK_CONFIRM ;
-	    } else {
-		# print all fields, including the undefined ones
-		foreach my $field (@field_names) {
-		    my $val = $edit_values->{$field} ;
-		    if (not defined $val) {
-			$val = "<not defined>" ;
-		    } elsif ($val eq "") {
-			$val = "<CLEAR>" ;
-		    } else {
-			$val = "'".$val."'" ;
-		    }
-		    print "      ".$field_name_letter{$field}
-		    ." => Edit ".ucfirst($field).$field_name_trailing_spaces{$field}
-			." (=".$val.")\n" ;
-		}
-		# TODO: show other fields ? not possible until we edit existing tags
-		print "      E => End edition and process the file\n" ;
-		print "      C => Cancel edition\n" ;
-		goto ASK_EDIT ;
-	    }
-
+	    my $new_values = () ;
+	    map { $new_values->{$_} = $values->{$_} } (keys %{$values}) ;
+	    $new_values = edit_values $new_values ;
+	    goto ASK_CONFIRM
+		unless defined $new_values ;
+	    $values = $new_values ;
+	    goto OK ;
 	} else {
 	    confirm_parser_usage $behaviors ;
 	    goto ASK_CONFIRM ;
