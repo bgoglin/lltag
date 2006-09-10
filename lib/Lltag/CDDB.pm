@@ -199,10 +199,6 @@ sub get_cddb_tags {
     $values{GENRE} = $cd->{GENRE} if defined $cd->{GENRE} ;
     $values{DATE} = $cd->{YEAR} if defined $cd->{YEAR} ;
 
-    map {
-	print "  $_: $values{$_}\n"
-    } (keys %values) ;
-
     return ($CDDB_SUCCESS, \%values) ;
 }
 

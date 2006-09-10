@@ -461,6 +461,10 @@ sub read_tags {
 sub edit_values {
     my $values = shift ;
 
+    # save values
+    my $old_values = () ;
+    map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
+
     while (1) {
 	print "    Edit a field [". (join '', @field_letters) ."ECV,<h>elp] ? " ;
 	my $edit_reply = <> ;
@@ -474,7 +478,7 @@ sub edit_values {
 	    return $values ;
 
 	} elsif ($edit_reply eq "C") {
-	    return undef ;
+	    return $old_values ;
 
 	} elsif ($edit_reply eq "V") {
 	    print "      Current tag values are:\n" ;
@@ -500,12 +504,11 @@ sub edit_values {
 	    }
 	    # TODO: show other fields ? not possible until we edit existing tags
 	    print "      V => View current fields\n" ;
-	    print "      E => End edition and process the file\n" ;
+	    print "      E => End edition\n" ;
 	    print "      C => Cancel edition\n" ;
 	}
     }
 }
-
 
 #######################################################
 # apply user-given regexp
@@ -833,9 +836,9 @@ sub apply_user_parsers {
 
 sub confirm_parser_letters {
     my $behaviors = shift ;
-    my $string = "[<y>v" ;
+    my $string = "[<y>" ;
     $string .= "u" if $behaviors & $PARSE_MAY_PREFER ;
-    $string .= "ae" ;
+    $string .= "a" ;
     $string .= "n" if $behaviors & $PARSE_MAY_SKIP_PARSER ;
     $string .= "p" if $behaviors & $PARSE_MAY_SKIP_PATH_PARSER ;
     $string .= "s,(h)elp]" ;
@@ -845,16 +848,14 @@ sub confirm_parser_letters {
 sub confirm_parser_usage {
     my $behaviors = shift ;
     print "    y => Yes, use this matching (default)\n" ;
-    print "    v => View which fields were matched\n" ;
     print "    u => Use this format for all files until one does not match\n"
 	if $behaviors & $PARSE_MAY_PREFER ;
     print "    a => Always yes, stop asking for a confirmation\n" ;
-    print "    e => Edit these fields by hand\n" ;
     print "    n => No, try the next matching format\n"
 	if $behaviors & $PARSE_MAY_SKIP_PARSER ;
     print "    p => No, try the next path matching format\n"
 	if $behaviors & $PARSE_MAY_SKIP_PATH_PARSER ;
-    print "    s => Skip this file, don't process it\n" ;
+    print "    s => Stop trying to parse this filename\n" ;
     print "    h => Show this help\n" ;
 }
 
@@ -868,39 +869,14 @@ sub confirm_parser {
     # prefer this type of tagging ?
     my $preferred = 0 ;
 
-    # are we only tagging default values ?
-    my $only_defaults = 0 ;
-    if (not defined $values) {
-	$values = () ;
-	$only_defaults = 1 ;
-    }
-
-    # add defaults
-    foreach my $field (@field_names) {
-	$values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
-    }
-
-    # is there something to do ?
-    my $nothing_to_do = (scalar (keys %{$values}) == 0) ;
-
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
 	while (1) {
-	    print "  ".
-		($nothing_to_do ? "Do not change any tag"
-		: ($only_defaults ? "Apply defaults"
-		    : "Use this matching"))
-		." ".(confirm_parser_letters ($behaviors))." ? " ;
+	    print "  Use this matching ".(confirm_parser_letters ($behaviors))." ? " ;
 	    my $reply = <> ;
 	    chomp $reply ;
 	    if ($reply eq "" or $reply =~ /^y/i) {
 		last ;
-	    } elsif ($reply eq "v") {
-		foreach my $field (@field_names) {
-		    print "    ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
-			if defined $values->{$field} ;
-		}
-		# TODO: show other fields ? not possible until we edit existing tags
 	    } elsif ($reply =~ /^a/i) {
 		$current_ask_opt = 0 ; $current_yes_opt = 1 ;
 		last ;
@@ -914,13 +890,6 @@ sub confirm_parser {
 		return ($PARSE_SKIP_PATH_PARSER, undef) ;
 	    } elsif ($reply =~ /^s/i) {
 		return ($PARSE_ABORT, undef) ;
-	    } elsif ($reply =~ /^e/i) {
-		my $new_values = () ;
-		map { $new_values->{$_} = $values->{$_} } (keys %{$values}) ;
-		$new_values = edit_values $new_values ;
-		next unless defined $new_values ;
-		$values = $new_values ;
-		last ;
 	    } else {
 		confirm_parser_usage $behaviors ;
 	    }
@@ -958,15 +927,15 @@ sub apply_parser {
 		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
 		map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
 		if (defined $values->{$field}) {
-		    print "    WARNING: ".ucfirst($field)." already set to '".$values->{$field}
-		    ."', skipping new value '$val'.\n" if defined $values->{$field} and $values->{$field} ne $val ;
+		    print "      WARNING: ".ucfirst($field)." already set to '".$values->{$field}
+		    ."', skipping new value '$val'.\n"
+			if defined $values->{$field} and $values->{$field} ne $val ;
 		    goto NEXT_FIELD ;
 		}
 		$values->{$field} = $val ;
 		if ($self->{verbose_opt} or $confirm or $current_ask_opt) {
-		    print "    ". ucfirst($field)
-			.$field_name_trailing_spaces{$field}
-		    .": ". $val ."\n" ;
+		    print "      ". ucfirst($field)
+			.$field_name_trailing_spaces{$field}  .": ". $val ."\n" ;
 		}
 	    }
 	  NEXT_FIELD:
@@ -1029,10 +998,7 @@ sub try_to_parse {
 	print "  Didn't find any parser!\n" ;
     }
 
-    # tag with default values only
-    ($res, $values) = confirm_parser $file, $file_type, 1, 0, undef ;
-    die "Unknown tag return value: $res.\n" if $res != $PARSE_SUCCESS and $res != $PARSE_ABORT ;
-    return ($res, $values) ;
+    return ($PARSE_NO_MATCH, undef) ;
 }
 
 #######################################################
@@ -1286,6 +1252,7 @@ generate_user_parsers ;
 while ( @files ) {
     my $file = shift @files ;
     my $values = undef ;
+    my $new_values = undef ;
     my $res ;
 
     print "Processing file \"".$file."\"...\n" ;
@@ -1300,27 +1267,101 @@ while ( @files ) {
     my $old_values = read_tags $file, $file_type ;
 
     # FIXME: parse first, to get the track number?
+    my $first_round = 1 ;
+    while (1) {
 
-    if ($self->{cddb_opt}) {
-	($res, $values) = Lltag::CDDB::get_cddb_tags () ;
-	# FIXME: skip file not return from anywhere, and ask/processed in this loop
-	goto NEXT_FILE
-	    if $res == $CDDB_ABORT ;
-	goto FOUND_TAGS
-	    if $res == $CDDB_SUCCESS ;
-	die "Unknown CDDB return value: $res.\n" ;
+	# FIXME: try preferred parser first, split it out try_to_parse()
+
+	# try CDDB, if enabled
+      TRY_CDDB:
+	if ($self->{cddb_opt}) {
+	    ($res, $values) = Lltag::CDDB::get_cddb_tags () ;
+	    goto ADD_DEFAULTS
+		if $res == $CDDB_SUCCESS ;
+	    die "Unknown CDDB return value: $res.\n"
+		unless $res == $CDDB_ABORT ;
+	    # during first round, try parse before going to confirmation
+	    # FIXME: option to disable parsing ?
+	    goto ADD_DEFAULTS
+		unless $first_round ;
+	}
+
+	# try to parse this file
+      TRY_PARSE:
+	($res, $values) = try_to_parse $file, $parsename, $file_type ;
+	goto ADD_DEFAULTS
+	    if $res == $PARSE_SUCCESS or $res == $PARSE_SUCCESS_PREFERRED ;
+	die "Unknown tag return value: $res.\n"
+	    unless $res == $PARSE_NO_MATCH or $res == $PARSE_ABORT ;
+
+      ADD_DEFAULTS:
+	$first_round = 0;
+
+	# add defaults
+	foreach my $field (@field_names) {
+	    $values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
+	}
+
+      CONFIRM:
+	print "    Current tag values are:\n" ;
+	foreach my $field (@field_names) {
+	    print "      ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
+		if defined $values->{$field} ;
+	}
+
+	goto TAG
+	    if $current_yes_opt and !$current_ask_opt ;
+
+	while (1) {
+	    print "  Use these tag values [<y>aPCEDs] ? " ;
+	    my $confirm_reply = <> ;
+	    chomp $confirm_reply ;
+
+	    # FIXME: option to display old values
+
+	    # FIXME: option to display additonial values
+
+	    goto TAG
+		# FIXME: check confirm options and always, except if cddb
+		if $confirm_reply eq "y" or $confirm_reply eq "" ;
+	    goto TRY_PARSE
+		if $confirm_reply eq "P" ;
+	    goto TRY_CDDB
+		if $confirm_reply eq "C" and $self->{cddb_opt} ;
+	    goto NEXT_FILE
+		if $confirm_reply eq "s" ;
+
+	    if ($confirm_reply =~ /^a/i) {
+		$current_ask_opt = 0 ; $current_yes_opt = 1 ;
+		goto TAG ;
+	    } elsif ($confirm_reply eq "E") {
+		$values = edit_values $values ;
+		goto CONFIRM ;
+
+	    } elsif ($confirm_reply eq "D") {
+		$values = undef ;
+		goto ADD_DEFAULTS ;
+
+	    } else {
+		print "    y => Yes, use these tags (default)\n" ;
+		print "    a => Always yes, stop asking for a confirmation\n" ;
+		print "    P => Try to parse the file\n" ;
+		print "    C => Query CDDB\n" ;
+		print "    E => Edit values\n" ;
+		print "    D => Only use default values\n" ;
+		print "    s => Skip this file\n" ;
+		print "    h => Show this help\n" ;
+	    }
+	}
+
     }
 
-    # try to parse this file
-    ($res, $values) = try_to_parse $file, $parsename, $file_type ;
-    goto NEXT_FILE
-	if $res == $PARSE_ABORT ;
-    die "Unknown tag return value: $res.\n"
-	if $res != $PARSE_SUCCESS and $res != $PARSE_SUCCESS_PREFERRED ;
+  TAG:
+    # FIXME: do that before confirmation
 
-  FOUND_TAGS:
     # add new values to the old ones, depending on clear/append options
-    my $new_values = Lltag::Tags::append_tag_values ($self, $old_values, $values) ;
+    $new_values = Lltag::Tags::append_tag_values ($self, $old_values, $values) ;
+
     # append additional tags too
     $new_values = Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 

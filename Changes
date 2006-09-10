@@ -1,5 +1,6 @@
 
   * Add basic CDDB support with --cddb.
+  * Rework menus to integrate CDDB better.
   * Do not change write guess in the generated configuration file
     unless explicitely asked by the user.
   * Add a doc/ subdirectory:
