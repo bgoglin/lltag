@@ -958,7 +958,7 @@ sub try_to_parse_with_preferred {
 
     # try the preferred parser first
     return ($PARSE_NO_MATCH, undef)
-	if defined $preferred_parser ;
+	unless defined $preferred_parser ;
 
     print "  Trying to parse filename with the previous matching parser...\n" ;
 
