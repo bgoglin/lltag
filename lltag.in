@@ -1065,7 +1065,7 @@ sub rename_with_values {
 
     foreach my $field (keys %{$values}) {
 	# use the first tag for renaming
-	my $val = LLtag::Misc::get_tag_unique_value ($self, $values, $field) ;
+	my $val = Lltag::Tags::get_tag_unique_value ($self, $values, $field) ;
 	$val = lc ($val)
 	    if $self->{rename_min_opt} ;
 	$val =~ s/ /$self->{rename_sep_opt}/g

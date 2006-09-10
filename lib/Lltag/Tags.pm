@@ -8,6 +8,7 @@ use vars qw(@EXPORT) ;
 @EXPORT = qw (
 	      append_tag_value
 	      get_tag_value_array
+	      get_tag_unique_value
 	      get_values_non_regular_keys
 	      get_values_non_regular_keys
 	      get_additional_tag_values
