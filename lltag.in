@@ -1268,6 +1268,7 @@ while ( @files ) {
     my $new_values = undef ;
     my $res ;
 
+    print "\n" ;
     print "Processing file \"".$file."\"...\n" ;
 
     my ($parsename, $file_type) = extract_parsename_and_type $file ;
