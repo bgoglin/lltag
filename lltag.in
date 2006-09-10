@@ -363,9 +363,9 @@ $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
 
 # if no user parsers, no defaults, no guess and no cddb, force guess
 $self->{try_internals_opt} = 1
-    if $self->{guess_opt} or $self->{cddb_opt} or ( !@{$self->{user_format_strings}}
-						    and !(grep { defined $field_default{$_} } (keys %field_default))
-						    and !$self->{list_formats_opt} ) ;
+    if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
+			       and !(grep { defined $field_default{$_} } (keys %field_default))
+			       and !$self->{list_formats_opt} ) ;
 
 # change format names into a parsing string
 my $field_letters_union = (join '|', @field_letters) ;
