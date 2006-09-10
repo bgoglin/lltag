@@ -1273,8 +1273,8 @@ while ( @files ) {
 	# FIXME: try preferred parser first, split it out try_to_parse()
 
 	# try CDDB, if enabled
-      TRY_CDDB:
 	if ($self->{cddb_opt}) {
+      TRY_CDDB:
 	    ($res, $values) = Lltag::CDDB::get_cddb_tags () ;
 	    goto ADD_DEFAULTS
 		if $res == $CDDB_SUCCESS ;
@@ -1327,7 +1327,7 @@ while ( @files ) {
 	    goto TRY_PARSE
 		if $confirm_reply eq "P" ;
 	    goto TRY_CDDB
-		if $confirm_reply eq "C" and $self->{cddb_opt} ;
+		if $confirm_reply eq "C" ;
 	    goto NEXT_FILE
 		if $confirm_reply eq "s" ;
 
