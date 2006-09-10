@@ -1004,7 +1004,7 @@ sub try_to_parse {
 #######################################################
 # real tagging
 
-sub tag_with_fields {
+sub tag_with_values {
     my $file = shift ;
     my $file_type = shift ;
     my $values = shift ;
@@ -1053,7 +1053,7 @@ sub rename_confirm_usage {
     print "      h => Show this help\n" ;
 }
 
-sub rename_with_tags {
+sub rename_with_values {
     my $file = shift ;
     my $file_type = shift ;
     my $values = shift ;
@@ -1366,11 +1366,11 @@ while ( @files ) {
     $new_values = Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # actually tagging
-    tag_with_fields $file, $file_type, $new_values
+    tag_with_values $file, $file_type, $new_values
 	unless $self->{no_tagging_opt} ;
 
     # renaming
-    rename_with_tags $file, $file_type, $new_values
+    rename_with_values $file, $file_type, $new_values
 	if defined $self->{rename_opt} ;
 
     # next file
