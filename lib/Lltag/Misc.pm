@@ -74,9 +74,10 @@ sub dummy_readline {
     my $prompt = shift ;
     my $preput = shift ;
     my $clear_allowed = shift ;
+    # 0 = no clearing, 1 = clearing allowed and documented, -1 = clearing allowed (normal behavior)
     $preput = "" if not defined $preput ;
     print $indent."The current value is given in parenthesis, <ENTER> to keep it"
-	. ($clear_allowed ? ", <CLEAR> to clear it" : "")
+	. ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
 	. ".\n"
 	if $readline_firsttime ;
     $readline_firsttime = 0 ;

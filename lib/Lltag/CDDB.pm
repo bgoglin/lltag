@@ -161,9 +161,10 @@ sub get_cddb_tags {
 
     # enter keywords for a query
   KEYWORDS:
-    my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (<query>,qh)", "", 0) ;
+    my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (<query>,qh)", "", -1) ;
     chomp $keywords ;
-    if ($keywords eq '' or $keywords eq 'h') {
+    goto KEYWORDS if $keywords eq '' ;
+    if ($keywords eq 'h') {
 	cddb_keywords_usage () ;
 	goto KEYWORDS ;
     }
@@ -196,14 +197,14 @@ sub get_cddb_tags {
     Lltag::Misc::print_question "  Enter CD index (<index>,vkqh) ? " ;
     $reply = <> ;
     chomp $reply ;
-    if ($reply eq '' or $reply eq 'h') {
-	cddb_cd_usage () ;
-	goto CD ;
-    }
+    goto CD if $reply eq '' ;
     goto KEYWORDS if $reply eq 'k' ;
     goto KEYWORDS_RESULTS if $reply eq 'v' ;
     return ($CDDB_ABORT, undef) if $reply eq 'q' ;
-    goto CD unless $reply =~ /^\d+$/ and $reply >= 1 and $reply <= @{$cdids} ;
+    if ($reply !~ /^\d+$/ or $reply < 1 or $reply > @{$cdids}) {
+	cddb_cd_usage () ;
+	goto CD ;
+    }
 
     # do the actual query for CD contents
     $cdid = $cdids->[$reply-1] ;
@@ -232,15 +233,15 @@ sub get_cddb_tags {
     Lltag::Misc::print_question "  Enter track index (<index>,vckqh) ? " ;
     $reply = <> ;
     chomp $reply ;
-    if ($reply eq '' or $reply eq 'h') {
-	cddb_track_usage () ;
-	goto TRACK ;
-    }
+    goto TRACK if $reply eq '' ;
     goto KEYWORDS if $reply eq 'k' ;
     goto KEYWORDS_RESULTS if $reply eq 'c' ;
     goto CD_RESULTS if $reply eq 'v' ;
     return ($CDDB_ABORT, undef) if $reply eq 'q' ;
-    goto TRACK unless $reply =~ /^\d+$/ and $reply >= 1 and $reply <= $cd->{TRACKS} ;
+    if ($reply !~ /^\d+$/ or $reply < 1 or $reply > $cd->{TRACKS}) {
+	cddb_track_usage () ;
+	goto TRACK ;
+    }
 
     # print the track tags
     my $track = $cd->{$reply-1} ;
