@@ -958,7 +958,7 @@ sub try_to_parse {
 
     # try the preferred parser first
     if (defined $preferred_parser) {
-	print "  with the previous matching parser...\n" ;
+	print "  Trying to parse filename with the previous matching parser...\n" ;
 	# there can't be any confirmation here, SKIP is not possible
 	($res, $values) = apply_parser $file, $parsename, $file_type, $preferred_parser, 0, 0 ;
 	if ($res != $PARSE_SKIP_PARSER) {
@@ -975,7 +975,7 @@ sub try_to_parse {
 
     # try user provided parsers then
     if (@user_parsers) {
-	print "  with user-provided formats...\n" ;
+	print "  Trying to parse filename with user-provided formats...\n" ;
 	($res, $values) = apply_user_parsers $file, $parsename, $file_type ;
 	return ($res, $values)
 	    if $res == $PARSE_SUCCESS or $res == $PARSE_SUCCESS_PREFERRED or $res == $PARSE_ABORT ;
@@ -983,7 +983,7 @@ sub try_to_parse {
 
     # try to guess my internal format database then
     if ($self->{try_internals_opt}) {
-	print "  with internal formats...\n" ;
+	print "  Trying to parse filename with internal formats...\n" ;
 
 	if ($self->{nopath_opt} or not ($parsename =~ /\//)) {
 	    ($res, $values) = apply_internal_basename_parsers $file, $parsename, $file_type ;
@@ -1011,7 +1011,7 @@ sub tag_with_fields {
 
     # is there actually something to do ?
     if ( !(keys %{$values}) ) {
-	print "    Nothing to do.\n" ;
+	print "  Nothing to do.\n" ;
 	return ;
     }
 
@@ -1027,13 +1027,13 @@ sub tag_with_fields {
 
     # show command line and really tag if asked
     if ($self->{dry_run_opt} or $self->{verbose_opt}) {
-	print "      '". +(join "' '", @system_args) ."'\n" ;
+	print "  '". +(join "' '", @system_args) ."'\n" ;
     }
     if (!$self->{dry_run_opt}) {
-	print "    Tagging.\n" ;
+	print "  Tagging.\n" ;
 	my ($status, @output) = Lltag::Misc::system_with_output (@system_args) ;
 	if ($status) {
-	    print "      Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
+	    print "    Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
 	    while (my $line = shift @output) {
 		print "# $line" ;
 	    }
