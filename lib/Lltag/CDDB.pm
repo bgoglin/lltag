@@ -161,7 +161,7 @@ sub get_cddb_tags {
 
     # enter keywords for a query
   KEYWORDS:
-    my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (<query>,qh)", "", 1) ;
+    my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (<query>,qh)", "", 0) ;
     chomp $keywords ;
     if ($keywords eq '' or $keywords eq 'h') {
 	cddb_keywords_usage () ;
