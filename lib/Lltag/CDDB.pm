@@ -77,11 +77,6 @@ sub cddb_query_tracks_by_id {
 
     my $cd ;
 
-    # TODO: are we sure no artist or album may contain " / " ?
-    $name =~ m@^(.*) / (.*)$@ ;
-    $cd->{ARTIST} = $1 ;
-    $cd->{ALBUM} = $2 ;
-
     while (my $line = <$socket>) {
 	if ($line =~ /tracks: (\d+)/i) {
 	    $cd->{TRACKS} = $1 ;
@@ -97,8 +92,22 @@ sub cddb_query_tracks_by_id {
 	    # '-?' because there are some buggy entries...
 	    my %track = ( TITLE => $3, TIME => $2 ) ;
 	    $cd->{$1} = \%track ;
+	} elsif ($line =~ m@<h2>(.+ / .+)</h2>@) {
+	    if (defined $name) {
+		if ($name ne $1) {
+		    print "      WARNING: Found CD name '$1' instead of '$name', this entry might be corrupted.\n" ;
+		}
+	    } else {
+		$name = $1 ;
+	    }
 	}
     }
+
+    # TODO: are we sure no artist or album may contain " / " ?
+    $name =~ m@^(.+) / (.+)$@ ;
+    $cd->{ARTIST} = $1 ;
+    $cd->{ALBUM} = $2 ;
+
     # TODO: check number and indexes of tracks ?
 
     close $socket ;
@@ -112,6 +121,7 @@ my $previous_cd = undef ;
 sub get_cddb_tags {
     my $reply ;
     my $cdids ;
+    my $cdid ;
     my $cd ;
 
     # FIXME: check additional parameter to start from scratch
@@ -132,7 +142,12 @@ sub get_cddb_tags {
     goto KEYWORDS unless length $keywords ;
     return ($CDDB_ABORT, undef) if $keywords eq 'e' ;
 
-    # FIXME: support cat/id by matching m@^\s*(\w+)/([\da-f]+)\s*$@
+    # it this actually a categorie/id ?
+    if ($keywords =~ m@^\s*(\w+)/([\da-f]+)\s*$@) {
+	$cdid->{CAT} = $1 ;
+	$cdid->{ID} = $2 ;
+	goto CD_QUERY ;
+    }
 
     # do the actual query for CD id with keywords
     $keywords =~ s/ /+/g ;
@@ -162,7 +177,8 @@ sub get_cddb_tags {
     goto CD unless $reply >= 1 and $reply <= @{$cdids} ;
 
     # do the actual query for CD contents
-    my $cdid = $cdids->[$reply-1] ;
+    $cdid = $cdids->[$reply-1] ;
+  CD_QUERY:
     $cd = cddb_query_tracks_by_id ($cdid->{CAT}, $cdid->{ID}, $cdid->{NAME}) ;
     $previous_cd = $cd ;
 
