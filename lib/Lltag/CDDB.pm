@@ -193,7 +193,7 @@ sub get_cddb_tags {
 
     # choose a CD id
   CD:
-    print "  Enter CD index (<index>,vkqh) ? " ;
+    Lltag::Misc::print_question "  Enter CD index (<index>,vkqh) ? " ;
     $reply = <> ;
     chomp $reply ;
     if ($reply eq '' or $reply eq 'h') {
@@ -229,7 +229,7 @@ sub get_cddb_tags {
 
     # choose a track
   TRACK:
-    print "  Enter track index (<index>,vckqh) ? " ;
+    Lltag::Misc::print_question "  Enter track index (<index>,vckqh) ? " ;
     $reply = <> ;
     chomp $reply ;
     if ($reply eq '' or $reply eq 'h') {

@@ -3,6 +3,7 @@ package Lltag::Misc ;
 use strict ;
 
 use Term::ReadLine;
+use Term::ANSIColor ;
 
 use vars qw(@EXPORT) ;
 
@@ -11,6 +12,7 @@ use vars qw(@EXPORT) ;
 	      init_readline
 	      exit_readline
 	      readline
+	      print_question
 	  ) ;
 
 ###################################################################
@@ -46,6 +48,15 @@ sub system_with_output {
 	close $pipe_in ;
 	exit -1 ;
     }
+}
+
+###################################################################
+# print a question in bold
+
+sub print_question {
+    print color 'bold' ;
+    print shift ;
+    print color 'reset' ;
 }
 
 ###################################################################

@@ -466,7 +466,7 @@ sub edit_values {
     map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
 
     while (1) {
-	print "    Edit a field [". (join '', @field_letters) ."ECV,<h>elp] ? " ;
+	Lltag::Misc::print_question ("    Edit a field [". (join '', @field_letters) ."ECV,<h>elp] ? ") ;
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
 
@@ -872,7 +872,7 @@ sub confirm_parser {
     # confirm if required
     if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
 	while (1) {
-	    print "  Use this matching ".(confirm_parser_letters ($behaviors))." ? " ;
+	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." ? ") ;
 	    my $reply = <> ;
 	    chomp $reply ;
 	    if ($reply eq "" or $reply =~ /^y/i) {
@@ -1136,7 +1136,7 @@ sub rename_with_values {
     # confirm if required or if any field undefined
     if ($undefined or !$current_rename_yes_opt) {
       ASK_CONFIRM:
-	print "    Really rename the file [<y>aen,(h)elp] ? " ;
+	Lltag::Misc::print_question ("    Really rename the file [<y>aen,(h)elp] ? ") ;
 	my $reply = <> ;
 	chomp $reply ;
         if ($reply eq "" or $reply =~ /^y/i) {
@@ -1332,7 +1332,7 @@ while ( @files ) {
 	    if $current_yes_opt and !$current_ask_opt ;
 
 	while (1) {
-	    print "  Use these tag values [<y>aPCEDs] ? " ;
+	    Lltag::Misc::print_question ("  Use these tag values [<y>aPCEDs] ? ") ;
 	    my $confirm_reply = <> ;
 	    chomp $confirm_reply ;
 
