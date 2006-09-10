@@ -20,6 +20,9 @@ my $server_port = 80 ;
 
 sub cddb_query_cd_by_keywords {
     my $keywords = shift ;
+
+    print "      Sending CDDB request...\n" ;
+
     my $socket = IO::Socket::INET->new(PeerAddr => $server_host,
 				       PeerPort => $server_port,
 				       Proto    => "tcp",
@@ -61,6 +64,9 @@ sub cddb_query_tracks_by_id {
     my $cat = shift ;
     my $id = shift ;
     my $name = shift ;
+
+    print "      Sending CDDB request...\n" ;
+
     my $socket = IO::Socket::INET->new(PeerAddr => $server_host,
 				       PeerPort => $server_port,
 				       Proto    => "tcp",
