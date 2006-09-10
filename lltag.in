@@ -948,7 +948,7 @@ sub apply_parser {
     }
 }
 
-sub try_to_parse {
+sub try_to_parse_with_preferred {
     my $file = shift ;
     my $parsename = shift ;
     my $file_type = shift ;
@@ -957,23 +957,36 @@ sub try_to_parse {
     my $res ;
 
     # try the preferred parser first
-    if (defined $preferred_parser) {
-	print "  Trying to parse filename with the previous matching parser...\n" ;
-	# there can't be any confirmation here, SKIP is not possible
-	($res, $values) = apply_parser $file, $parsename, $file_type, $preferred_parser, 0, 0 ;
-	if ($res != $PARSE_SKIP_PARSER) {
-	    # only SUCCESS if possible
-	    die "Unknown tag return value: $res.\n"
-		if $res != $PARSE_SUCCESS ;
-	    return ($res, $values) ;
-	} else {
-	    print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
-	    $current_ask_opt = $self->{ask_opt} ; $current_yes_opt = $self->{yes_opt} ;
-	    $preferred_parser = undef ;
-	}
-    }
+    return ($PARSE_NO_MATCH, undef)
+	if defined $preferred_parser ;
 
-    # try user provided parsers then
+    print "  Trying to parse filename with the previous matching parser...\n" ;
+
+    # there can't be any confirmation here, SKIP is not possible
+    ($res, $values) = apply_parser $file, $parsename, $file_type, $preferred_parser, 0, 0 ;
+    if ($res != $PARSE_SKIP_PARSER) {
+	# only SUCCESS if possible
+	die "Unknown tag return value: $res.\n"
+	    if $res != $PARSE_SUCCESS ;
+	return ($res, $values) ;
+
+    } else {
+	print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
+	$current_ask_opt = $self->{ask_opt} ; $current_yes_opt = $self->{yes_opt} ;
+	$preferred_parser = undef ;
+	return ($PARSE_NO_MATCH, undef) ;
+    }
+}
+
+sub try_to_parse {
+    my $file = shift ;
+    my $parsename = shift ;
+    my $file_type = shift ;
+
+    my $values = undef ;
+    my $res ;
+
+    # try user provided parsers first
     if (@user_parsers) {
 	print "  Trying to parse filename with user-provided formats...\n" ;
 	($res, $values) = apply_user_parsers $file, $parsename, $file_type ;
@@ -1267,10 +1280,16 @@ while ( @files ) {
     my $old_values = read_tags $file, $file_type ;
 
     # FIXME: parse first, to get the track number?
+
     my $first_round = 1 ;
     while (1) {
 
-	# FIXME: try preferred parser first, split it out try_to_parse()
+	# try preferred parser first
+	($res, $values) = try_to_parse_with_preferred $file, $parsename, $file_type ;
+	goto ADD_DEFAULTS
+	    if $res == $PARSE_SUCCESS ;
+	die "Unknown tag return value: $res.\n"
+	    unless $res == $PARSE_NO_MATCH ;
 
 	# try CDDB, if enabled
 	if ($self->{cddb_opt}) {
