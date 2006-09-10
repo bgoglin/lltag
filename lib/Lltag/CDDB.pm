@@ -118,6 +118,30 @@ sub cddb_query_tracks_by_id {
 my $previous_cdids = undef ;
 my $previous_cd = undef ;
 
+sub cddb_keywords_usage {
+  print "    <category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
+  print "    <space-seperated keywords> => CDDB query for CD matching the keywords\n" ;
+  print "    q => Quit CDDB query\n" ;
+  print "    h => Show this help\n" ;
+}
+
+sub cddb_cd_usage {
+  print "    <index> => Choose a CD in the current keywords query results list\n" ;
+  print "    v => View the list of CD matching the keywords\n" ;
+  print "    k => Start again CDDB query with different keywords\n" ;
+  print "    q => Quit CDDB query\n" ;
+  print "    h => Show this help\n" ;
+}
+
+sub cddb_track_usage {
+  print "    <index> => Choose a track of the current CD\n" ;
+  print "    v => View the list of CD matching the keywords\n" ;
+  print "    c => Change the CD chosen in keywords query results list\n" ;
+  print "    k => Start again CDDB query with different keywords\n" ;
+  print "    q => Quit CDDB query\n" ;
+  print "    h => Show this help\n" ;
+}
+
 sub get_cddb_tags {
     my $reply ;
     my $cdids ;
@@ -137,10 +161,13 @@ sub get_cddb_tags {
 
     # enter keywords for a query
   KEYWORDS:
-    my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (e to exit CDDB)", "", 1) ;
+    my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (<query>,qh)", "", 1) ;
     chomp $keywords ;
-    goto KEYWORDS unless length $keywords ;
-    return ($CDDB_ABORT, undef) if $keywords eq 'e' ;
+    if ($keywords eq '' or $keywords eq 'h') {
+	cddb_keywords_usage () ;
+	goto KEYWORDS ;
+    }
+    return ($CDDB_ABORT, undef) if $keywords eq 'q' ;
 
     # it this actually a categorie/id ?
     if ($keywords =~ m@^\s*(\w+)/([\da-f]+)\s*$@) {
@@ -166,15 +193,17 @@ sub get_cddb_tags {
 
     # choose a CD id
   CD:
-    print "  Enter CD index (v to view the list, q to query again, e to exit CDDB) ? " ;
+    print "  Enter CD index (<index>,vkqh) ? " ;
     $reply = <> ;
     chomp $reply ;
-    goto CD unless length $reply ;
-    goto KEYWORDS if $reply eq 'q' ;
+    if ($reply eq '' or $reply eq 'h') {
+	cddb_cd_usage () ;
+	goto CD ;
+    }
+    goto KEYWORDS if $reply eq 'k' ;
     goto KEYWORDS_RESULTS if $reply eq 'v' ;
-    return ($CDDB_ABORT, undef) if $reply eq 'e' ;
-    goto CD unless $reply =~ /^\d+$/ ;
-    goto CD unless $reply >= 1 and $reply <= @{$cdids} ;
+    return ($CDDB_ABORT, undef) if $reply eq 'q' ;
+    goto CD unless $reply =~ /^\d+$/ and $reply >= 1 and $reply <= @{$cdids} ;
 
     # do the actual query for CD contents
     $cdid = $cdids->[$reply-1] ;
@@ -200,16 +229,18 @@ sub get_cddb_tags {
 
     # choose a track
   TRACK:
-    print "  Enter track index (v to view the list, q to query again, c to change CD index, e to exit CDDB) ? " ;
+    print "  Enter track index (<index>,vckqh) ? " ;
     $reply = <> ;
     chomp $reply ;
-    goto TRACK unless length $reply ;
-    goto KEYWORDS if $reply eq 'q' ;
+    if ($reply eq '' or $reply eq 'h') {
+	cddb_track_usage () ;
+	goto TRACK ;
+    }
+    goto KEYWORDS if $reply eq 'k' ;
     goto KEYWORDS_RESULTS if $reply eq 'c' ;
     goto CD_RESULTS if $reply eq 'v' ;
-    return ($CDDB_ABORT, undef) if $reply eq 'e' ;
-    goto TRACK unless $reply =~ /^\d+$/ ;
-    goto TRACK unless $reply >= 1 and $reply <= $cd->{TRACKS} ;
+    return ($CDDB_ABORT, undef) if $reply eq 'q' ;
+    goto TRACK unless $reply =~ /^\d+$/ and $reply >= 1 and $reply <= $cd->{TRACKS} ;
 
     # print the track tags
     my $track = $cd->{$reply-1} ;
