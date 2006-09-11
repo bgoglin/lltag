@@ -352,11 +352,11 @@ GetOptions(
 	   ) or usage () ;
 
 # yes/ask option status may vary with user confirmation replies
-my $current_yes_opt = $self->{yes_opt} ;
-my $current_ask_opt = $self->{ask_opt} ;
+$self->{current_yes_opt} = $self->{yes_opt} ;
+$self->{current_ask_opt} = $self->{ask_opt} ;
 
 # confirmation when renaming
-my $current_rename_yes_opt = $self->{yes_opt} ;
+$self->{current_rename_yes_opt} = $self->{yes_opt} ;
 
 # spaces_opt changes matching regexps
 $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
@@ -866,7 +866,7 @@ sub confirm_parser {
     my $preferred = 0 ;
 
     # confirm if required
-    if ($current_ask_opt or ($confirm and !$current_yes_opt)) {
+    if ($self->{current_ask_opt} or ($confirm and !$self->{current_yes_opt})) {
 	while (1) {
 	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." ? ") ;
 	    my $reply = <> ;
@@ -874,11 +874,11 @@ sub confirm_parser {
 	    if ($reply eq "" or $reply =~ /^y/i) {
 		last ;
 	    } elsif ($reply =~ /^a/i) {
-		$current_ask_opt = 0 ; $current_yes_opt = 1 ;
+		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		last ;
 	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/i) {
 		$preferred = 1 ;
-		$current_ask_opt = 0 ; $current_yes_opt = 1 ;
+		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		last ;
 	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/i) {
 		return (PARSE_SKIP_PARSER, undef) ;
@@ -929,7 +929,7 @@ sub apply_parser {
 		    goto NEXT_FIELD ;
 		}
 		$values->{$field} = $val ;
-		if ($self->{verbose_opt} or $confirm or $current_ask_opt) {
+		if ($self->{verbose_opt} or $confirm or $self->{current_ask_opt}) {
 		    print "      ". ucfirst($field)
 			.$field_name_trailing_spaces{$field}  .": ". $val ."\n" ;
 		}
@@ -968,7 +968,7 @@ sub try_to_parse_with_preferred {
 
     } else {
 	print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
-	$current_ask_opt = $self->{ask_opt} ; $current_yes_opt = $self->{yes_opt} ;
+	$self->{current_ask_opt} = $self->{ask_opt} ; $self->{current_yes_opt} = $self->{yes_opt} ;
 	$preferred_parser = undef ;
 	return (PARSE_NO_MATCH, undef) ;
     }
@@ -1130,7 +1130,7 @@ sub rename_with_values {
     print "    New filename is '$new_name'\n" ;
 
     # confirm if required or if any field undefined
-    if ($undefined or !$current_rename_yes_opt) {
+    if ($undefined or !$self->{current_rename_yes_opt}) {
       ASK_CONFIRM:
 	Lltag::Misc::print_question ("    Really rename the file [<y>aen,(h)elp] ? ") ;
 	my $reply = <> ;
@@ -1138,7 +1138,7 @@ sub rename_with_values {
         if ($reply eq "" or $reply =~ /^y/i) {
             goto RENAME_IT ;
 	} elsif ($reply =~ /^a/i) {
-	    $current_rename_yes_opt = 1 ;
+	    $self->{current_rename_yes_opt} = 1 ;
             goto RENAME_IT ;
 	} elsif ($reply =~ /^n/i) {
 	    return ;
@@ -1326,7 +1326,7 @@ while ( @files ) {
 	}
 
 	goto TAG
-	    if $current_yes_opt and !$current_ask_opt ;
+	    if $self->{current_yes_opt} and !$self->{current_ask_opt} ;
 
 	while (1) {
 	    Lltag::Misc::print_question ("  Use these tag values [<y>aPCEDs] ? ") ;
@@ -1348,7 +1348,7 @@ while ( @files ) {
 		if $confirm_reply eq "s" ;
 
 	    if ($confirm_reply =~ /^a/i) {
-		$current_ask_opt = 0 ; $current_yes_opt = 1 ;
+		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		goto TAG ;
 	    } elsif ($confirm_reply eq "E") {
 		$values = edit_values $values ;
