@@ -6,3 +6,5 @@ Lltag/MP3.pm
 Lltag/OGG.pm
 Lltag/FLAC.pm
 Lltag/CDDB.pm
+Lltag/Parse.pm
+Lltag/Rename.pm

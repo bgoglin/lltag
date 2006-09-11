@@ -9,6 +9,7 @@ require Lltag::OGG ;
 require Lltag::FLAC ;
 require Lltag::CDDB ;
 require Lltag::Parse ;
+require Lltag::Rename ;
 
 use Getopt::Long ;
 Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
@@ -104,12 +105,7 @@ sub usage {
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
     print "  --no-tagging           Do not actually tag files\n" ;
-    print " Renaming options:\n" ;
-    print "  --rename <format>      Rename file according to format\n" ;
-    print "  --rename-min           Lowcase tags before renaming\n" ;
-    print "  --rename-sep <s>       Replace space with s in tags before renaming\n" ;
-    print "  --rename-regexp <reg>  Apply a replace regexp to tags before renaming\n" ;
-    print "  --rename-ext           Assume the rename format provides an extension\n" ;
+    Lltag::Rename::rename_usage ($self) ;
     print " General options:\n" ;
     print "  --dry-run              Do nothing but show what would have been done\n" ;
     print "  --yes                  Tag without asking for confirmation when guessing\n" ;
@@ -530,140 +526,6 @@ sub tag_with_values {
     }
 }
 
-#############################################
-# renaming
-
-sub rename_confirm_usage {
-    my $behaviors = shift ;
-    print "      y => Yes, rename this file (default)\n" ;
-    print "      a => Always rename without asking\n" ;
-    print "      e => Edit the filename before tagging\n" ;
-    print "      n => No, don't rename this file\n" ;
-    print "      h => Show this help\n" ;
-}
-
-sub rename_with_values {
-    my $file = shift ;
-    my $file_type = shift ;
-    my $values = shift ;
-
-    my $rename_values = {} ;
-    my $undefined = 0 ;
-
-    print "  Renaming with format '$self->{rename_opt}'...\n" ;
-
-    foreach my $field (keys %{$values}) {
-	# use the first tag for renaming
-	my $val = Lltag::Tags::get_tag_unique_value ($self, $values, $field) ;
-	$val = lc ($val)
-	    if $self->{rename_min_opt} ;
-	$val =~ s/ /$self->{rename_sep_opt}/g
-	    if $self->{rename_sep_opt} ;
-	map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{rename_regexp_opts}} ;
-	$rename_values->{$field} = $val ;
-    }
-
-    my $format_string = $self->{rename_opt} ;
-    my @array = split(//, $format_string) ;
-    for(my $i = 0; $i < @array - 1; $i++) {
-
-	# normal characters
-	next if $array[$i] ne "%" ;
-
-	# remove % and check next char
-	splice (@array, $i, 1) ;
-	# replace the char with the matching
-	my $char = $array[$i] ;
-	next if $char eq "%" ;
-	if ($char =~ /$self->{field_letters_union}/) {
-	    my $field = $self->{field_letter_name}{$char} ;
-	    my $val = $rename_values->{$field} ;
-	    # rename does not contain an array anymore
-	    if (not defined $val) {
-		$undefined++ ;
-		print "    WARNING: Undefined field '".$field."'.\n" ;
-		$val = "" ;
-	    }
-	    if ($char eq 'n') {
-		# initialize track number to 0 if empty
-		$val = "0" if !$val ;
-		# make it at least 2 digits
-		$val = '0'.$val if $val < 10 and length $val < 2 ;
-	    }
-	    $array[$i] = $val ;
-	} else {
-	    $array[$i] = "%".$char ;
-	}
-    }
-
-    my $new_name = join ("", @array) ;
-    if (!$self->{rename_ext_opt}) {
-	if ($file_type eq $mp3_type) {
-	    $new_name .= ".". $mp3_ext ;
-	} elsif ($file_type eq $ogg_type) {
-	    $new_name .= ".". $ogg_ext ;
-	} elsif ($file_type eq $flac_type) {
-	    $new_name .= ".". $flac_ext ;
-	}
-    }
-
-    print "    New filename is '$new_name'\n" ;
-
-    # confirm if required or if any field undefined
-    if ($undefined or !$self->{current_rename_yes_opt}) {
-      ASK_CONFIRM:
-	Lltag::Misc::print_question ("    Really rename the file [<y>aen,(h)elp] ? ") ;
-	my $reply = <> ;
-	chomp $reply ;
-        if ($reply eq "" or $reply =~ /^y/i) {
-            goto RENAME_IT ;
-	} elsif ($reply =~ /^a/i) {
-	    $self->{current_rename_yes_opt} = 1 ;
-            goto RENAME_IT ;
-	} elsif ($reply =~ /^n/i) {
-	    return ;
-	} elsif ($reply =~ /^e/i) {
-	    $new_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
-	    goto ASK_CONFIRM ;
-	} else {
-	    rename_confirm_usage ;
-	    goto ASK_CONFIRM ;
-	}
-    }
-
-  RENAME_IT:
-    if ($new_name eq $file) {
-	print "    Filename would not change, not renaming\n" ;
-	return ;
-    }
-
-    if (-e $new_name) {
-	print "    File $new_name already exists, not renaming\n" ;
-	return ;
-    }
-
-    return
-	if $self->{dry_run_opt} ;
-
-    my $remain = $new_name ;
-    my $path = '' ;
-    while ($remain =~ /^([^\/]*\/+)(.*)$/) {
-        $path .= $1 ;
-	$remain = $2 ;
-	if (!-d $path) {
-	    print "      Creating directory '$path'\n" ;
-	    if (!mkdir $path) {
-		print "      ERROR: Failed to create directory ($!)\n" ;
-		return ;
-	    }
-	}
-    }
-
-    print "    Renaming.\n" ;
-    rename $file, $new_name
-	or print "    ERROR: Failed to rename ($!)\n" ;
-}
-
 #######################################################
 # main process
 
@@ -705,6 +567,7 @@ while ( @ARGV ) {
     }
 }
 
+# display tags
 if ($self->{show_tags_opt}) {
     my @fields_to_show = split (/,/, $self->{show_tags_opt}) ;
     foreach my $file (@files) {
@@ -733,7 +596,7 @@ if ($self->{show_tags_opt}) {
 # generate user parsers
 Lltag::Parse::generate_user_parsers ($self) ;
 
-# main loop
+# main reading/parsing/tagging/renaming loop
 while ( @files ) {
     my $file = shift @files ;
     my $values = undef ;
@@ -862,8 +725,17 @@ while ( @files ) {
 	unless $self->{no_tagging_opt} ;
 
     # renaming
-    rename_with_values $file, $file_type, $new_values
-	if defined $self->{rename_opt} ;
+    if (defined $self->{rename_opt}) {
+	my $extension ;
+	if ($file_type eq $mp3_type) {
+	    $extension = $mp3_ext ;
+	} elsif ($file_type eq $ogg_type) {
+	    $extension = $ogg_ext ;
+	} elsif ($file_type eq $flac_type) {
+	    $extension = $flac_ext ;
+	}
+	Lltag::Rename::rename_with_values ($self, $file, $extension, $new_values) ;
+    }
 
     # next file
   NEXT_FILE:
