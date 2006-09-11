@@ -10,15 +10,17 @@ use vars qw(@EXPORT) ;
 
 @EXPORT = qw (
 	      get_cddb_tags
+	      CDDB_SUCCESS
+	      CDDB_ABORT
 	      ) ;
 
 # return values that are passed to lltag
-my $CDDB_SUCCESS = 0 ;
-my $CDDB_ABORT = -1 ;
+use constant CDDB_SUCCESS => 0 ;
+use constant CDDB_ABORT => -1 ;
 
 # local return values
-my $CDDB_ABORT_TO_KEYWORDS = -10 ;
-my $CDDB_ABORT_TO_CDIDS = -11 ;
+use constant CDDB_ABORT_TO_KEYWORDS => -10 ;
+use constant CDDB_ABORT_TO_CDIDS => -11 ;
 
 my $server_host = "www.freedb.org" ;
 my $server_port = 80 ;
@@ -163,9 +165,9 @@ sub get_cddb_tags_from_tracks {
 	chomp $reply ;
 	next if $reply eq '' ;
 
-	return ($CDDB_ABORT, undef) if $reply eq 'q' ;
-	return ($CDDB_ABORT_TO_KEYWORDS, undef) if $reply eq 'k' ;
-	return ($CDDB_ABORT_TO_CDIDS, undef) if $reply eq 'c' ;
+	return (CDDB_ABORT, undef) if $reply eq 'q' ;
+	return (CDDB_ABORT_TO_KEYWORDS, undef) if $reply eq 'k' ;
+	return (CDDB_ABORT_TO_CDIDS, undef) if $reply eq 'c' ;
 
 	if ($reply eq 'v') {
 	    print_cd $cd ;
@@ -182,7 +184,7 @@ sub get_cddb_tags_from_tracks {
 	    $values{NUMBER} = $reply ;
 	    $values{GENRE} = $cd->{GENRE} if defined $cd->{GENRE} ;
 	    $values{DATE} = $cd->{YEAR} if defined $cd->{YEAR} ;
-	    return ($CDDB_SUCCESS, \%values) ;
+	    return (CDDB_SUCCESS, \%values) ;
 	}
 
 	cddb_track_usage () ;
@@ -235,14 +237,14 @@ sub get_cddb_tags_from_cdids {
 	chomp $reply ;
 	next if $reply eq '' ;
 
-	return ($CDDB_ABORT, undef) if $reply eq 'q' ;
-	return ($CDDB_ABORT_TO_KEYWORDS, undef) if $reply eq 'k' ;
+	return (CDDB_ABORT, undef) if $reply eq 'q' ;
+	return (CDDB_ABORT_TO_KEYWORDS, undef) if $reply eq 'k' ;
 	goto AGAIN if $reply eq 'v' ;
 
 	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= @{$cdids}) {
 	    # do the actual query for CD contents
 	    my ($res, $values) = get_cddb_tags_from_cdid $cdids->[$reply-1] ;
-	    goto AGAIN if $res == $CDDB_ABORT_TO_CDIDS ;
+	    goto AGAIN if $res == CDDB_ABORT_TO_CDIDS ;
 	    return ($res, $values) ;
 	}
 
@@ -267,11 +269,11 @@ sub get_cddb_tags {
     if (defined $previous_cd) {
 	bless $previous_cd ;
 	my ($res, $values) = get_cddb_tags_from_tracks $previous_cd ;
-	return ($res, $values) if $res == $CDDB_SUCCESS or $res == $CDDB_ABORT ;
-	if ($res == $CDDB_ABORT_TO_CDIDS) {
+	return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
+	if ($res == CDDB_ABORT_TO_CDIDS) {
 	    bless $previous_cdids ;
 	    my ($res, $values) = get_cddb_tags_from_cdids $previous_cdids ;
-	    return ($res, $values) if $res == $CDDB_SUCCESS or $res == $CDDB_ABORT ;
+	    return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
 	}
     }
 
@@ -280,7 +282,7 @@ sub get_cddb_tags {
 	chomp $keywords ;
 	next if $keywords eq '' ;
 
-	return ($CDDB_ABORT, undef) if $keywords eq 'q' ;
+	return (CDDB_ABORT, undef) if $keywords eq 'q' ;
 
 	if ($keywords eq 'h') {
 	    cddb_keywords_usage () ;
@@ -294,7 +296,7 @@ sub get_cddb_tags {
 	    $cdid->{ID} = $2 ;
 	    # FIXME: do not show 'c' for goto to CD list in there
 	    my ($res, $values) = get_cddb_tags_from_cdid $cdid ;
-	    return ($res, $values) if $res == $CDDB_SUCCESS or $res == $CDDB_ABORT ;
+	    return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
 	    next ;
 	}
 
@@ -305,7 +307,7 @@ sub get_cddb_tags {
 	$previous_cd = undef ;
 
 	my ($res, $values) = get_cddb_tags_from_cdids $cdids ;
-	next if $res == $CDDB_ABORT_TO_KEYWORDS ;
+	next if $res == CDDB_ABORT_TO_KEYWORDS ;
 	return ($res, $values) ;
     }
 }
