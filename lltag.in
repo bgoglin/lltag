@@ -88,6 +88,14 @@ sub version {
 
 #######################################################
 # usage
+
+sub parsing_usage {
+    print " Format is composed of anything you want with special fields:\n" ;
+    print map { "  %". $self->{field_name_letter}{$_} ." means ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
+    print "  %$ignore_letter means that the text has to be ignored\n" ;
+    print "  %% means %\n" ;
+}
+
 sub usage {
     print $0." $version is a frontend to tag MP3/OGG/FLAC files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
@@ -128,10 +136,7 @@ sub usage {
     print "  -L, --list             List internal formats\n" ;
     print "  -V, --version          Show lltag version\n" ;
     print "  -h, --help             Show this help\n" ;
-    print " Format is composed of anything you want with special fields:\n" ;
-    print map { "  %". $self->{field_name_letter}{$_} ." means ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
-    print "  %$ignore_letter means that the text has to be ignored\n" ;
-    print "  %% means %\n" ;
+    parsing_usage ;
     print "\n" ;
     print "Author:    Brice Goglin\n" ;
     print "Homepage:  http://home.gna.org/lltag\n" ;
@@ -361,17 +366,18 @@ $self->{current_ask_opt} = $self->{ask_opt} ;
 # confirmation when renaming
 $self->{current_rename_yes_opt} = $self->{yes_opt} ;
 
-# spaces_opt changes matching regexps
-$match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
-
 # if no user parsers, no defaults, no guess and no cddb, force guess
 $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
 			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
 			       and !$self->{list_formats_opt} ) ;
 
-# forward declarations
-sub apply_parser ;
+sub init_parsing {
+    # spaces_opt changes matching regexps
+    $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
+}
+
+init_parsing ;
 
 #######################################################
 # Parsing return values
@@ -530,6 +536,54 @@ sub apply_regexp_to_tag {
 }
 
 #######################################################
+# actual parsing
+
+sub apply_parser {
+    my $file = shift ;
+    my $parsename = shift ;
+    my $file_type = shift ;
+    my $parser = shift ;
+    my $confirm = shift ;
+    my $behaviors = shift ;
+
+    if ($parsename =~ /^$parser->{regexp}$/) {
+	print "    '$parser->{title}' matches this file...\n" ;
+
+	my @field_table = @{$parser->{field_table}} ;
+	my $values = {} ;
+	my $i = 1 ;
+
+	# traverse matched values (stored in ${$i}
+	while ( $i <= @field_table ) {
+	    my $field = $field_table[$i-1] ;
+	    if ($field ne $ignore_name) {
+		my $val = ${$i} ;
+		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
+		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
+		map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
+		if (defined $values->{$field}) {
+		    print "      WARNING: ".ucfirst($field)." already set to '".$values->{$field}
+		    ."', skipping new value '$val'.\n"
+			if defined $values->{$field} and $values->{$field} ne $val ;
+		    goto NEXT_FIELD ;
+		}
+		$values->{$field} = $val ;
+		if ($self->{verbose_opt} or $confirm or $self->{current_ask_opt}) {
+		    print "      ". ucfirst($field)
+			.$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
+		}
+	    }
+	  NEXT_FIELD:
+	    $i++ ;
+	}
+
+	return confirm_parser ($file, $file_type, $confirm, $behaviors, $values) ;
+    } else {
+	return (PARSE_SKIP_PARSER, undef) ;
+    }
+}
+
+#######################################################
 # internal parsers
 
 my @internal_basename_parsers = () ;
@@ -643,6 +697,14 @@ sub read_internal_parsers {
 	die "Incomplete format at line $. in file '$file'\n" ;
     }
   NO_FORMATS_FILE_FOUND:
+}
+
+sub list_internal_parsers {
+    foreach my $path_parser (@internal_path_parsers) {
+	foreach my $basename_parser (@internal_basename_parsers) {
+	    print "  $path_parser->{title}/$basename_parser->{title}\n" ;
+	}
+    }
 }
 
 sub apply_internal_basename_parsers {
@@ -899,50 +961,8 @@ sub confirm_parser {
     }
 }
 
-sub apply_parser {
-    my $file = shift ;
-    my $parsename = shift ;
-    my $file_type = shift ;
-    my $parser = shift ;
-    my $confirm = shift ;
-    my $behaviors = shift ;
-
-    if ($parsename =~ /^$parser->{regexp}$/) {
-	print "    '$parser->{title}' matches this file...\n" ;
-
-	my @field_table = @{$parser->{field_table}} ;
-	my $values = {} ;
-	my $i = 1 ;
-
-	# traverse matched values (stored in ${$i}
-	while ( $i <= @field_table ) {
-	    my $field = $field_table[$i-1] ;
-	    if ($field ne $ignore_name) {
-		my $val = ${$i} ;
-		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
-		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
-		map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
-		if (defined $values->{$field}) {
-		    print "      WARNING: ".ucfirst($field)." already set to '".$values->{$field}
-		    ."', skipping new value '$val'.\n"
-			if defined $values->{$field} and $values->{$field} ne $val ;
-		    goto NEXT_FIELD ;
-		}
-		$values->{$field} = $val ;
-		if ($self->{verbose_opt} or $confirm or $self->{current_ask_opt}) {
-		    print "      ". ucfirst($field)
-			.$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
-		}
-	    }
-	  NEXT_FIELD:
-	    $i++ ;
-	}
-
-	return confirm_parser ($file, $file_type, $confirm, $behaviors, $values) ;
-    } else {
-	return (PARSE_SKIP_PARSER, undef) ;
-    }
-}
+#######################################################
+# high-level parsing routines
 
 sub try_to_parse_with_preferred {
     my $file = shift ;
@@ -1194,11 +1214,7 @@ read_internal_parsers
 # if -L was passed, show formats and exit
 if ($self->{list_formats_opt}) {
     print "Listing internal parsers:\n" ;
-    foreach my $path_parser (@internal_path_parsers) {
-	foreach my $basename_parser (@internal_basename_parsers) {
-	    print "  $path_parser->{title}/$basename_parser->{title}\n" ;
-	}
-    }
+    list_internal_parsers ;
     exit 0 ;
 }
 
