@@ -115,8 +115,9 @@ sub readline {
 
 # initialization
 sub init_readline {
-    $history_dir = shift ;
-    $history_file = shift ;
+    my $self = shift ;
+    $history_dir = $self->{user_lltag_dir} ;
+    $history_file = $self->{lltag_edit_history_filename} ;
 
     $term = Term::ReadLine->new('lltag editor') ;
     $attribs = $term->Attribs ;

@@ -14,19 +14,19 @@ use Getopt::Long ;
 Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 
 #######################################################
-# configuration file location
-my $common_lltag_dir = "@SYSCONFDIR@/lltag" ;
-my $user_lltag_dir = "$ENV{HOME}/.lltag" ;
-my $lltag_format_filename = "formats" ;
-my $lltag_config_filename = "config" ;
-my $lltag_edit_history_filename = "edit_history" ;
-
-#######################################################
 # main hash for globals and config
 my $self = {} ;
 
 #######################################################
-Lltag::Misc::init_readline ($user_lltag_dir, $lltag_edit_history_filename) ;
+# configuration file location
+$self->{common_lltag_dir} = "@SYSCONFDIR@/lltag" ;
+$self->{user_lltag_dir} = "$ENV{HOME}/.lltag" ;
+$self->{lltag_format_filename} = "formats" ;
+$self->{lltag_config_filename} = "config" ;
+$self->{lltag_edit_history_filename} = "edit_history" ;
+
+#######################################################
+Lltag::Misc::init_readline ($self) ;
 
 #######################################################
 # format parameters
@@ -293,8 +293,8 @@ sub parse_generic_config_file {
    close CONF ;
 }
 
-parse_generic_config_file "$common_lltag_dir/$lltag_config_filename" ;
-parse_generic_config_file "$user_lltag_dir/$lltag_config_filename" ;
+parse_generic_config_file "$self->{common_lltag_dir}/$self->{lltag_config_filename}" ;
+parse_generic_config_file "$self->{user_lltag_dir}/$self->{lltag_config_filename}" ;
 
 sub parse_additional_config_file {
     my $file = shift ;
@@ -538,10 +538,10 @@ my @internal_path_parsers = () ;
 sub read_internal_parsers {
     # get parsers from configuration files
     my $file ;
-    if (open FORMAT, "$user_lltag_dir/$lltag_format_filename") {
-	$file = "$user_lltag_dir/$lltag_format_filename" ;
-    } elsif (open FORMAT, "$common_lltag_dir/$lltag_format_filename") {
-	$file = "$common_lltag_dir/$lltag_format_filename" ;
+    if (open FORMAT, "$self->{user_lltag_dir}/$self->{lltag_format_filename}") {
+	$file = "$self->{user_lltag_dir}/$self->{lltag_format_filename}" ;
+    } elsif (open FORMAT, "$self->{common_lltag_dir}/$self->{lltag_format_filename}") {
+	$file = "$self->{common_lltag_dir}/$self->{lltag_format_filename}" ;
     } else {
 	print "Did not find any format file.\n" ;
 	goto NO_FORMATS_FILE_FOUND;
