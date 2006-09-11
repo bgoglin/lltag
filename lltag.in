@@ -31,13 +31,13 @@ Lltag::Misc::init_readline ($self) ;
 #######################################################
 # format parameters
 
-my @field_names = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'DATE', 'COMMENT') ;
-my @field_letters = ('a', 't', 'A', 'n', 'g', 'd', 'c') ;
+@{$self->{field_names}} = ('ARTIST', 'TITLE', 'ALBUM', 'NUMBER', 'GENRE', 'DATE', 'COMMENT') ;
+@{$self->{field_letters}} = ('a', 't', 'A', 'n', 'g', 'd', 'c') ;
 
 my $ignore_letter = 'i' ;
 my $ignore_name = 'IGNORE' ;
 
-my %field_name_letter =
+%{$self->{field_name_letter}} =
     (
      'ARTIST'  => 'a',
      'TITLE'   => 't',
@@ -48,7 +48,7 @@ my %field_name_letter =
      'COMMENT' => 'c',
      ) ;
 
-my %field_name_trailing_spaces =
+%{$self->{field_name_trailing_spaces}} =
     (
      'ARTIST' => '  ',
      'TITLE' => '   ',
@@ -59,11 +59,11 @@ my %field_name_trailing_spaces =
      'COMMENT' => ' ',
      ) ;
 
-my %field_default = () ;
+%{$self->{field_default}} = () ;
 
-my %additional_values = () ;
+%{$self->{additional_values}} = () ;
 
-my %field_letter_name =
+%{$self->{field_letter_name}} =
     (
      'a' => 'ARTIST',
      't' => 'TITLE',
@@ -73,6 +73,9 @@ my %field_letter_name =
      'd' => 'DATE',
      'c' => 'COMMENT',
      ) ;
+
+# change format names into a parsing string
+$self->{field_letters_union} = (join '|', @{$self->{field_letters}}) ;
 
 #######################################################
 # version
@@ -93,8 +96,8 @@ sub usage {
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -C, --cddb             Query tags in CDDB\n" ;
     print "  -p, --nopath           Remove the path from filenames when matching\n" ;
-    print map { "  -". $field_name_letter{$_} .", --". $_.$field_name_trailing_spaces{$_}
-		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @field_names ;
+    print map { "  -". $self->{field_name_letter}{$_} .", --". $_.$self->{field_name_trailing_spaces}{$_}
+		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
     print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
@@ -126,7 +129,7 @@ sub usage {
     print "  -V, --version          Show lltag version\n" ;
     print "  -h, --help             Show this help\n" ;
     print " Format is composed of anything you want with special fields:\n" ;
-    print map { "  %". $field_name_letter{$_} ." means ". ucfirst($_) ."\n" } @field_names ;
+    print map { "  %". $self->{field_name_letter}{$_} ." means ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
     print "  %$ignore_letter means that the text has to be ignored\n" ;
     print "  %% means %\n" ;
     print "\n" ;
@@ -196,7 +199,7 @@ $self->{gencfg_file} = undef ;
 
 #######################################################
 # add field_names to self for the other modules
-@{$self->{field_names}} = @field_names ;
+@{$self->{field_names}} = @{$self->{field_names}} ;
 
 #######################################################
 # parse config files first
@@ -224,9 +227,9 @@ sub process_option {
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
         die "Unrecognized option line #$.: \"$_\"\n"
 	    # TODO: drop non-capitalized field name support on september 20 2006
-	    unless defined $field_name_letter{uc ($1)} ;
+	    unless defined $self->{field_name_letter}{uc ($1)} ;
 	# TODO: drop filename support on september 20 2006
-	$field_default{uc ($1)} = $2 ;
+	$self->{field_default}{uc ($1)} = $2 ;
     } elsif (/^tag\s*=\s*"(.+)"$/) {
 	push @{$self->{additional_tags}}, $1 ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
@@ -347,8 +350,8 @@ GetOptions(
 	   'S'            => sub { $self->{show_tags_opt} = "all" ; },
 	   'tag=s'        => \@{$self->{additional_tags}},
 	   map { my $field = $_ ;
-		 $field_name_letter{$field} .'|'. $field .'=s' => \$field_default{$field},
-	       } @field_names ,
+		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => \$self->{field_default}{$field},
+	       } @{$self->{field_names}} ,
 	   ) or usage () ;
 
 # yes/ask option status may vary with user confirmation replies
@@ -364,11 +367,8 @@ $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
 # if no user parsers, no defaults, no guess and no cddb, force guess
 $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
-			       and !(grep { defined $field_default{$_} } (keys %field_default))
+			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
 			       and !$self->{list_formats_opt} ) ;
-
-# change format names into a parsing string
-my $field_letters_union = (join '|', @field_letters) ;
 
 # forward declarations
 sub apply_parser ;
@@ -462,12 +462,12 @@ sub edit_values {
     map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
 
     while (1) {
-	Lltag::Misc::print_question ("    Edit a field [". (join '', @field_letters) ."ECV,<h>elp] ? ") ;
+	Lltag::Misc::print_question ("    Edit a field [". (join '', @{$self->{field_letters}}) ."ECV,<h>elp] ? ") ;
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
 
-	if ($edit_reply =~ /^($field_letters_union)$/) {
-	    my $field = $field_letter_name{$edit_reply} ;
+	if ($edit_reply =~ /^($self->{field_letters_union})$/) {
+	    my $field = $self->{field_letter_name}{$edit_reply} ;
 	    $values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
 
 	} elsif ($edit_reply eq "E") {
@@ -478,14 +478,14 @@ sub edit_values {
 
 	} elsif ($edit_reply eq "V") {
 	    print "      Current tag values are:\n" ;
-	    foreach my $field (@field_names) {
-		print "        ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
+	    foreach my $field (@{$self->{field_names}}) {
+		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
 		    if defined $values->{$field} ;
 	    }
 
 	} else {
 	    # print all fields, including the undefined ones
-	    foreach my $field (@field_names) {
+	    foreach my $field (@{$self->{field_names}}) {
 		my $val = $values->{$field} ;
 		if (not defined $val) {
 		    $val = "<not defined>" ;
@@ -494,8 +494,8 @@ sub edit_values {
 		} else {
 		    $val = "'".$val."'" ;
 		}
-		print "      ".$field_name_letter{$field}
-		." => Edit ".ucfirst($field).$field_name_trailing_spaces{$field}
+		print "      ".$self->{field_name_letter}{$field}
+		." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
 		." (=".$val.")\n" ;
 	    }
 	    # TODO: show other fields ? not possible until we edit existing tags
@@ -606,12 +606,12 @@ sub read_internal_parsers {
 	} elsif (/^indices = (.*)$/) {
 	    @field_table = map {
 		my $field ;
-		if (defined $field_name_letter{$_} or $_ eq $ignore_name) {
+		if (defined $self->{field_name_letter}{$_} or $_ eq $ignore_name) {
 		    # full field name, keep as it is
 		    $field = $_
-		} elsif (defined $field_letter_name{$_}) {
+		} elsif (defined $self->{field_letter_name}{$_}) {
 		    # field letter
-		    $field = $field_letter_name{$_} ;
+		    $field = $self->{field_letter_name}{$_} ;
 		} elsif ($_ eq $ignore_letter) {
 		    # ignore letter
 		    $field = $ignore_name ;
@@ -760,7 +760,7 @@ sub generate_user_parser {
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$field_letters_union|$ignore_letter/) {
+	} elsif ($array[$i] =~ /$self->{field_letters_union}|$ignore_letter/) {
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
@@ -769,7 +769,7 @@ sub generate_user_parser {
 	if ($char eq $ignore_letter) {
 	    push @field_table, $ignore_name ;
 	} else {
-	    push @field_table, $field_letter_name{$char} ;
+	    push @field_table, $self->{field_letter_name}{$char} ;
 	}
     }
     @{$parser->{field_table}} = @field_table ;
@@ -931,7 +931,7 @@ sub apply_parser {
 		$values->{$field} = $val ;
 		if ($self->{verbose_opt} or $confirm or $self->{current_ask_opt}) {
 		    print "      ". ucfirst($field)
-			.$field_name_trailing_spaces{$field}  .": ". $val ."\n" ;
+			.$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
 		}
 	    }
 	  NEXT_FIELD:
@@ -1095,8 +1095,8 @@ sub rename_with_values {
 	# replace the char with the matching
 	my $char = $array[$i] ;
 	next if $char eq "%" ;
-	if ($char =~ /$field_letters_union/) {
-	    my $field = $field_letter_name{$char} ;
+	if ($char =~ /$self->{field_letters_union}/) {
+	    my $field = $self->{field_letter_name}{$char} ;
 	    my $val = $rename_values->{$field} ;
 	    # rename does not contain an array anymore
 	    if (not defined $val) {
@@ -1243,7 +1243,7 @@ if ($self->{show_tags_opt}) {
 
 	my $values = read_tags $file, $file_type ;
 
-	foreach my $field (@field_names, (Lltag::Tags::get_values_non_regular_keys ($self, $values))) {
+	foreach my $field (@{$self->{field_names}}, (Lltag::Tags::get_values_non_regular_keys ($self, $values))) {
 	    next if not defined $values->{$field} ;
 	    next unless grep { /^all$/ } @fields_to_show
 		or grep { /^$field$/i } @fields_to_show ;
@@ -1314,14 +1314,14 @@ while ( @files ) {
 	$first_round = 0;
 
 	# add defaults
-	foreach my $field (@field_names) {
-	    $values->{$field} = $field_default{$field} if not defined $values->{$field} and defined $field_default{$field} ;
+	foreach my $field (@{$self->{field_names}}) {
+	    $values->{$field} = $self->{field_default}{$field} if not defined $values->{$field} and defined $self->{field_default}{$field} ;
 	}
 
       CONFIRM:
 	print "    Current tag values are:\n" ;
-	foreach my $field (@field_names) {
-	    print "      ".ucfirst($field).$field_name_trailing_spaces{$field}.": ".$values->{$field}."\n"
+	foreach my $field (@{$self->{field_names}}) {
+	    print "      ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
 		if defined $values->{$field} ;
 	}
 
@@ -1414,7 +1414,7 @@ sub generate_config {
     print NEWCFG "guess = $self->{guess_opt}\n" ;
     print NEWCFG "nopath = $self->{nopath_opt}\n" ;
 
-    map { print NEWCFG "default_$_ = \"$field_default{$_}\"\n" ; } (keys %field_default) ;
+    map { print NEWCFG "default_$_ = \"$self->{field_default}{$_}\"\n" ; } (keys %{$self->{field_default}}) ;
 
     map { print NEWCFG "tag = \"$_\"\n" ; } @{$self->{additional_tags}} ;
 
