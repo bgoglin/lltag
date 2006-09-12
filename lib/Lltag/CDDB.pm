@@ -106,6 +106,8 @@ sub cddb_query_tracks_by_id {
     return (CDDB_ABORT, undef) unless defined $socket ;
 
     my $cd ;
+    $cd->{CAT} = $cat ;
+    $cd->{ID} = $id ;
 
     while (my $line = <$socket>) {
 	if ($line =~ /tracks: (\d+)/i) {
@@ -293,14 +295,14 @@ sub get_cddb_tags {
 
     if (defined $previous_cd) {
 	bless $previous_cd ;
-        # FIXME: print something saying that we went back to the same CD
+	print "  Going back to previous CD cat=$previous_cd->{CAT} id=$previous_cd->{ID}\n" ;
 	($res, $values) = get_cddb_tags_from_tracks $self, $previous_cd ;
-	return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
 	if ($res == CDDB_ABORT_TO_CDIDS) {
 	    bless $previous_cdids ;
 	    ($res, $values) = get_cddb_tags_from_cdids $self, $previous_cdids ;
-	    return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
 	}
+	goto OUT if $res == CDDB_SUCCESS ;
+	goto ABORT if $res == CDDB_ABORT ;
     }
 
     while (1) {
@@ -308,7 +310,7 @@ sub get_cddb_tags {
 	chomp $keywords ;
 	next if $keywords eq '' ;
 
-	return (CDDB_ABORT, undef) if $keywords eq 'q' ;
+	goto ABORT if $keywords eq 'q' ;
 
 	if ($keywords eq 'h') {
 	    cddb_keywords_usage () ;
@@ -322,7 +324,8 @@ sub get_cddb_tags {
 	    $cdid->{ID} = $2 ;
 	    # FIXME: do not show 'c' for goto to CD list in there
 	    ($res, $values) = get_cddb_tags_from_cdid $self, $cdid ;
-	    return ($res, $values) if ($res == CDDB_SUCCESS and defined $values) or $res == CDDB_ABORT ;
+	    goto OUT if $res == CDDB_SUCCESS and defined $values ;
+	    goto ABORT if $res == CDDB_ABORT ;
 	    next ;
 	}
 
@@ -330,16 +333,24 @@ sub get_cddb_tags {
 	$keywords =~ s/ /+/g ;
 	my $cdids ;
 	($res, $cdids) = cddb_query_cd_by_keywords $self, $keywords ;
-	return (CDDB_ABORT, undef) if $res == CDDB_ABORT ;
+	goto ABORT if $res == CDDB_ABORT ;
 
 	$previous_cdids = $cdids ;
 	$previous_cd = undef ;
 
 	($res, $values) = get_cddb_tags_from_cdids $self, $cdids ;
 	next if $res == CDDB_ABORT_TO_KEYWORDS ;
-	# FIXME: clear if ABORT
-	return ($res, $values) ;
+	goto OUT ;
     }
+
+ OUT:
+    goto ABORT if $res == CDDB_ABORT ;
+    return ($res, $values) ;
+
+ ABORT:
+    $previous_cdids = undef ;
+    $previous_cd = undef ;
+    return (CDDB_ABORT, undef);
 }
 
 1 ;
