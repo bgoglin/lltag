@@ -176,6 +176,11 @@ $self->{gencfg_file} = undef ;
 
 @{$self->{user_format_strings}} = () ;
 
+$self->{cddb_server_name} = "www.freedb.org" ;
+$self->{cddb_server_port} = 80 ;
+$self->{cddb_proxy_name} = undef ;
+$self->{cddb_proxy_port} = undef ;
+
 #######################################################
 # parse config files first
 
@@ -255,6 +260,16 @@ sub process_option {
 	$self->{recursive_opt} = $1 ;
     } elsif (/^verbose\s*=\s*(.+)$/) {
 	$self->{verbose_opt} = $1 ;
+    } elsif (/^cddb\s*=\s*(.+)$/) {
+	$self->{cddb_opt} = $1 ;
+    } elsif (/^cddb_server_name\s*=\s*"(.+)"$/) {
+	$self->{cddb_server_name} = $1 ;
+    } elsif (/^cddb_server_port\s*=\s*(\d+)$/) {
+	$self->{cddb_server_port} = $1 ;
+    } elsif (/^cddb_proxy_name\s*=\s*"(.*)"$/) {
+	$self->{cddb_proxy_name} = $1 ;
+    } elsif (/^cddb_proxy_port\s*=\s*(\d*)$/) {
+	$self->{cddb_proxy_port} = $1 ;
 # Error
     } elsif (/^[^#]/ && !/^(\s*)$/) {
         die "Unrecognized option line #$.: \"$_\"\n" ;
@@ -630,7 +645,7 @@ while ( @files ) {
 	# try CDDB, if enabled
 	if ($self->{cddb_opt}) {
       TRY_CDDB:
-	    ($res, $values) = Lltag::CDDB::get_cddb_tags () ;
+	    ($res, $values) = Lltag::CDDB::get_cddb_tags ($self) ;
 	    goto ADD_DEFAULTS
 		if $res == Lltag::CDDB->CDDB_SUCCESS ;
 	    die "Unknown CDDB return value: $res.\n"
@@ -781,6 +796,12 @@ sub generate_config {
     print NEWCFG "rename_sep = \"$self->{rename_sep_opt}\"\n" ;
     map { print NEWCFG "rename_regexp = \"$_\"\n" ; } @{$self->{rename_regexp_opts}} ;
     print NEWCFG "rename_ext = $self->{rename_ext_opt}\n" ;
+
+    print NEWCFG "cddb = $self->{cddb_opt}\n" ;
+    print NEWCFG "cddb_server_name = \"$self->{cddb_server_name}\"\n" ;
+    print NEWCFG "cddb_server_port = $self->{cddb_server_port}\n" ;
+    print NEWCFG "cddb_proxy_name = \"$self->{cddb_proxy_name}\"\n" if defined $self->{cddb_proxy_name} ;
+    print NEWCFG "cddb_proxy_port = $self->{cddb_proxy_port}\n" if defined $self->{cddb_proxy_name} ;
 
     print NEWCFG "dry_run = $self->{dry_run_opt}\n" ;
     print NEWCFG "yes = $self->{yes_opt}\n" ;
