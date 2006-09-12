@@ -340,7 +340,8 @@ GetOptions(
 	   'S'            => sub { $self->{show_tags_opt} = "all" ; },
 	   'tag=s'        => \@{$self->{additional_tags}},
 	   map { my $field = $_ ;
-		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => \$self->{field_default}{$field},
+		 # use a sub because \$self->{field_default}{$field} always allocates it and assigns it to undef...
+		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; $self->{field_default}{$field} = shift },
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
 
