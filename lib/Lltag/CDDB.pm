@@ -37,8 +37,9 @@ sub cddb_socket {
     my $socket = IO::Socket::INET->new(PeerAddr => $self->{cddb_proxy_name} ? $self->{cddb_proxy_name} : $self->{cddb_server_name},
 				       PeerPort => $self->{cddb_proxy_port} ? $self->{cddb_proxy_port} : $self->{cddb_server_port},
 				       Proto    => "tcp",
-				       Type     => SOCK_STREAM)
-	or die "Failed to connect CDDB server: "
+				       Type     => SOCK_STREAM) ;
+    if (not defined $socket) {
+	print "  ERROR: Failed to connect CDDB server "
 		. $self->{cddb_server_name} .":". $self->{cddb_server_port}
 		. ($self->{cddb_proxy_name} ?
 			(" (proxy $self->{cddb_proxy_name}:"
@@ -46,7 +47,8 @@ sub cddb_socket {
 			 . ")")
 			: "")
 		. " ($!)\n" ;
-    # FIXME: do not die
+	return undef ;
+    }
 
     print $socket "GET http://"
 	. $self->{cddb_server_name}
@@ -63,6 +65,7 @@ sub cddb_query_cd_by_keywords {
     my $keywords = shift ;
 
     my $socket = cddb_socket $self, "/freedb_search.php?words=${keywords}&allfields=NO&fields=artist&fields=title&allcats=YES&grouping=none&x=0&y=0" ;
+    return (CDDB_ABORT, undef) unless defined $socket ;
 
     my @cdids = () ;
     my $samename = undef ;
@@ -90,7 +93,7 @@ sub cddb_query_cd_by_keywords {
 
     close $socket ;
 
-    return \@cdids ;
+    return (CDDB_SUCCESS, \@cdids) ;
 }
 
 sub cddb_query_tracks_by_id {
@@ -100,6 +103,7 @@ sub cddb_query_tracks_by_id {
     my $name = shift ;
 
     my $socket = cddb_socket $self, "/freedb_search_fmt.php?cat=${cat}&id=${id}\n" ;
+    return (CDDB_ABORT, undef) unless defined $socket ;
 
     my $cd ;
 
@@ -131,7 +135,8 @@ sub cddb_query_tracks_by_id {
 
     close $socket ;
 
-    return undef unless defined $name ;
+    return (CDDB_SUCCESS, undef)
+	unless defined $name ;
 
     # TODO: are we sure no artist or album may contain " / " ?
     $name =~ m@^(.+) / (.+)$@ ;
@@ -140,7 +145,7 @@ sub cddb_query_tracks_by_id {
 
     # TODO: check number and indexes of tracks ?
 
-    return $cd ;
+    return (CDDB_SUCCESS, $cd) ;
 }
 
 ######################################################
@@ -226,14 +231,16 @@ sub print_cdids {
     }
 }
 
+# returns (SUCCESS, undef) if CDDB returned an bad/empty CD
 sub get_cddb_tags_from_cdid {
     my $self = shift ;
     my $cdid = shift ;
-    my $cd = cddb_query_tracks_by_id ($self, $cdid->{CAT}, $cdid->{ID}, $cdid->{NAME}) ;
+    my ($res, $cd) = cddb_query_tracks_by_id ($self, $cdid->{CAT}, $cdid->{ID}, $cdid->{NAME}) ;
+    return (CDDB_ABORT, undef) if $res == CDDB_ABORT ;
 
     if (!$cd or !$cd->{TRACKS}) {
 	print "    There is no tracks in this CD.\n" ;
-	goto AGAIN ;
+	return (CDDB_SUCCESS, undef) ;
     }
 
     $previous_cd = $cd ;
@@ -260,7 +267,7 @@ sub get_cddb_tags_from_cdids {
 	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= @{$cdids}) {
 	    # do the actual query for CD contents
 	    my ($res, $values) = get_cddb_tags_from_cdid $self, $cdids->[$reply-1] ;
-	    goto AGAIN if $res == CDDB_ABORT_TO_CDIDS ;
+	    goto AGAIN if $res == CDDB_ABORT_TO_CDIDS or ($res == CDDB_SUCCESS and not defined $values) ;
 	    return ($res, $values) ;
 	}
 
@@ -280,17 +287,18 @@ sub cddb_keywords_usage {
 
 sub get_cddb_tags {
     my $self = shift ;
+    my ($res, $values) ;
 
     # FIXME: check an additional parameter to start from scratch
 
     if (defined $previous_cd) {
 	bless $previous_cd ;
         # FIXME: print something saying that we went back to the same CD
-	my ($res, $values) = get_cddb_tags_from_tracks $self, $previous_cd ;
+	($res, $values) = get_cddb_tags_from_tracks $self, $previous_cd ;
 	return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
 	if ($res == CDDB_ABORT_TO_CDIDS) {
 	    bless $previous_cdids ;
-	    my ($res, $values) = get_cddb_tags_from_cdids $self, $previous_cdids ;
+	    ($res, $values) = get_cddb_tags_from_cdids $self, $previous_cdids ;
 	    return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
 	}
     }
@@ -313,18 +321,21 @@ sub get_cddb_tags {
 	    $cdid->{CAT} = $1 ;
 	    $cdid->{ID} = $2 ;
 	    # FIXME: do not show 'c' for goto to CD list in there
-	    my ($res, $values) = get_cddb_tags_from_cdid $self, $cdid ;
-	    return ($res, $values) if $res == CDDB_SUCCESS or $res == CDDB_ABORT ;
+	    ($res, $values) = get_cddb_tags_from_cdid $self, $cdid ;
+	    return ($res, $values) if ($res == CDDB_SUCCESS and defined $values) or $res == CDDB_ABORT ;
 	    next ;
 	}
 
 	# do the actual query for CD id with keywords
 	$keywords =~ s/ /+/g ;
-	my $cdids = cddb_query_cd_by_keywords $self, $keywords ;
+	my $cdids ;
+	($res, $cdids) = cddb_query_cd_by_keywords $self, $keywords ;
+	return (CDDB_ABORT, undef) if $res == CDDB_ABORT ;
+
 	$previous_cdids = $cdids ;
 	$previous_cd = undef ;
 
-	my ($res, $values) = get_cddb_tags_from_cdids $self, $cdids ;
+	($res, $values) = get_cddb_tags_from_cdids $self, $cdids ;
 	next if $res == CDDB_ABORT_TO_KEYWORDS ;
 	# FIXME: clear if ABORT
 	return ($res, $values) ;
