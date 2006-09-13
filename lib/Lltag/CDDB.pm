@@ -63,8 +63,13 @@ sub cddb_socket {
 sub cddb_query_cd_by_keywords {
     my $self = shift ;
     my $keywords = shift ;
+    my @fields = split /\+/, shift ;
+    my @cats = split /\+/, shift ;
 
-    my $socket = cddb_socket $self, "/freedb_search.php?words=${keywords}&allfields=NO&fields=artist&fields=title&allcats=YES&grouping=none&x=0&y=0" ;
+    my $query_fields = (grep { $_ eq "all" } @fields) ? "allfields=YES" : "allfields=NO".(join ("", map { "&fields=$_" } @fields)) ;
+    my $query_cats = (grep { $_ eq "all" } @cats) ? "allcats=YES" : "allcats=NO".(join ("", map { "&cats=$_" } @cats)) ;
+
+    my $socket = cddb_socket $self, "/freedb_search.php?words=${keywords}&${query_fields}&${query_cats}&grouping=none&x=0&y=0" ;
     return (CDDB_ABORT, undef) unless defined $socket ;
 
     my @cdids = () ;
@@ -330,9 +335,25 @@ sub get_cddb_tags {
 	}
 
 	# do the actual query for CD id with keywords
-	$keywords =~ s/ /+/g ;
+	my $cats = "all" ;
+	my $fields = "artist+title" ;
+
+	# extract fields and cat from the keywords
+	my @keywords_list = map {
+	    my $val = $_ ;
+	    if ($val =~ /^fields=(.+)$/) {
+		$fields = $1 ; () ;
+	    } elsif ($val =~ /^cats=(.+)$/) {
+		$cats = $1 ; () ;
+	    } else {
+		$_ ;
+	    }
+	} (split / +/, $keywords) ;
+	# assemble remaining keywords with "+"
+	$keywords = join "+", @keywords_list ;
+
 	my $cdids ;
-	($res, $cdids) = cddb_query_cd_by_keywords $self, $keywords ;
+	($res, $cdids) = cddb_query_cd_by_keywords $self, $keywords, $fields, $cats ;
 	goto ABORT if $res == CDDB_ABORT ;
 
 	$previous_cdids = $cdids ;
