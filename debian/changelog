@@ -1,6 +1,8 @@
 
   * Install HTML files from the new upstream doc/ subdirectory.
   * Update debian/rules to pass PERL_INSTALLDIRS=vendor.
+  * Update the description according to new upstream CDDB feature and
+    add a sentence about the interface being automatic.
   * Update Standards-Version to 3.7.2.
   * Add an empty binary-arch target in debian/rules.
   * Replace Build-Depends-Indep with Build-Depends in debian/control.
