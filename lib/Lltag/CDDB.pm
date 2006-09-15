@@ -286,10 +286,14 @@ sub get_cddb_tags_from_cdids {
 # interactive menu to browse CDDB, keywords query
 
 sub cddb_keywords_usage {
-  print "    <category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
-  print "    <space-seperated keywords> => CDDB query for CD matching the keywords\n" ;
-  print "    q => Quit CDDB query\n" ;
-  print "    h => Show this help\n" ;
+    print "    <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
+    print "        Search in all CD categories within fields 'artist' and 'title' by default\n" ;
+    print "            cats=foo+bar   => Search in CD categories 'foo' and 'bar' only\n" ;
+    print "            fields=all     => Search keywords in all fields\n" ;
+    print "            fields=foo+bar => Search keywords in fields 'foo' and 'bar'\n" ;
+    print "    <category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
+    print "    q => Quit CDDB query\n" ;
+    print "    h => Show this help\n" ;
 }
 
 sub get_cddb_tags {
