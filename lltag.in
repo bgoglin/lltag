@@ -452,7 +452,8 @@ sub edit_values {
 	} elsif ($edit_reply eq "V") {
 	    print "      Current tag values are:\n" ;
 	    foreach my $field (@{$self->{field_names}}) {
-		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
+		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": "
+		    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
 		    if defined $values->{$field} ;
 	    }
 
@@ -464,12 +465,10 @@ sub edit_values {
 		    $val = "<not defined>" ;
 		} elsif ($val eq "") {
 		    $val = "<CLEAR>" ;
-		} else {
-		    $val = "'".$val."'" ;
 		}
 		print "      ".$self->{field_name_letter}{$field}
 		." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
-		." (=".$val.")\n" ;
+		." (".$val.")\n" ;
 	    }
 	    # TODO: show other fields ? not possible until we edit existing tags
 	    print "      V => View current fields\n" ;
