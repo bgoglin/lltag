@@ -444,7 +444,7 @@ sub confirm_parser_usage {
 	if $behaviors & PARSE_MAY_SKIP_PARSER ;
     print "    p => No, try the next path matching format\n"
 	if $behaviors & PARSE_MAY_SKIP_PATH_PARSER ;
-    print "    s => Stop trying to parse this filename\n" ;
+    print "    q => Quit parsing, stop trying to parse this filename\n" ;
     print "    h => Show this help\n" ;
 }
 
@@ -478,7 +478,7 @@ sub confirm_parser {
 		return (PARSE_SKIP_PARSER, undef) ;
 	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
 		return (PARSE_SKIP_PATH_PARSER, undef) ;
-	    } elsif ($reply =~ /^s/i) {
+	    } elsif ($reply =~ /^q/i) {
 		return (PARSE_ABORT, undef) ;
 	    } else {
 		confirm_parser_usage $behaviors ;
