@@ -629,7 +629,7 @@ while ( @files ) {
 	    if $self->{current_yes_opt} and !$self->{current_ask_opt} ;
 
 	while (1) {
-	    Lltag::Misc::print_question ("  Use these tag values [<y>aPCEDsQ] ? ") ;
+	    Lltag::Misc::print_question ("  Use these tag values [<y>aPCEDsqQ] ? ") ;
 	    my $confirm_reply = <> ;
 	    chomp $confirm_reply ;
 
@@ -639,25 +639,25 @@ while ( @files ) {
 
 	    goto TAG
 		# FIXME: check confirm options and always, except if cddb
-		if $confirm_reply eq "y" or $confirm_reply eq "" ;
+		if $confirm_reply =~ /^y/ or $confirm_reply eq "" ;
 	    goto TRY_PARSE
-		if $confirm_reply eq "P" ;
+		if $confirm_reply =~ /^P/ ;
 	    goto TRY_CDDB
-		if $confirm_reply eq "C" ;
+		if $confirm_reply =~ /^C/ ;
 	    goto NEXT_FILE
-		if $confirm_reply eq "s" ;
-
+		if $confirm_reply =~ /^s/ or $confirm_reply =~ /^q/ ;
 	    goto EXIT
-		if $confirm_reply eq "Q" ;
+		if $confirm_reply =~ /^Q/ ;
 
-	    if ($confirm_reply =~ /^a/i) {
+	    if ($confirm_reply =~ /^a/) {
 		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		goto TAG ;
-	    } elsif ($confirm_reply eq "E") {
+
+	    } elsif ($confirm_reply =~ /^E/) {
 		$values = Lltag::Tags::edit_values ($self, $values, $self->{field_names}) ;
 		goto CONFIRM ;
 
-	    } elsif ($confirm_reply eq "D") {
+	    } elsif ($confirm_reply =~ /^D/) {
 		$values = undef ;
 		goto ADD_DEFAULTS ;
 
@@ -668,7 +668,7 @@ while ( @files ) {
 		print "    C => Query CDDB\n" ;
 		print "    E => Edit values\n" ;
 		print "    D => Only use default values\n" ;
-		print "    s => Skip this file\n" ;
+		print "    s/q => Skip this file\n" ;
 		print "    Q => Quit without tagging anything anymore\n" ;
 		print "    h => Show this help\n" ;
 	    }
