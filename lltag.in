@@ -629,7 +629,7 @@ while ( @files ) {
 	    if $self->{current_yes_opt} and !$self->{current_ask_opt} ;
 
 	while (1) {
-	    Lltag::Misc::print_question ("  Use these tag values [<y>aPCEDsqQ] ? ") ;
+	    Lltag::Misc::print_question ("  Use these tag values [yaPCEDqQ] (default is yes, h for help) ? ") ;
 	    my $confirm_reply = <> ;
 	    chomp $confirm_reply ;
 

@@ -159,13 +159,14 @@ sub cddb_query_tracks_by_id {
 # interactive menu to browse CDDB, tracks in a CD
 
 sub cddb_track_usage {
-  print "    <index> => Choose a track of the current CD\n" ;
-  print "    E => Edit current CD common tags\n" ;
-  print "    v => View the list of CD matching the keywords\n" ;
-  print "    c => Change the CD chosen in keywords query results list\n" ;
-  print "    k => Start again CDDB query with different keywords\n" ;
-  print "    q => Quit CDDB query\n" ;
-  print "    h => Show this help\n" ;
+    # FIXME: needs a default
+    print "    <index> => Choose a track of the current CD\n" ;
+    print "    E => Edit current CD common tags\n" ;
+    print "    v => View the list of CD matching the keywords\n" ;
+    print "    c => Change the CD chosen in keywords query results list\n" ;
+    print "    k => Start again CDDB query with different keywords\n" ;
+    print "    q => Quit CDDB query\n" ;
+    print "    h => Show this help\n" ;
 }
 
 sub print_cd {
@@ -187,22 +188,30 @@ sub get_cddb_tags_from_tracks {
     print_cd $cd ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter track index (<index>,Evckqh) ? " ;
+	# FIXME: needs a default
+	Lltag::Misc::print_question "  Enter track index [<index>Evckq] (no default, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
+
+	# FIXME: needs a default
 	next if $reply eq '' ;
 
-	return (CDDB_ABORT, undef) if $reply eq 'q' ;
-	return (CDDB_ABORT_TO_KEYWORDS, undef) if $reply eq 'k' ;
-	return (CDDB_ABORT_TO_CDIDS, undef) if $reply eq 'c' ;
+	return (CDDB_ABORT, undef)
+	    if $reply =~ /^q/ ;
 
-	if ($reply eq 'E') {
+	return (CDDB_ABORT_TO_KEYWORDS, undef)
+	    if $reply =~ /^k/ ;
+
+	return (CDDB_ABORT_TO_CDIDS, undef)
+	    if $reply eq /^c/ ;
+
+	if ($reply =~ /^E/) {
 	    my @field_names = grep { $_ ne 'TITLE' and $_ ne 'NUMBER' } @{$self->{field_names}} ;
 	    $cd = Lltag::Tags::edit_values ($self, $cd, \@field_names) ;
 	    next ;
 	}
 
-	if ($reply eq 'v') {
+	if ($reply =~ /^v/) {
 	    print_cd $cd ;
 	    next ;
 	} ;
@@ -228,6 +237,7 @@ sub get_cddb_tags_from_tracks {
 # interactive menu to browse CDDB, CDs in a query results
 
 sub cddb_cd_usage {
+  # FIXME: needs a default
   print "    <index> => Choose a CD in the current keywords query results list\n" ;
   print "    v => View the list of CD matching the keywords\n" ;
   print "    k => Start again CDDB query with different keywords\n" ;
@@ -269,14 +279,22 @@ sub get_cddb_tags_from_cdids {
   AGAIN:
     print_cdids $cdids ;
     while (1) {
-	Lltag::Misc::print_question "  Enter CD index (<index>,vkqh) ? " ;
+	# FIXME: needs a default
+	Lltag::Misc::print_question "  Enter CD index [<index>vkq] (no default, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
+
+	# FIXME: needs a default
 	next if $reply eq '' ;
 
-	return (CDDB_ABORT, undef) if $reply eq 'q' ;
-	return (CDDB_ABORT_TO_KEYWORDS, undef) if $reply eq 'k' ;
-	goto AGAIN if $reply eq 'v' ;
+	return (CDDB_ABORT, undef)
+	    if $reply =~ /^q/ ;
+
+	return (CDDB_ABORT_TO_KEYWORDS, undef)
+	    if $reply =~ /^k/ ;
+
+	goto AGAIN
+	    if $reply =~ /^v/ ;
 
 	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= @{$cdids}) {
 	    # do the actual query for CD contents
@@ -293,6 +311,7 @@ sub get_cddb_tags_from_cdids {
 # interactive menu to browse CDDB, keywords query
 
 sub cddb_keywords_usage {
+    # FIXME: needs a default
     print "    <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
     print "        Search in all CD categories within fields 'artist' and 'title' by default\n" ;
     print "            cats=foo+bar   => Search in CD categories 'foo' and 'bar' only\n" ;
@@ -322,11 +341,18 @@ sub get_cddb_tags {
     }
 
     while (1) {
-	my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query (<query>,qh)", "", -1) ;
+	# FIXME: needs a default
+	my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
 	chomp $keywords ;
+
+	# FIXME: needs a default
 	next if $keywords eq '' ;
 
-	goto ABORT if $keywords eq 'q' ;
+	# be careful to match the whole reply, not only the first char
+	# since multiple chars are valid keyword queries
+
+	goto ABORT
+	    if $keywords eq 'q' ;
 
 	if ($keywords eq 'h') {
 	    cddb_keywords_usage () ;

@@ -425,12 +425,12 @@ sub apply_user_parsers {
 
 sub confirm_parser_letters {
     my $behaviors = shift ;
-    my $string = "[<y>" ;
+    my $string = "[y" ;
     $string .= "u" if $behaviors & PARSE_MAY_PREFER ;
     $string .= "a" ;
     $string .= "n" if $behaviors & PARSE_MAY_SKIP_PARSER ;
     $string .= "p" if $behaviors & PARSE_MAY_SKIP_PATH_PARSER ;
-    $string .= "s,(h)elp]" ;
+    $string .= "q]" ;
     return $string ;
 }
 
@@ -462,24 +462,31 @@ sub confirm_parser {
     # confirm if required
     if ($self->{current_ask_opt} or ($confirm and !$self->{current_yes_opt})) {
 	while (1) {
-	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." ? ") ;
+	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help) ? ") ;
 	    my $reply = <> ;
 	    chomp $reply ;
-	    if ($reply eq "" or $reply =~ /^y/i) {
+
+	    if ($reply eq "" or $reply =~ /^y/) {
 		last ;
-	    } elsif ($reply =~ /^a/i) {
+
+	    } elsif ($reply =~ /^a/) {
 		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		last ;
-	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/i) {
+
+	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/) {
 		$preferred = 1 ;
 		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		last ;
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/i) {
+
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/) {
 		return (PARSE_SKIP_PARSER, undef) ;
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/i) {
+
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/) {
 		return (PARSE_SKIP_PATH_PARSER, undef) ;
-	    } elsif ($reply =~ /^q/i) {
+
+	    } elsif ($reply =~ /^q/) {
 		return (PARSE_ABORT, undef) ;
+
 	    } else {
 		confirm_parser_usage $behaviors ;
 	    }

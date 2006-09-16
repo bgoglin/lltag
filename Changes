@@ -7,9 +7,10 @@
       might be tagged immediately.
     + Edit CDDB values before using them.
   * Rework menus to integrate CDDB better.
-    + Skip file from parsing menu is now 'q' to stop parsing and 's'
-      to skip file from main menu.
-  * Add 'Q' to exit completely.
+    + Use 'q' to leave submenus (parsing, CDDB or renaming),
+      and 'q' instead of 's' to skip a file from the main menu.
+    + Add 'Q' to exit completely.
+    + Do not match user replies case-insensitively.
   * Do not change write guess in the generated configuration file
     unless explicitely asked by the user.
   * Add a doc/ subdirectory:

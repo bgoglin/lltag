@@ -115,7 +115,8 @@ sub edit_values {
     map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
 
     while (1) {
-	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."ECV,<h>elp] ? ") ;
+	# FIXME: needs a default
+	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."ECV] (no default, h for help) ? ") ;
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
 
@@ -138,6 +139,8 @@ sub edit_values {
 	    }
 
 	} else {
+	    # FIXME: needs a default
+
 	    # print all fields, including the undefined ones
 	    foreach my $field (@field_names) {
 		my $val = $values->{$field} ;

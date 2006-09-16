@@ -17,7 +17,7 @@ sub rename_confirm_usage {
     print "      y => Yes, rename this file (default)\n" ;
     print "      a => Always rename without asking\n" ;
     print "      e => Edit the filename before tagging\n" ;
-    print "      n => No, don't rename this file\n" ;
+    print "      n/q => No, don't rename this file\n" ;
     print "      h => Show this help\n" ;
 }
 
@@ -86,19 +86,24 @@ sub rename_with_values {
     # confirm if required or if any field undefined
     if ($undefined or !$self->{current_rename_yes_opt}) {
       ASK_CONFIRM:
-	Lltag::Misc::print_question ("    Really rename the file [<y>aen,(h)elp] ? ") ;
+	Lltag::Misc::print_question ("    Really rename the file [yaeq] (default is yes, h for help) ? ") ;
 	my $reply = <> ;
 	chomp $reply ;
+
         if ($reply eq "" or $reply =~ /^y/i) {
             goto RENAME_IT ;
-	} elsif ($reply =~ /^a/i) {
+
+	} elsif ($reply =~ /^a/) {
 	    $self->{current_rename_yes_opt} = 1 ;
             goto RENAME_IT ;
-	} elsif ($reply =~ /^n/i) {
+
+	} elsif ($reply =~ /^n/ or $reply =~ /^q/) {
 	    return ;
-	} elsif ($reply =~ /^e/i) {
+
+	} elsif ($reply =~ /^e/) {
 	    $new_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
 	    goto ASK_CONFIRM ;
+
 	} else {
 	    rename_confirm_usage ;
 	    goto ASK_CONFIRM ;
