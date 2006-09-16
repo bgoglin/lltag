@@ -13,6 +13,7 @@ use vars qw(@EXPORT) ;
 	      exit_readline
 	      readline
 	      print_question
+	      print_usage_header
 	  ) ;
 
 ###################################################################
@@ -57,6 +58,18 @@ sub print_question {
     print color 'bold' ;
     print shift ;
     print color 'reset' ;
+}
+
+###################################################################
+# Print a usage header in underlined
+
+sub print_usage_header {
+    print shift ;
+    print color 'underline' ;
+    print shift ;
+    print " - Usage:" ;
+    print color 'reset' ;
+    print "\n" ;
 }
 
 ###################################################################

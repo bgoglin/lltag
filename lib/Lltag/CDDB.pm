@@ -158,15 +158,20 @@ sub cddb_query_tracks_by_id {
 ######################################################
 # interactive menu to browse CDDB, tracks in a CD
 
+my $cddb_track_usage_forced = 1 ;
+
+# FIXME: needs a default
 sub cddb_track_usage {
-    # FIXME: needs a default
-    print "    <index> => Choose a track of the current CD\n" ;
-    print "    E => Edit current CD common tags\n" ;
-    print "    v => View the list of CD matching the keywords\n" ;
-    print "    c => Change the CD chosen in keywords query results list\n" ;
-    print "    k => Start again CDDB query with different keywords\n" ;
-    print "    q => Quit CDDB query\n" ;
-    print "    h => Show this help\n" ;
+    Lltag::Misc::print_usage_header ("    ", "Choose Track in CDDB CD") ;
+    print "      <index> => Choose a track of the current CD\n" ;
+    print "      E => Edit current CD common tags\n" ;
+    print "      v => View the list of CD matching the keywords\n" ;
+    print "      c => Change the CD chosen in keywords query results list\n" ;
+    print "      k => Start again CDDB query with different keywords\n" ;
+    print "      q => Quit CDDB query\n" ;
+    print "      h => Show this help\n" ;
+
+    $cddb_track_usage_forced = 0 ;
 }
 
 sub print_cd {
@@ -186,6 +191,9 @@ sub get_cddb_tags_from_tracks {
     my $cd = shift ;
 
     print_cd $cd ;
+
+    cddb_track_usage
+	if $cddb_track_usage_forced ;
 
     while (1) {
 	# FIXME: needs a default
@@ -236,13 +244,18 @@ sub get_cddb_tags_from_tracks {
 ##########################################################
 # interactive menu to browse CDDB, CDs in a query results
 
+my $cddb_cd_usage_forced = 1 ;
+
+# FIXME: needs a default
 sub cddb_cd_usage {
-  # FIXME: needs a default
-  print "    <index> => Choose a CD in the current keywords query results list\n" ;
-  print "    v => View the list of CD matching the keywords\n" ;
-  print "    k => Start again CDDB query with different keywords\n" ;
-  print "    q => Quit CDDB query\n" ;
-  print "    h => Show this help\n" ;
+    Lltag::Misc::print_usage_header ("    ", "Choose CD in CDDB Query Results") ;
+    print "      <index> => Choose a CD in the current keywords query results list\n" ;
+    print "      v => View the list of CD matching the keywords\n" ;
+    print "      k => Start again CDDB query with different keywords\n" ;
+    print "      q => Quit CDDB query\n" ;
+    print "      h => Show this help\n" ;
+
+    $cddb_cd_usage_forced = 0 ;
 }
 
 sub print_cdids {
@@ -278,6 +291,10 @@ sub get_cddb_tags_from_cdids {
 
   AGAIN:
     print_cdids $cdids ;
+
+    cddb_cd_usage
+	if $cddb_cd_usage_forced ;
+
     while (1) {
 	# FIXME: needs a default
 	Lltag::Misc::print_question "  Enter CD index [<index>vkq] (no default, h for help) ? " ;
@@ -310,16 +327,21 @@ sub get_cddb_tags_from_cdids {
 ##########################################################
 # interactive menu to browse CDDB, keywords query
 
+my $cddb_keywords_usage_forced = 1 ;
+
+# FIXME: needs a default
 sub cddb_keywords_usage {
-    # FIXME: needs a default
-    print "    <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
+    Lltag::Misc::print_usage_header ("    ", "CDDB Query by Keywords") ;
+    print "      <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
     print "        Search in all CD categories within fields 'artist' and 'title' by default\n" ;
-    print "            cats=foo+bar   => Search in CD categories 'foo' and 'bar' only\n" ;
-    print "            fields=all     => Search keywords in all fields\n" ;
-    print "            fields=foo+bar => Search keywords in fields 'foo' and 'bar'\n" ;
-    print "    <category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
-    print "    q => Quit CDDB query\n" ;
-    print "    h => Show this help\n" ;
+    print "          cats=foo+bar   => Search in CD categories 'foo' and 'bar' only\n" ;
+    print "          fields=all     => Search keywords in all fields\n" ;
+    print "          fields=foo+bar => Search keywords in fields 'foo' and 'bar'\n" ;
+    print "      <category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
+    print "      q => Quit CDDB query\n" ;
+    print "      h => Show this help\n" ;
+
+    $cddb_keywords_usage_forced = 0 ;
 }
 
 sub get_cddb_tags {
@@ -339,6 +361,9 @@ sub get_cddb_tags {
 	goto OUT if $res == CDDB_SUCCESS ;
 	goto ABORT if $res == CDDB_ABORT ;
     }
+
+    cddb_keywords_usage
+	if $cddb_keywords_usage_forced ;
 
     while (1) {
 	# FIXME: needs a default

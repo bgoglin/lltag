@@ -434,8 +434,11 @@ sub confirm_parser_letters {
     return $string ;
 }
 
+my $confirm_parser_usage_forced = 1 ;
+
 sub confirm_parser_usage {
     my $behaviors = shift ;
+    Lltag::Misc::print_usage_header ("  ", "Parsing filenames") ;
     print "    y => Yes, use this matching (default)\n" ;
     print "    u => Use this format for all files until one does not match\n"
 	if $behaviors & PARSE_MAY_PREFER ;
@@ -446,6 +449,8 @@ sub confirm_parser_usage {
 	if $behaviors & PARSE_MAY_SKIP_PATH_PARSER ;
     print "    q => Quit parsing, stop trying to parse this filename\n" ;
     print "    h => Show this help\n" ;
+
+    $confirm_parser_usage_forced = 0 ;
 }
 
 sub confirm_parser {
@@ -461,6 +466,10 @@ sub confirm_parser {
 
     # confirm if required
     if ($self->{current_ask_opt} or ($confirm and !$self->{current_yes_opt})) {
+
+	confirm_parser_usage $behaviors
+	    if $confirm_parser_usage_forced ;
+
 	while (1) {
 	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help) ? ") ;
 	    my $reply = <> ;

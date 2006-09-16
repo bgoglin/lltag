@@ -100,19 +100,55 @@ sub get_additional_tag_values {
 #######################################################
 # edit current tags
 
+my $edit_values_usage_forced = 1 ;
+
+# FIXME: y for E, q for C
+
+# FIXME: needs a default
+sub edit_values_usage {
+    my $self = shift ;
+    my $values = shift ;
+    my $field_names_ref = shift ;
+
+    my @field_names = @{$field_names_ref} ;
+
+    Lltag::Misc::print_usage_header ("    ", "Editing") ;
+
+    # print all fields, including the undefined ones
+    foreach my $field (@field_names) {
+	my $val = $values->{$field} ;
+	if (not defined $val) {
+	    $val = "<not defined>" ;
+	} elsif ($val eq "") {
+	    $val = "<CLEAR>" ;
+	}
+	print "      ".$self->{field_name_letter}{$field}
+	." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
+	." (".$val.")\n" ;
+    }
+    # TODO: show other fields ? not possible until we edit existing tags
+    print "      V => View current fields\n" ;
+    print "      E => End edition\n" ;
+    print "      C => Cancel edition\n" ;
+
+    $edit_values_usage_forced = 0 ;
+}
+
 sub edit_values {
     my $self = shift ;
     my $values = shift ;
-
     my $field_names_ref = shift ;
-    my @field_names = @{$field_names_ref} ;
 
+    my @field_names = @{$field_names_ref} ;
     my @letters = map { $self->{field_name_letter}{$_} } @field_names ;
     my $letters_union = join '|', @letters ;
 
     # save values
     my $old_values = () ;
     map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
+
+    edit_values_usage $self, $values, $field_names_ref
+	if $edit_values_usage_forced ;
 
     while (1) {
 	# FIXME: needs a default
@@ -139,24 +175,7 @@ sub edit_values {
 	    }
 
 	} else {
-	    # FIXME: needs a default
-
-	    # print all fields, including the undefined ones
-	    foreach my $field (@field_names) {
-		my $val = $values->{$field} ;
-		if (not defined $val) {
-		    $val = "<not defined>" ;
-		} elsif ($val eq "") {
-		    $val = "<CLEAR>" ;
-		}
-		print "      ".$self->{field_name_letter}{$field}
-		." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
-		." (".$val.")\n" ;
-	    }
-	    # TODO: show other fields ? not possible until we edit existing tags
-	    print "      V => View current fields\n" ;
-	    print "      E => End edition\n" ;
-	    print "      C => Cancel edition\n" ;
+	    edit_values_usage $self, $values, $field_names_ref ;
 	}
     }
 }

@@ -2,6 +2,8 @@ package Lltag::Rename ;
 
 use strict ;
 
+use Lltag::Misc ;
+
 sub rename_usage {
     my $self = shift ;
     print " Renaming options:\n" ;
@@ -12,13 +14,16 @@ sub rename_usage {
     print "  --rename-ext           Assume the rename format provides an extension\n" ;
 }
 
+my $rename_confirm_usage_forced = 1 ;
+
 sub rename_confirm_usage {
-    my $behaviors = shift ;
+    Lltag::Misc::print_usage_header ("   ", "Renaming files") ;
     print "      y => Yes, rename this file (default)\n" ;
     print "      a => Always rename without asking\n" ;
     print "      e => Edit the filename before tagging\n" ;
     print "      n/q => No, don't rename this file\n" ;
     print "      h => Show this help\n" ;
+    $rename_confirm_usage_forced = 0 ;
 }
 
 sub rename_with_values {
@@ -85,6 +90,10 @@ sub rename_with_values {
 
     # confirm if required or if any field undefined
     if ($undefined or !$self->{current_rename_yes_opt}) {
+
+	rename_confirm_usage
+	    if $rename_confirm_usage_forced ;
+
       ASK_CONFIRM:
 	Lltag::Misc::print_question ("    Really rename the file [yaeq] (default is yes, h for help) ? ") ;
 	my $reply = <> ;
