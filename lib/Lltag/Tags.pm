@@ -128,8 +128,8 @@ sub edit_values_usage {
     }
     # TODO: show other fields ? not possible until we edit existing tags
     print "      V => View current fields\n" ;
-    print "      E => End edition\n" ;
-    print "      C => Cancel edition\n" ;
+    print "      y/E => End edition\n" ;
+    print "      q/C => Cancel edition\n" ;
 
     $edit_values_usage_forced = 0 ;
 }
@@ -152,21 +152,21 @@ sub edit_values {
 
     while (1) {
 	# FIXME: needs a default
-	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."ECV] (no default, h for help) ? ") ;
+	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."Vyq] (no default, h for help) ? ") ;
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
 
-	if ($edit_reply =~ /^($letters_union)$/) {
-	    my $field = $self->{field_letter_name}{$edit_reply} ;
+	if ($edit_reply =~ /^($letters_union)/) {
+	    my $field = $self->{field_letter_name}{$1} ;
 	    $values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
 
-	} elsif ($edit_reply eq "E") {
+	} elsif ($edit_reply =~ /^y/ or $edit_reply =~ /^E/) {
 	    return $values ;
 
-	} elsif ($edit_reply eq "C") {
+	} elsif ($edit_reply =~ /^q/ or $edit_reply =~ /^C/) {
 	    return $old_values ;
 
-	} elsif ($edit_reply eq "V") {
+	} elsif ($edit_reply =~ /^V/) {
 	    print "      Current tag values are:\n" ;
 	    foreach my $field (@field_names) {
 		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": "

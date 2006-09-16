@@ -7,8 +7,9 @@
       might be tagged immediately.
     + Edit CDDB values before using them.
   * Rework menus to integrate CDDB better.
-    + Use 'q' to leave submenus (parsing, CDDB or renaming),
+    + Use 'q' to leave submenus (parsing, CDDB, renaming and editing),
       and 'q' instead of 's' to skip a file from the main menu.
+    + Use 'y' to exit editing after save the changes.
     + Add 'Q' to exit completely.
     + Do not match user replies case-insensitively.
   * Do not change write guess in the generated configuration file
