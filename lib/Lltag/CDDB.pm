@@ -203,7 +203,7 @@ sub get_cddb_tags_from_tracks {
 	    if $reply =~ /^k/ ;
 
 	return (CDDB_ABORT_TO_CDIDS, undef)
-	    if $reply eq /^c/ ;
+	    if $reply =~ /^c/ ;
 
 	if ($reply =~ /^E/) {
 	    my @field_names = grep { $_ ne 'TITLE' and $_ ne 'NUMBER' } @{$self->{field_names}} ;
