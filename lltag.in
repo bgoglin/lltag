@@ -629,7 +629,7 @@ while ( @files ) {
 	    if $self->{current_yes_opt} and !$self->{current_ask_opt} ;
 
 	while (1) {
-	    Lltag::Misc::print_question ("  Use these tag values [<y>aPCEDs] ? ") ;
+	    Lltag::Misc::print_question ("  Use these tag values [<y>aPCEDsQ] ? ") ;
 	    my $confirm_reply = <> ;
 	    chomp $confirm_reply ;
 
@@ -646,6 +646,9 @@ while ( @files ) {
 		if $confirm_reply eq "C" ;
 	    goto NEXT_FILE
 		if $confirm_reply eq "s" ;
+
+	    goto EXIT
+		if $confirm_reply eq "Q" ;
 
 	    if ($confirm_reply =~ /^a/i) {
 		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
@@ -666,6 +669,7 @@ while ( @files ) {
 		print "    E => Edit values\n" ;
 		print "    D => Only use default values\n" ;
 		print "    s => Skip this file\n" ;
+		print "    Q => Quit without tagging anything anymore\n" ;
 		print "    h => Show this help\n" ;
 	    }
 	}
@@ -701,6 +705,11 @@ while ( @files ) {
     # next file
   NEXT_FILE:
     shift ;
+    next ;
+
+    # exit without tagging anything anymore
+  EXIT:
+    last ;
 }
 
 #############################################
