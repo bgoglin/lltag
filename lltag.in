@@ -425,60 +425,6 @@ sub read_tags {
 }
 
 #######################################################
-# edit current tags
-
-sub edit_values {
-    my $values = shift ;
-
-    # save values
-    my $old_values = () ;
-    map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
-
-    while (1) {
-	Lltag::Misc::print_question ("    Edit a field [". (join '', @{$self->{field_letters}}) ."ECV,<h>elp] ? ") ;
-	my $edit_reply = <> ;
-	chomp $edit_reply ;
-
-	if ($edit_reply =~ /^($self->{field_letters_union})$/) {
-	    my $field = $self->{field_letter_name}{$edit_reply} ;
-	    $values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
-
-	} elsif ($edit_reply eq "E") {
-	    return $values ;
-
-	} elsif ($edit_reply eq "C") {
-	    return $old_values ;
-
-	} elsif ($edit_reply eq "V") {
-	    print "      Current tag values are:\n" ;
-	    foreach my $field (@{$self->{field_names}}) {
-		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": "
-		    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
-		    if defined $values->{$field} ;
-	    }
-
-	} else {
-	    # print all fields, including the undefined ones
-	    foreach my $field (@{$self->{field_names}}) {
-		my $val = $values->{$field} ;
-		if (not defined $val) {
-		    $val = "<not defined>" ;
-		} elsif ($val eq "") {
-		    $val = "<CLEAR>" ;
-		}
-		print "      ".$self->{field_name_letter}{$field}
-		." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
-		." (".$val.")\n" ;
-	    }
-	    # TODO: show other fields ? not possible until we edit existing tags
-	    print "      V => View current fields\n" ;
-	    print "      E => End edition\n" ;
-	    print "      C => Cancel edition\n" ;
-	}
-    }
-}
-
-#######################################################
 # apply user-given regexp
 
 sub apply_regexp_to_tag {
@@ -705,7 +651,7 @@ while ( @files ) {
 		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		goto TAG ;
 	    } elsif ($confirm_reply eq "E") {
-		$values = edit_values $values ;
+		$values = Lltag::Tags::edit_values ($self, $values, $self->{field_names}) ;
 		goto CONFIRM ;
 
 	    } elsif ($confirm_reply eq "D") {

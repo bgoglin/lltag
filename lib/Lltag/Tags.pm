@@ -12,6 +12,7 @@ use vars qw(@EXPORT) ;
 	      get_values_non_regular_keys
 	      get_values_non_regular_keys
 	      get_additional_tag_values
+	      edit_values
 	      ) ;
 
 # add a value to a field, creating an array if required
@@ -92,6 +93,67 @@ sub get_additional_tag_values {
 	    append_tag_value $self, $self->{additional_values}, $1, $2 ;
 	} else {
 	    die "Additional tags must be given as 'TAG=value'.\n" ;
+	}
+    }
+}
+
+#######################################################
+# edit current tags
+
+sub edit_values {
+    my $self = shift ;
+    my $values = shift ;
+
+    my $field_names_ref = shift ;
+    my @field_names = @{$field_names_ref} ;
+
+    my @letters = map { $self->{field_name_letter}{$_} } @field_names ;
+    my $letters_union = join '|', @letters ;
+
+    # save values
+    my $old_values = () ;
+    map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
+
+    while (1) {
+	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."ECV,<h>elp] ? ") ;
+	my $edit_reply = <> ;
+	chomp $edit_reply ;
+
+	if ($edit_reply =~ /^($letters_union)$/) {
+	    my $field = $self->{field_letter_name}{$edit_reply} ;
+	    $values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+
+	} elsif ($edit_reply eq "E") {
+	    return $values ;
+
+	} elsif ($edit_reply eq "C") {
+	    return $old_values ;
+
+	} elsif ($edit_reply eq "V") {
+	    print "      Current tag values are:\n" ;
+	    foreach my $field (@field_names) {
+		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": "
+		    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
+		    if defined $values->{$field} ;
+	    }
+
+	} else {
+	    # print all fields, including the undefined ones
+	    foreach my $field (@field_names) {
+		my $val = $values->{$field} ;
+		if (not defined $val) {
+		    $val = "<not defined>" ;
+		} elsif ($val eq "") {
+		    $val = "<CLEAR>" ;
+		}
+		print "      ".$self->{field_name_letter}{$field}
+		." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
+		." (".$val.")\n" ;
+	    }
+	    # TODO: show other fields ? not possible until we edit existing tags
+	    print "      V => View current fields\n" ;
+	    print "      E => End edition\n" ;
+	    print "      C => Cancel edition\n" ;
 	}
     }
 }

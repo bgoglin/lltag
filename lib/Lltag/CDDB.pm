@@ -124,7 +124,7 @@ sub cddb_query_tracks_by_id {
 	} elsif ($line =~ /id3g: (\d+)/i) {
 	    $cd->{ID3G} = $1 ;
 	} elsif ($line =~ /year: (\d+)/i) {
-	    $cd->{YEAR} = $1 ;
+	    $cd->{DATE} = $1 ;
 	} elsif ($line =~ m@ *(\d+)\.</td><td valign=top> *(-?[\d:]+)</td><td><b>(.*)</b>@) {
 	    # '-?' because there are some buggy entries...
 	    my %track = ( TITLE => $3, TIME => $2 ) ;
@@ -160,6 +160,7 @@ sub cddb_query_tracks_by_id {
 
 sub cddb_track_usage {
   print "    <index> => Choose a track of the current CD\n" ;
+  print "    E => Edit current CD common tags\n" ;
   print "    v => View the list of CD matching the keywords\n" ;
   print "    c => Change the CD chosen in keywords query results list\n" ;
   print "    k => Start again CDDB query with different keywords\n" ;
@@ -186,7 +187,7 @@ sub get_cddb_tags_from_tracks {
     print_cd $cd ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter track index (<index>,vckqh) ? " ;
+	Lltag::Misc::print_question "  Enter track index (<index>,Evckqh) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 	next if $reply eq '' ;
@@ -194,6 +195,12 @@ sub get_cddb_tags_from_tracks {
 	return (CDDB_ABORT, undef) if $reply eq 'q' ;
 	return (CDDB_ABORT_TO_KEYWORDS, undef) if $reply eq 'k' ;
 	return (CDDB_ABORT_TO_CDIDS, undef) if $reply eq 'c' ;
+
+	if ($reply eq 'E') {
+	    my @field_names = grep { $_ ne 'TITLE' and $_ ne 'NUMBER' } @{$self->{field_names}} ;
+	    $cd = Lltag::Tags::edit_values ($self, $cd, \@field_names) ;
+	    next ;
+	}
 
 	if ($reply eq 'v') {
 	    print_cd $cd ;
@@ -209,7 +216,7 @@ sub get_cddb_tags_from_tracks {
 	    $values{ALBUM} = $cd->{ALBUM} ;
 	    $values{NUMBER} = $reply ;
 	    $values{GENRE} = $cd->{GENRE} if defined $cd->{GENRE} ;
-	    $values{DATE} = $cd->{YEAR} if defined $cd->{YEAR} ;
+	    $values{DATE} = $cd->{DATE} if defined $cd->{DATE} ;
 	    return (CDDB_SUCCESS, \%values) ;
 	}
 

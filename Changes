@@ -5,6 +5,7 @@
     + Lookup a CD by giving its category and CD id.
     + Keep the previous CD contents in memory so that the next track
       might be tagged immediately.
+    + Edit CDDB values before using them.
   * Rework menus to integrate CDDB better.
   * Do not change write guess in the generated configuration file
     unless explicitely asked by the user.
