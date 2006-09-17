@@ -626,7 +626,7 @@ while ( @files ) {
 	}
 
 	goto TAG
-	    if $self->{current_yes_opt} and !$self->{current_ask_opt} ;
+	    if $self->{current_yes_opt} ;
 
 	while (1) {
 	    Lltag::Misc::print_question ("  Use these tag values [yaPCEDqQ] (default is yes, h for help) ? ") ;
@@ -650,6 +650,7 @@ while ( @files ) {
 		if $confirm_reply =~ /^Q/ ;
 
 	    if ($confirm_reply =~ /^a/) {
+		# FIXME: only change the yes_opt of the main menu, do not touch ask/yes of parsing and others
 		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
 		goto TAG ;
 
