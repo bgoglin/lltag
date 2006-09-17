@@ -115,6 +115,9 @@ sub usage {
     print "  -v, --verbose          Verbose messages\n" ;
     print "  --config <file>        Read additional configuration file\n" ;
     print "  --gencfg <file>        Generate additional configuration file\n" ;
+    print " CDDB options:\n" ;
+    print "  --cddb-server <server> Change the CDDB server and port\n" ;
+    print "  --cddb-proxy <server>  Use a HTTP proxy to access the CDDB server\n" ;
     print " Behavior options:\n" ;
     print "  -S                     Show all tags from files\n" ;
     print "  --show-tags <tag,..>   Show several tags from files\n" ;
@@ -331,6 +334,24 @@ GetOptions(
 	   'R|recursive'  => \$self->{recursive_opt},
 	   'yes'          => sub { $self->{yes_opt} = 1 ; $self->{ask_opt} = 0 ; },
 	   'ask'          => sub { $self->{ask_opt} = 1 ; $self->{yes_opt} = 0 ; },
+	   'cddb-server=s'=> sub { shift ; my $name = shift ;
+				   if ($name =~ /(.*):(.*)/) {
+					$self->{cddb_server_name} = $1 ;
+					$self->{cddb_server_port} = $2 ;
+				   } else {
+					$self->{cddb_server_name} = $name ;
+					$self->{cddb_server_port} = 80 ;
+				   }
+			     },
+	   'cddb-proxy=s' => sub { shift ; my $name = shift ;
+				   if ($name =~ /(.*):(.*)/) {
+					$self->{cddb_proxy_name} = $1 ;
+					$self->{cddb_proxy_port} = $2 ;
+				   } else {
+					$self->{cddb_proxy_name} = $name ;
+					$self->{cddb_proxy_port} = 80 ;
+				   }
+			     },
 	   'v|verbose'    => \$self->{verbose_opt},
 	   'gencfg=s'     => \$self->{gencfg_file},
 	   'h|help'       => sub { usage () ; },

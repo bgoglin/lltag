@@ -43,6 +43,8 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ --dry-run ]
 .RB [ --yes ]
 .RB [ --ask ]
+.RB [ "--cddb-server <server[:port]>" ]
+.RB [ "--cddb-proxy <server[:port]>" ]
 .RB [ -R ]
 .RB [ -v ]
 .RB [ "--config <file>" ]
@@ -123,8 +125,21 @@ below for details.
 
 .TP
 .BI "-C, --cddb"
-Try to find tags in the CDDB online database before trying
-to parse filenames.
+Try to find tags in the CDDB online database before trying to parse filenames.
+The queries are sent using the HTTP interface, which means a HTTP proxy might
+be used when required.
+
+.TP
+.BI "--cddb-server" " <server[:port]>"
+Change the CDDB server, and eventually its port.
+The default is
+.BR www.freedb.org:80 .
+
+.TP
+.BI "--cddb-proxy" " <server[:port]>"
+Setup a HTTP proxy to contact the CDDB server.
+The default is
+.BR disabled .
 
 .TP
 .BI "-c, --comment" " <comment>"
