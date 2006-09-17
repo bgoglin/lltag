@@ -1,7 +1,9 @@
 .\" Process this file with
 .\" groff -man -Tascii foo.1
 .\"
-.TH LLTAG 1 "DECEMBER 2005"
+.TH LLTAG 1 "SEPTEMBER 2006"
+
+
 
 
 
@@ -10,8 +12,10 @@ lltag - tag mp3/ogg/flac music files automagically
 
 
 
+
 .SH SYNOPSIS
 .B lltag
+.RB [ -C ]
 .RB [ "-F <format>" ]
 .RB [ -G ]
 .RB [ -p ]
@@ -52,6 +56,7 @@ lltag - tag mp3/ogg/flac music files automagically
 
 
 
+
 .SH DESCRIPTION
 .B lltag
 is a command-line tool to automagically set tags of MP3, OGG or FLAC files.
@@ -85,6 +90,8 @@ When called with
 the target file will also be renamed.
 
 
+
+
 .SH OPTIONS
 
 .TP
@@ -109,8 +116,15 @@ Always ask confirmation to the user before using a user-specified
 parser. By default, all actions require confirmation, except when
 a matching user-specified format is found.
 See
-.B TAGGING CONFIRMATION
+.B PARSING MENU
+in
+.B INTERACTIVE MENUS
 below for details.
+
+.TP
+.BI "-C, --cddb"
+Try to find tags in the CDDB online database before trying
+to parse filenames.
 
 .TP
 .BI "-c, --comment" " <comment>"
@@ -221,7 +235,9 @@ was not passed.
 
 By default, confirmation is asked before tagging.
 See
-.B RENAMING CONFIRMATION
+.B RENAMING MENU
+in
+.B INTERACTIVE MENUS
 below for details.
 
 .TP
@@ -308,6 +324,250 @@ Also always accept renaming without asking the user.
 
 
 
+
+.SH INTERACTIVE MENUS
+When not running with
+.BI --yes ,
+the user has to tells lltag what to do.
+Files are processed one after the other, with the following steps:
+.TP
+.B *
+If the
+.B preferred
+parser exists, try to apply it.
+.TP
+.B *
+If failed, if 
+.B --cddb
+was passed, trying a CDDB query.
+.TP
+.B *
+If failed, try the user-provided formats, if any.
+.TP
+.B *
+If failed, if no user-format were passed, or if
+.B -G
+was passed, try the internal formats.
+.TP
+.B *
+Then we have a list of tags to apply, we may apply them, edit them,
+or go back to a CDDB query or trying to parse the filename again.
+.TP
+.B *
+Then, if
+.B --rename
+was passed, the file is renamed.
+
+We now describe all interactive menus.
+
+
+
+.SS MAIN MENU
+Once some tags have been obtained by either CDDB, parsing or the default
+values on the command line, the main menu opens to either change the tags
+or apply them:
+.TP
+.B y
+Yes, use these tags (default)
+.TP
+.B a
+Always yes, stop asking for a confirmation
+.TP
+.B P
+Try to parse the file, see
+.B PARSING MENU
+.TP
+.B C
+Query CDDB, see
+.B CDDB MENUS
+.TP
+.B E
+Edit values, see
+.B EDITING MENU
+.TP
+.B D
+Only use default values, forget about CDDB or parsed tags
+.TP
+.B q
+Skip this file
+.TP
+.B Q
+Quit without tagging anything anymore
+
+
+
+.SS CDDB MENUS
+When the CDDB opens for the first time, the user must enter a query
+to choose a CD in the online database.
+.TP
+.B <space-separated keywords>
+CDDB query for CD matching the keywords.
+Search in all CD categories within fields artist and title by default.
+If
+.B cats=foo+bar
+is added, search in CD categories foo and bar only.
+If
+.B fields=all
+is added, search keywords in all fields.
+If
+.B fields=foo+bar
+is added, search keywords in fields foo and bar.
+.TP
+.B <category>/<hexadecinal id>
+CDDB query for CD matching category and id
+.TP
+.B q
+Quit CDDB query, see
+.B MAIN MENU
+
+.P
+Once keywords have been passed as a query to CDDB, a list of matching
+CD titles will be displayed. The user then needs to choose one:
+.TP
+.B <index>
+Choose a CD in the current keywords query results list
+.TP
+.B v
+View the list of CD matching the keywords
+.TP
+.B k
+Start again CDDB query with different keywords
+.TP
+.B q
+Quit CDDB query, see
+.B MAIN MENU
+
+.P
+Once a CD have been chosen, the user needs to choose a track
+.TP
+.B <index>
+Choose a track of the current CD
+.TP
+.B E
+Edit current CD common tags, see
+.B EDITING MENU
+.TP
+.B v
+View the list of CD matching the keywords
+.TP
+.B c
+Change the CD chosen in keywords query results list
+.TP
+.B k
+Start again CDDB query with different keywords
+.TP
+.B q
+Quit CDDB query, see
+.B MAIN MENU
+
+.P
+Note that entering the CDDB menus again will go back to the previous
+CD instead of asking the user to query again, so that an entire CD
+may be tagged easily.
+
+
+
+.SS PARSING MENU
+When
+.B --ask
+is passed or when guessing, each matching will lead to
+a confirmation message before tagging.
+Available behaviors are:
+.TP
+.B y
+Tag current file with current format. This is the default.
+.TP
+.B u
+Tag current file with current format.
+Then use current format for all remaining matching files.
+When a non-matching file is reached, stop using this
+preferred format.
+.TP
+.B a
+Tag current file with current format.
+Then, never asking for a confirmation anymore.
+.TP
+.B n
+Don't tag current file with this format.
+Try the next matching format on the current file.
+.TP
+.B p
+When matching is done through combination of a path parser
+and a basename parser, keep the basename parser and try the
+next path parser on the current file.
+.TP
+.B q
+Skip the current file, don't tag it at all.
+
+
+
+.SS EDITING MENU
+It is possible to edit tags, either before tagging or file, or before
+choosing a track in a CD obtained by CDDB.
+The current value of all regular fields is shown and may be modified
+or cleared.
+
+The behavior depends on the installed readline library.
+If it is smart, the current value may be edited inline and an
+history is available.
+If not, pressing
+.I <enter>
+will keep the current value while
+.I CLEAR
+will empty it.
+
+Each field may be selected for edition by pressing its corresponding
+letter in the format (see \fBFORMAT\fR).
+Editing ends by tagging (if \fIE\fR is pressed)
+or canceling and return to confirmation menu (if \fIC\fR is pressed).
+
+The other options are:
+.TP
+.B V
+View the current values of tags
+.TP
+.B y
+End edition, save changes, and return to previous menu
+.TP
+.B q
+Cancel edition, forget about changes, and return to previous menu
+
+
+
+.SS RENAMING MENU
+By default, before renaming, a confirmation is asked to the user.
+You may bypass it by passing
+.B --yes
+on the command line.
+
+If the rename format uses a field that is not defined,
+a warning is shown and confirmation is always asked.
+
+Available behaviors when renaming are:
+.TP
+.B y
+Rename current file with current new filename.
+This is the default.
+.TP
+.B a
+Rename current file with current new filename.
+Then, never asking for a renaming confirmation anymore.
+.TP
+.B e
+Edit current new filename before renaming.
+The behavior depends on the installed readline library.
+If it is smart, the current value may be edited inline
+and an history is available.
+.TP
+.B q
+Don't rename current file.
+.TP
+.B h
+Show help about confirmation.
+
+
+
+
 .SH FORMAT
 User-specified formats must be a string composed of any characters
 and the following special codes:
@@ -339,135 +599,6 @@ to match anything and ignore it.
 
 .I "%%"
 to match %.
-
-
-
-.SH TAGGING CONFIRMATION
-When
-.B --ask
-is passed or when guessing, each matching will lead to
-a confirmation message before tagging.
-Available behaviors are:
-
-.I y
-.RS
-Tag current file with current format.
-This is the default reply (that is why \fI<y>\fR appears).
-.RE
-
-.I v
-.RS
-View which tags would be set.
-.RE
-
-.I u
-.RS
-Tag current file with current format.
-Then use current format for all remaining matching files.
-When a non-matching file is reached, stop using this
-preferred format.
-.RE
-
-.I a
-.RS
-Tag current file with current format.
-Then, never asking for a confirmation anymore.
-.RE
-
-.I e
-.RS
-Edit current fields before tagging, see \fBEDITING TAGS\fR.
-.RE
-
-.I n
-.RS
-Don't tag current file with this format.
-Try the next matching format on the current file.
-.RE
-
-.I p
-.RS
-When matching is done through combination of a path parser
-and a basename parser, keep the basename parser and try the
-next path parser on the current file.
-.RE
-
-.I s
-.RS
-Skip the current file, don't tag it at all.
-.RE
-
-.I h
-.RS
-Show help about confirmation.
-.RE
-
-
-.SH EDITING TAGS
-
-It is possible to edit tags during matching confirmation.
-It includes fields that were matched by the format, default values
-and other fields.
-The current value of all regular fields is shown and may be modified
-or cleared.
-
-The behavior depends on the installed readline library.
-If it is smart, the current value may be edited inline and an
-history is available.
-If not, pressing
-.I <enter>
-will keep the current value while
-.I CLEAR
-will empty it.
-.RE
-
-Each field may be selected for edition by pressing its corresponding
-letter in the format (see \fBFORMAT\fR).
-Editing ends by tagging (if \fIE\fR is pressed)
-or canceling and return to confirmation menu (if \fIC\fR is pressed).
-
-
-
-.SH RENAMING CONFIRMATION
-By default, before renaming, a confirmation is asked to the user.
-You may bypass it by passing
-.B --yes
-on the command line.
-
-If the rename format uses a field that is not defined,
-a warning is shown and confirmation is always asked.
-
-Available behaviors when renaming are:
-
-.I y
-.RS
-Rename current file with current new filename.
-This is the default reply (that is why \fI<y>\fR appears).
-.RE
-
-.I a
-.RS
-Rename current file with current new filename.
-Then, never asking for a renaming confirmation anymore.
-.RE
-
-.I e
-.RS
-Edit current new filename before renaming.
-The behavior depends on the installed readline library.
-If it is smart, the current value may be edited inline
-and an history is available.
-.RE
-
-.I n
-.RS
-Don't rename current file.
-.RE
-
-.I h
-.RS
-Show help about confirmation.
-.RE
 
 
 
@@ -503,6 +634,7 @@ A list of format letters corresponding to %N or %A field in the previous format
 (See
 .B FORMAT
 for a list of these letters).
+
 
 
 
@@ -695,6 +827,32 @@ Verbose messages
 .RB [ -v ].
 Default is
 .BR 0 " (" disabled ")."
+.RE
+.I cddb_server_name = "hostname"
+.RS
+Change the CDDB server name.
+Default is
+.BR www.freedb.org .
+.RE
+.I cddb_server_port = <port>
+.RS
+Change the CDDB server port.
+Default is
+.BR 80 " (" HTTP ")."
+.RE
+.I cddb_proxy_name = "hostname"
+.RS
+Use a HTTP proxy server on hostname.
+Default is 
+.BR unset " (" disabled ")."
+.RE
+.I cddb_proxy_port = <port>
+.RS
+Use a HTTP proxy server on port.
+Default is
+.BR unset " (" disabled ")."
+.RE
+
 
 
 
@@ -727,6 +885,7 @@ for details.
 .I $HOME/.lltag/config
 .RS
 User configuration file.
+
 
 
 
