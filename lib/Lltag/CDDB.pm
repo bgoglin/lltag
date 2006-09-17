@@ -22,10 +22,12 @@ use constant CDDB_ABORT => -1 ;
 use constant CDDB_ABORT_TO_KEYWORDS => -10 ;
 use constant CDDB_ABORT_TO_CDIDS => -11 ;
 
+# keep track of where we were during the previous CDDB access
 my $previous_cdids = undef ;
 my $previous_cd = undef ;
+my $previous_track = undef ;
 
-#########################################3
+#########################################
 # low level CDDB http requests
 
 sub cddb_socket {
@@ -145,12 +147,12 @@ sub cddb_query_tracks_by_id {
     return (CDDB_SUCCESS, undef)
 	unless defined $name ;
 
-    # TODO: are we sure no artist or album may contain " / " ?
+    # FIXME: are we sure no artist or album may contain " / " ?
     $name =~ m@^(.+) / (.+)$@ ;
     $cd->{ARTIST} = $1 ;
     $cd->{ALBUM} = $2 ;
 
-    # TODO: check number and indexes of tracks ?
+    # FIXME: check number and indexes of tracks ?
 
     return (CDDB_SUCCESS, $cd) ;
 }
@@ -160,10 +162,9 @@ sub cddb_query_tracks_by_id {
 
 my $cddb_track_usage_forced = 1 ;
 
-# FIXME: needs a default
 sub cddb_track_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose Track in CDDB CD") ;
-    print "      <index> => Choose a track of the current CD\n" ;
+    print "      <index> => Choose a track of the current CD (current default is Track $previous_track)\n" ;
     print "      E => Edit current CD common tags\n" ;
     print "      v => View the list of CD matching the keywords\n" ;
     print "      c => Change the CD chosen in keywords query results list\n" ;
@@ -192,17 +193,21 @@ sub get_cddb_tags_from_tracks {
 
     print_cd $cd ;
 
+    $previous_track = 0
+	unless defined $previous_track ;
+    $previous_track++ ;
+
     cddb_track_usage
 	if $cddb_track_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default
-	Lltag::Misc::print_question "  Enter track index [<index>Evckq] (no default, h for help) ? " ;
+	Lltag::Misc::print_question "  Enter track index [<index>Evckq]".
+	    " (default is Track $previous_track, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 
-	# FIXME: needs a default
-	next if $reply eq '' ;
+	$reply = $previous_track
+	    if $reply eq '' ;
 
 	return (CDDB_ABORT, undef)
 	    if $reply =~ /^q/ ;
@@ -246,7 +251,7 @@ sub get_cddb_tags_from_tracks {
 
 my $cddb_cd_usage_forced = 1 ;
 
-# FIXME: needs a default
+# FIXME: needs a default ?
 sub cddb_cd_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose CD in CDDB Query Results") ;
     print "      <index> => Choose a CD in the current keywords query results list\n" ;
@@ -296,12 +301,12 @@ sub get_cddb_tags_from_cdids {
 	if $cddb_cd_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default
+	# FIXME: needs a default ?
 	Lltag::Misc::print_question "  Enter CD index [<index>vkq] (no default, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 
-	# FIXME: needs a default
+	# FIXME: needs a default ?
 	next if $reply eq '' ;
 
 	return (CDDB_ABORT, undef)
@@ -329,7 +334,7 @@ sub get_cddb_tags_from_cdids {
 
 my $cddb_keywords_usage_forced = 1 ;
 
-# FIXME: needs a default
+# FIXME: needs a default ?
 sub cddb_keywords_usage {
     Lltag::Misc::print_usage_header ("    ", "CDDB Query by Keywords") ;
     print "      <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
@@ -348,8 +353,6 @@ sub get_cddb_tags {
     my $self = shift ;
     my ($res, $values) ;
 
-    # FIXME: check an additional parameter to start from scratch
-
     if (defined $previous_cd) {
 	bless $previous_cd ;
 	print "  Going back to previous CD cat=$previous_cd->{CAT} id=$previous_cd->{ID}\n" ;
@@ -366,11 +369,11 @@ sub get_cddb_tags {
 	if $cddb_keywords_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default
+	# FIXME: needs a default ?
 	my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
 	chomp $keywords ;
 
-	# FIXME: needs a default
+	# FIXME: needs a default ?
 	next if $keywords eq '' ;
 
 	# be careful to match the whole reply, not only the first char
@@ -433,6 +436,7 @@ sub get_cddb_tags {
  ABORT:
     $previous_cdids = undef ;
     $previous_cd = undef ;
+    $previous_track = undef ;
     return (CDDB_ABORT, undef);
 }
 
