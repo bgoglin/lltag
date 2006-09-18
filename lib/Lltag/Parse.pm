@@ -536,7 +536,7 @@ sub try_to_parse_with_preferred {
 	return ($res, $values) ;
 
     } else {
-	print "    '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
+	print "    WARNING: '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
 	$self->{current_ask_opt} = $self->{ask_opt} ; $self->{current_yes_opt} = $self->{yes_opt} ;
 	$preferred_parser = undef ;
 	return (PARSE_NO_MATCH, undef) ;

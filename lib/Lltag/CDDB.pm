@@ -200,7 +200,7 @@ sub get_cddb_tags_from_tracks {
     }
 
     if (defined $previous_track and $previous_track == $cd->{TRACKS}) {
-	print "  Reached the end of the CD, returning to interactive mode.\n" ;
+	print "  WARNING: Reached the end of the CD, returning to interactive mode\n" ;
 	undef $previous_track ;
 	# FIXME: disable current_yes_opt ?
     }
