@@ -67,21 +67,6 @@ Finally, during confirmation, it is possible to use <tt>Always</tt> to enable
 
 
 
-<h3 class="question">What is the preferred parser?</h3>
-
-If all your filenames have the same format, i.e. they may be matched with the
-same parser, you might want to try this one first instead of seeing the other
-ones fail or having to skip them. 
-When confirming parsing, you may choose to accept the current parser and mark
-it as <em>preferred</em> so that <tt>lltag</tt> will try it first for the next
-files, and not ask you for confirmation as long as it parses filenames fine.
-
-If one filename cannot be matched by the <em>preferred</em> parser, <tt>lltag</tt>
-will revert to the common behavior. Any other parser, or the same previous one,
-may be marked as <em>preferred</em> later again.
-
-
-
 <h2 class="section">Parsing</h2>
 
 
@@ -108,6 +93,21 @@ It is also possible to try user-provided formats and then try internal formats:
 <pre>
   lltag -F "%a-%t" -F "%n)%a-%t" -G myfile1.mp3 myfile2.flac
 </pre>
+
+
+
+<h3 class="question">What is the preferred parser?</h3>
+
+If all your filenames have the same format, i.e. they may be matched with the
+same parser, you might want to try this one first instead of seeing the other
+ones fail or having to skip them. 
+When confirming parsing, you may choose to accept the current parser and mark
+it as <em>preferred</em> so that <tt>lltag</tt> will try it first for the next
+files, and not ask you for confirmation as long as it parses filenames fine.
+
+If one filename cannot be matched by the <em>preferred</em> parser, <tt>lltag</tt>
+will revert to the common behavior. Any other parser, or the same previous one,
+may be marked as <em>preferred</em> later again.
 
 
 
