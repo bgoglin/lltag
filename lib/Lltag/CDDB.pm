@@ -306,6 +306,7 @@ sub get_cddb_tags_from_cdid {
     }
 
     $previous_cd = $cd ;
+    undef $previous_track ;
 
     return get_cddb_tags_from_tracks $self, $cd ;
 }
