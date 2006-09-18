@@ -190,8 +190,20 @@ sub print_cd {
 sub get_cddb_tags_from_tracks {
     my $self = shift ;
     my $cd = shift ;
+    my $tracknumber = undef ;
 
     print_cd $cd ;
+
+    if ($self->{current_yes_opt} and defined $previous_track and $previous_track < $cd->{TRACKS}) {
+	$tracknumber = $previous_track + 1 ;
+	goto FOUND ;
+    }
+
+    if (defined $previous_track and $previous_track == $cd->{TRACKS}) {
+	print "  Reached the end of the CD, returning to interactive mode.\n" ;
+	undef $previous_track ;
+	# FIXME: disable current_yes_opt ?
+    }
 
     $previous_track = 0
 	unless defined $previous_track ;
@@ -230,20 +242,28 @@ sub get_cddb_tags_from_tracks {
 	} ;
 
 	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= $cd->{TRACKS}) {
-	    # get the track tags
-	    my $track = $cd->{$reply} ;
-	    my %values ;
-	    $values{ARTIST} = $cd->{ARTIST} ;
-	    $values{TITLE} = $track->{TITLE} ;
-	    $values{ALBUM} = $cd->{ALBUM} ;
-	    $values{NUMBER} = $reply ;
-	    $values{GENRE} = $cd->{GENRE} if defined $cd->{GENRE} ;
-	    $values{DATE} = $cd->{DATE} if defined $cd->{DATE} ;
-	    return (CDDB_SUCCESS, \%values) ;
+	    $tracknumber = $reply ;
+	    last ;
 	}
 
 	cddb_track_usage () ;
     }
+
+   FOUND:
+    my $track = $cd->{$tracknumber} ;
+    # get the track tags
+    my %values ;
+    $values{ARTIST} = $cd->{ARTIST} ;
+    $values{TITLE} = $track->{TITLE} ;
+    $values{ALBUM} = $cd->{ALBUM} ;
+    $values{NUMBER} = $tracknumber ;
+    $values{GENRE} = $cd->{GENRE} if defined $cd->{GENRE} ;
+    $values{DATE} = $cd->{DATE} if defined $cd->{DATE} ;
+
+    # save the previous track number
+    $previous_track = $tracknumber ;
+
+    return (CDDB_SUCCESS, \%values) ;
 }
 
 ##########################################################
