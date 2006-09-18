@@ -2,10 +2,10 @@
   * Add CDDB support with -C or--cddb, or C in the main menu:
     + Search CD ids by keywords, with ability to choose categories
       and fields to look in.
-    + Lookup a CD by giving its category and CD id.
+    + Lookup a CD by giving its category and CD id directly.
     + Keep the previous CD contents in memory so that the next track
       might be tagged immediately.
-    + Edit CDDB values before using them.
+    + Edit CDDB common tags before using them.
     + Configurable HTTP CDDB server and proxy.
   * Rework menus to integrate CDDB better.
     + Use 'q' to leave submenus (parsing, CDDB, renaming and editing),
@@ -14,7 +14,8 @@
     + Add 'Q' to exit completely.
     + Do not match user replies case-insensitively.
     + Large rework of the manpage to document the new menus.
-  * Do not change write guess in the generated configuration file
+  * Some new entries in the How-To.
+  * Do not write guess option in the generated configuration file
     unless explicitely asked by the user.
   * Add a doc/ subdirectory:
     + The How-To is now also included in the tarball.
