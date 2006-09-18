@@ -56,14 +56,29 @@ It is possible to remove any need for confirmation when no problem occurs:
   lltag --yes myfile.flac
 </pre>
 
-It is also possible to force confirmation when <tt>lltag</tt> guesses the filename
-format with internal formats:
+It is also possible to force confirmation when <tt>lltag</tt> parses the 
+filename with user-provided formats:
 <pre>
   lltag --ask myfile.ogg
 </pre>
 
 Finally, during confirmation, it is possible to use <tt>Always</tt> to enable
 <tt>--yes</tt> at runtime.
+
+
+
+<h3 class="question">What is the preferred parser?</h3>
+
+If all your filenames have the same format, i.e. they may be matched with the
+same parser, you might want to try this one first instead of seeing the other
+ones fail or having to skip them. 
+When confirming parsing, you may choose to accept the current parser and mark
+it as <em>preferred</em> so that <tt>lltag</tt> will try it first for the next
+files, and not ask you for confirmation as long as it parses filenames fine.
+
+If one filename cannot be matched by the <em>preferred</em> parser, <tt>lltag</tt>
+will revert to the common behavior. Any other parser, or the same previous one,
+may be marked as <em>preferred</em> later again.
 
 
 
