@@ -104,10 +104,70 @@ ones fail or having to skip them.
 When confirming parsing, you may choose to accept the current parser and mark
 it as <em>preferred</em> so that <tt>lltag</tt> will try it first for the next
 files, and not ask you for confirmation as long as it parses filenames fine.
+<br />
 
 If one filename cannot be matched by the <em>preferred</em> parser, <tt>lltag</tt>
 will revert to the common behavior. Any other parser, or the same previous one,
 may be marked as <em>preferred</em> later again.
+
+
+
+<h2 class="section">Getting tags from the online CDDB</h2>
+
+
+
+<h3 class="question">What is CDDB and why does lltag need it?</h3>
+
+CDDB is a huge online database of CD describing their artist, album, date,
+tracks, ... everything that <tt>lltag</tt> considers as tags.
+
+By default, <tt>lltag</tt> accesses the database on <tt>www.freedb.org</tt>
+through the HTTP protocol. The server and its port may be changed on the
+command-line:
+<pre>
+  lltag --cddb --cddb-server mycddb.mydomain.org:443 *
+</pre>
+
+In case of a HTTP proxy being required for HTTP request, <tt>lltag</tt>
+may also be configured to use it:
+<pre>
+  lltag --cddb --cddb-proxy myhttpproxy.mydomain.org:3128 *
+</pre>
+
+
+
+<h3 class="question">How do get tags from CDDB?</h3>
+
+The common way to search a CD on CDDB is to pass keywords, which return a list
+of matching CDs. Then, you choose a CD in the list, and a track in the CD tracks.
+<br />
+
+When entering the <tt>lltag</tt> CDDB menu for the first time, you need to
+enter keywords to find the CD that match the audio file you are processing.
+<tt>lltag</tt> will return a list of CD. At this point, you may either go back
+to search with other keywords, or enter the index of the CD that you want.
+<br />
+
+Then, <tt>lltag</tt> will display of the CD you have chosen and of its tracks.
+You may then choose a track and use it to tag/rename your file, or go back to
+choose another CD, or go back more to change the keywords.
+<br />
+
+When coming back to CDDB the next time, <tt>lltag</tt> will propose the next
+track of the previous CD that you used, so that processing an entire album
+is quick and easy.
+
+
+
+<h3 class="question">How do choose a precise CD in CDDB?</h3>
+
+All CD that are registered in CDDB are identified by a category and an
+hexadecimal identifier. When searching by keywords, <tt>lltag</tt> will
+return a list of matching CD with their category/identifier in parentheses.
+<br />
+
+It is also possible to directly enter this category/identifier instead
+of keywords to get a precise CD quickly.
 
 
 
