@@ -86,8 +86,8 @@ sub apply_parser {
 		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
 		map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
 		if (defined $values->{$field}) {
-		    print "      WARNING: ".ucfirst($field)." already set to '".$values->{$field}
-		    ."', skipping new value '$val'.\n"
+		    Lltag::Misc::print_warning ("      ", ucfirst($field)." already set to '".$values->{$field}
+		    ."', skipping new value '$val'")
 			if defined $values->{$field} and $values->{$field} ne $val ;
 		    goto NEXT_FIELD ;
 		}
@@ -378,9 +378,9 @@ sub generate_user_parser {
 	my $nextchar = $array[$i+1] ;
 	if ( $char eq $match_any and
 	     ( $nextchar eq $match_any or $nextchar eq $match_num ) ) {
-	    print "  WARNING: Format '". $format_string
+	    Lltag::Misc::print_warning ("  ", "Format '". $format_string
 		."' leads to problematic subregexp '". $char.$nextchar
-		."' that won't probably match as desired.\n" ;
+		."' that won't probably match as desired") ;
 	}
     }
 
@@ -536,7 +536,7 @@ sub try_to_parse_with_preferred {
 	return ($res, $values) ;
 
     } else {
-	print "    WARNING: '$preferred_parser->{title}' does not match anymore, returning to original mode\n" ;
+	Lltag::Misc::print_warning ("    ", "'$preferred_parser->{title}' does not match anymore, returning to original mode") ;
 	$self->{current_ask_opt} = $self->{ask_opt} ; $self->{current_yes_opt} = $self->{yes_opt} ;
 	$preferred_parser = undef ;
 	return (PARSE_NO_MATCH, undef) ;

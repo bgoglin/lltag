@@ -134,7 +134,7 @@ sub cddb_query_tracks_by_id {
 	} elsif ($line =~ m@<h2>(.+ / .+)</h2>@) {
 	    if (defined $name) {
 		if ($name ne $1) {
-		    print "      WARNING: Found CD name '$1' instead of '$name', this entry might be corrupted.\n" ;
+		    Lltag::Misc::print_warning ("      ", "Found CD name '$1' instead of '$name', this entry might be corrupted") ;
 		}
 	    } else {
 		$name = $1 ;
@@ -200,7 +200,7 @@ sub get_cddb_tags_from_tracks {
     }
 
     if (defined $previous_track and $previous_track == $cd->{TRACKS}) {
-	print "  WARNING: Reached the end of the CD, returning to interactive mode\n" ;
+	Lltag::Misc::print_warning ("  ", "Reached the end of the CD, returning to interactive mode") ;
 	undef $previous_track ;
 	# FIXME: disable current_yes_opt ?
     }

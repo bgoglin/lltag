@@ -66,7 +66,7 @@ sub rename_with_values {
 	    # rename does not contain an array anymore
 	    if (not defined $val) {
 		$undefined++ ;
-		print "    WARNING: Undefined field '".$field."'.\n" ;
+		Lltag::Misc::print_warning ("    ", "Undefined field '".$field."'") ;
 		$val = "" ;
 	    }
 	    if ($char eq 'n') {
