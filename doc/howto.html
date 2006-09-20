@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+<head>
+ <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+ <title>lltag - Automatic command-line mp3/ogg/flac file tagger and renamer - How-To?</title>
+ <link rel="stylesheet" type="text/css" href="main.css"/>
+</head>
+<body>
+
+<h1 class="title">lltag How-To?</h1>
+
+<div class="howto">
+
+
+
+<h2 class="section">Basics</h2>
+
+
+
+<h3 class="question">How do I use lltag?</h3>
+
+<pre>
+  lltag myfile1.mp3 myfile2.ogg
+</pre>
+
+It is also possible to tag all file in subdirectories with:
+<pre>
+  lltag -R mymusic/
+</pre>
+
+All mp3, ogg and flac are processed, depending on their extension.
+If the extension is wrong, it is possible to force the file processing type:
+<pre>
+  lltag --ogg myfile.mp3
+</pre>
+
+
+
+<h2 class="section">Disabling, Confirming, Forcing</h2>
+
+
+
+<h3 class="question">How do I try lltag without actually tagging?</h3>
+
+<pre>
+  lltag --dry-run
+</pre>
+
+
+
+<h3 class="question">How do I change what confirmation lltag wants?</h3>
+
+It is possible to remove any need for confirmation when no problem occurs:
+<pre>
+  lltag --yes myfile.flac
+</pre>
+
+It is also possible to force confirmation when <tt>lltag</tt> parses the 
+filename with user-provided formats:
+<pre>
+  lltag --ask myfile.ogg
+</pre>
+
+Finally, during confirmation, it is possible to use <tt>Always</tt> to enable
+<tt>--yes</tt> at runtime.
+
+
+
+<h2 class="section">Parsing</h2>
+
+
+
+<h3 class="question">How do I see how lltag parses filename?</h3>
+
+<tt>lltag</tt> uses internal format that are defined in <tt>/etc/lltag/formats/</tt>.
+You might see them with:
+<pre>
+  lltag -L
+</pre>
+
+
+
+<h3 class="question">How do I force lltag to use another format?</h3>
+
+If internal formats do not fit the way your filename is written, you may pass
+additional formats with:
+<pre>
+  lltag -F "%a-%t" -F "%n)%a-%t" myfile1.mp3 myfile2.flac
+</pre>
+
+It is also possible to try user-provided formats and then try internal formats:
+<pre>
+  lltag -F "%a-%t" -F "%n)%a-%t" -G myfile1.mp3 myfile2.flac
+</pre>
+
+
+
+<h3 class="question">What is the preferred parser?</h3>
+
+If all your filenames have the same format, i.e. they may be matched with the
+same parser, you might want to try this one first instead of seeing the other
+ones fail or having to skip them. 
+When confirming parsing, you may choose to accept the current parser and mark
+it as <em>preferred</em> so that <tt>lltag</tt> will try it first for the next
+files, and not ask you for confirmation as long as it parses filenames fine.
+<br />
+
+If one filename cannot be matched by the <em>preferred</em> parser, <tt>lltag</tt>
+will revert to the common behavior. Any other parser, or the same previous one,
+may be marked as <em>preferred</em> later again.
+
+
+
+<h2 class="section">Getting tags from the online CDDB</h2>
+
+
+
+<h3 class="question">What is CDDB and why does lltag need it?</h3>
+
+CDDB is a huge online database of CD describing their artist, album, date,
+tracks, ... everything that <tt>lltag</tt> considers as tags.
+
+By default, <tt>lltag</tt> accesses the database on <tt>www.freedb.org</tt>
+through the HTTP protocol. The server and its port may be changed on the
+command-line:
+<pre>
+  lltag --cddb --cddb-server mycddb.mydomain.org:443 *
+</pre>
+
+In case of a HTTP proxy being required for HTTP request, <tt>lltag</tt>
+may also be configured to use it:
+<pre>
+  lltag --cddb --cddb-proxy myhttpproxy.mydomain.org:3128 *
+</pre>
+
+
+
+<h3 class="question">How do get tags from CDDB?</h3>
+
+The common way to search a CD on CDDB is to pass keywords, which return a list
+of matching CDs. Then, you choose a CD in the list, and a track in the CD tracks.
+<br />
+
+When entering the <tt>lltag</tt> CDDB menu for the first time, you need to
+enter keywords to find the CD that match the audio file you are processing.
+<tt>lltag</tt> will return a list of CD. At this point, you may either go back
+to search with other keywords, or enter the index of the CD that you want.
+<br />
+
+Then, <tt>lltag</tt> will display of the CD you have chosen and of its tracks.
+You may then choose a track and use it to tag/rename your file, or go back to
+choose another CD, or go back more to change the keywords.
+<br />
+
+When coming back to CDDB the next time, <tt>lltag</tt> will propose the next
+track of the previous CD that you used, so that processing an entire album
+is quick and easy.
+
+
+
+<h3 class="question">How do choose a precise CD in CDDB?</h3>
+
+All CD that are registered in CDDB are identified by a category and an
+hexadecimal identifier. When searching by keywords, <tt>lltag</tt> will
+return a list of matching CD with their category/identifier in parentheses.
+<br />
+
+It is also possible to directly enter this category/identifier instead
+of keywords to get a precise CD quickly.
+
+
+
+<h2 class="section">Managing tags</h2>
+
+
+
+<h3 class="question">How do I set default values?</h3>
+
+Each tag field may receive a default value even if it is not defined
+when parsing the filename:
+<pre>
+  lltag -a MyArtist -y 1990 myfile.mp3
+</pre>
+
+
+
+<h3 class="question">How do I cleanup tags?</h3>
+
+If your filenames are dirty, it is possible to ask <tt>lltag</tt> to be flexible
+with spaces. Any space in the format might be matched with 0 or several spaces
+with:
+<pre>
+  lltag --spaces myfile.mp3
+</pre>
+
+The first letter of each word in each tag might be upcased with:
+<pre>
+  lltag --maj myfile.mp3
+</pre>
+
+If the filename contains special characters that have to be translated into
+spaces for tags:
+<pre>
+  lltag --sep _|-|: myfile.mp3
+</pre>
+
+
+
+<h2 class="section">Renaming</h2>
+
+
+
+<h3 class="question">How do I rename files after tagging?</h3>
+
+Files might be renamed using the tags that were gotten from original filename parsing:
+<pre>
+  lltag myfile.mp3 --rename "%a - %t.mp3"
+</pre>
+
+Tags might be lowcased before renaming, and spaces might be replaced with another character:
+<pre>
+  lltag myfile.mp3 --rename "%a - %t.mp3" --rename-min --rename-sep _
+</pre>
+
+
+
+<h3 class="question">How do I rename files without tagging?</h3>
+
+<tt>lltag</tt> may also be used as a renaming program without any tagging:
+
+<pre>
+  lltag --no-tagging -F "%A/%n. %a - %t" --rename "%a - %A/%n - %t" */*.ogg
+</pre>
+
+Note that <tt>lltag</tt> may rename using existing tags even if the old filename
+is useless. Matching with <tt>"%i"</tt> to ignore the old filename might be useful
+in this case.
+
+<pre>
+  lltag --no-tagging -F "%i" --rename "%a - %A/%n - %t" */*.ogg
+</pre>
+
+
+</div>
+
+<hr />
+
+<p style="text-align: center">
+<a href="http://validator.w3.org/check/referer">
+ <img src="http://www.w3.org/Icons/valid-xhtml11" alt="Valid XHTML 1.1!" class="icon" />
+</a>
+
+<a href="http://jigsaw.w3.org/css-validator/check/referer">
+ <img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!" class="icon" />
+</a>
+
+<a href="http://validator.loulous.org/check?uri=referer">
+ <img style="border:0;width:88px;height:31px;" src="http://loulous.org/loulous.png" alt="Loulous Compliant" />
+</a>
+</p>
+
+<address id="addr">
+ The <a href="mailto:lltag-users AT gna.org">lltag team</a>.
+</address>
+
+<div id="modif">
+ $Id: howto.html,v 1.2 2006/05/07 00:57:26 bgoglin Exp $
+</div>
+
+</body>
+</html>
