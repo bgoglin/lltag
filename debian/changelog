@@ -1,4 +1,6 @@
+lltag (0.12-1) unstable; urgency=low
 
+  * New upstream release.
   * Install HTML files from the new upstream doc/ subdirectory.
   * Update debian/rules to pass PERL_INSTALLDIRS=vendor.
   * Update the description according to new upstream CDDB feature and
@@ -7,6 +9,7 @@
   * Add an empty binary-arch target in debian/rules.
   * Replace Build-Depends-Indep with Build-Depends in debian/control.
 
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 19 Sep 2006 21:45:24 -0400
 
 lltag (0.11-1) unstable; urgency=low
 
