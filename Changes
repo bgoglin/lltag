@@ -1,6 +1,8 @@
 
   * Add %F, %E and %P to be replaced by original basename, extension
     and path of the file when renaming.
+  * If CDDB query by keywords find nothing, go back to keywords query
+    instead of asking the user to choose in the (empty) list.
 
 
 lltag (0.12)

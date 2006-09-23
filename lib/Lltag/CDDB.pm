@@ -442,6 +442,11 @@ sub get_cddb_tags {
 	($res, $cdids) = cddb_query_cd_by_keywords $self, $keywords, $fields, $cats ;
 	goto ABORT if $res == CDDB_ABORT ;
 
+	if (!@{$cdids}) {
+	    print "    No CD found.\n" ;
+	    next ;
+	}
+
 	$previous_cdids = $cdids ;
 	$previous_cd = undef ;
 
