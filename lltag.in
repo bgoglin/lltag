@@ -369,20 +369,17 @@ GetOptions(
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
 
-# yes/ask option status may vary with user confirmation replies
-$self->{current_yes_opt} = $self->{yes_opt} ;
-$self->{current_ask_opt} = $self->{ask_opt} ;
-
-# confirmation when renaming
-$self->{current_rename_yes_opt} = $self->{yes_opt} ;
-
 # if no user parsers, no defaults, no guess and no cddb, force guess
 $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
 			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
 			       and !$self->{list_formats_opt} ) ;
 
+# yes/ask option status may vary with user confirmation replies
+my $current_main_yes_opt = $self->{yes_opt} ;
+Lltag::CDDB::init_cddb ($self) ;
 Lltag::Parse::init_parsing ($self) ;
+Lltag::Rename::init_renaming ($self) ;
 
 #######################################################
 # extract file type and parsename
@@ -650,7 +647,7 @@ while ( @files ) {
 	}
 
 	goto TAG
-	    if $self->{current_yes_opt} ;
+	    if $current_main_yes_opt ;
 
 	while (1) {
 	    Lltag::Misc::print_question ("  Use these tag values [yaPCEDqQ] (default is yes, h for help) ? ") ;
@@ -674,8 +671,7 @@ while ( @files ) {
 		if $confirm_reply =~ /^Q/ ;
 
 	    if ($confirm_reply =~ /^a/) {
-		# FIXME: only change the yes_opt of the main menu, do not touch ask/yes of parsing and others
-		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
+		$current_main_yes_opt = 1 ;
 		goto TAG ;
 
 	    } elsif ($confirm_reply =~ /^E/) {

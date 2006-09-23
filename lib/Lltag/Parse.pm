@@ -23,6 +23,10 @@ my $match_limit = '' ;
 # the parser that the user wants to always use
 my $preferred_parser = undef ;
 
+# confirmation behavior
+my $current_parse_ask_opt ;
+my $current_parse_yes_opt ;
+
 #######################################################
 # Parsing return values
 use constant PARSE_SUCCESS_PREFERRED => 1 ;
@@ -42,6 +46,10 @@ use constant PARSE_MAY_PREFER => 4 ;
 
 sub init_parsing {
     my $self = shift ;
+
+    # default confirmation behavior
+    $current_parse_ask_opt = $self->{ask_opt} ;
+    $current_parse_yes_opt = $self->{yes_opt} ;
 
     # spaces_opt changes matching regexps
     $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
@@ -90,7 +98,7 @@ sub apply_parser {
 		    goto NEXT_FIELD ;
 		}
 		$values->{$field} = $val ;
-		if ($self->{verbose_opt} or $confirm or $self->{current_ask_opt}) {
+		if ($self->{verbose_opt} or $confirm or $current_parse_ask_opt) {
 		    print "      ". ucfirst($field)
 			.$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
 		}
@@ -463,7 +471,7 @@ sub confirm_parser {
     my $preferred = 0 ;
 
     # confirm if required
-    if ($self->{current_ask_opt} or ($confirm and !$self->{current_yes_opt})) {
+    if ($current_parse_ask_opt or ($confirm and !$current_parse_yes_opt)) {
 
 	confirm_parser_usage $behaviors
 	    if $confirm_parser_usage_forced ;
@@ -477,12 +485,12 @@ sub confirm_parser {
 		last ;
 
 	    } elsif ($reply =~ /^a/) {
-		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
+		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
 		last ;
 
 	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/) {
 		$preferred = 1 ;
-		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
+		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
 		last ;
 
 	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/) {
@@ -535,7 +543,7 @@ sub try_to_parse_with_preferred {
 
     } else {
 	Lltag::Misc::print_warning ("    ", "'$preferred_parser->{title}' does not match anymore, returning to original mode") ;
-	$self->{current_ask_opt} = $self->{ask_opt} ; $self->{current_yes_opt} = $self->{yes_opt} ;
+	$current_parse_ask_opt = $self->{ask_opt} ; $current_parse_yes_opt = $self->{yes_opt} ;
 	$preferred_parser = undef ;
 	return (PARSE_NO_MATCH, undef) ;
     }

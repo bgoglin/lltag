@@ -9,6 +9,9 @@ use constant DIRNAME_LETTER => "P" ;
 use constant BASENAME_LETTER => "F" ;
 use constant EXTENSION_LETTER => "E" ;
 
+# confirmation behavior
+my $current_rename_yes_opt ;
+
 #######################################################
 # rename specific usage
 
@@ -31,6 +34,17 @@ sub rename_format_usage {
     print "  %".EXTENSION_LETTER." means the original extension of the file\n" ;
     print "  %".DIRNAME_LETTER." means the original path of the file\n" ;
 }
+
+#######################################################
+# init
+
+sub init_renaming {
+    my $self = shift ;
+
+    # default confirmation behavior
+    $current_rename_yes_opt = $self->{yes_opt} ;
+}
+
 
 #######################################################
 # rename confirmation
@@ -143,7 +157,7 @@ sub rename_with_values {
     print "    New filename is '$new_name'\n" ;
 
     # confirm if required or if any field undefined
-    if ($undefined or !$self->{current_rename_yes_opt}) {
+    if ($undefined or !$current_rename_yes_opt) {
 
 	rename_confirm_usage
 	    if $rename_confirm_usage_forced ;
@@ -157,7 +171,7 @@ sub rename_with_values {
             goto RENAME_IT ;
 
 	} elsif ($reply =~ /^a/) {
-	    $self->{current_rename_yes_opt} = 1 ;
+	    $current_rename_yes_opt = 1 ;
             goto RENAME_IT ;
 
 	} elsif ($reply =~ /^n/ or $reply =~ /^q/) {

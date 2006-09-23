@@ -27,6 +27,20 @@ my $previous_cdids = undef ;
 my $previous_cd = undef ;
 my $previous_track = undef ;
 
+# confirmation behavior
+# FIXME: find a way to enable it
+my $current_cddb_yes_opt = undef ;
+
+#########################################
+# init
+
+sub init_cddb {
+    my $self = shift ;
+
+    # default confirmation behavior
+    $current_cddb_yes_opt = $self->{current_yes_opt} ;
+}
+
 #########################################
 # low level CDDB http requests
 
@@ -194,15 +208,18 @@ sub get_cddb_tags_from_tracks {
 
     print_cd $cd ;
 
-    if ($self->{current_yes_opt} and defined $previous_track and $previous_track < $cd->{TRACKS}) {
+    if ($current_cddb_yes_opt and defined $previous_track and $previous_track < $cd->{TRACKS}) {
 	$tracknumber = $previous_track + 1 ;
 	goto FOUND ;
     }
 
     if (defined $previous_track and $previous_track == $cd->{TRACKS}) {
-	Lltag::Misc::print_warning ("  ", "Reached the end of the CD, returning to interactive mode") ;
 	undef $previous_track ;
-	# FIXME: disable current_yes_opt ?
+	if ($current_cddb_yes_opt) {
+	    Lltag::Misc::print_warning ("  ", "Reached the end of the CD, returning to interactive mode") ;
+	    # return to previous confirmation behavior
+	    $current_cddb_yes_opt = $self->{yes_opt} ;
+	}
     }
 
     $previous_track = 0

@@ -3,6 +3,9 @@
     and path of the file when renaming.
   * If CDDB query by keywords find nothing, go back to keywords query
     instead of asking the user to choose in the (empty) list.
+  * When using 'a' to switch to automatic mode, only change the mode
+    for the local menu (i.e. automatic parsing does not make automatic
+    tagging or CDDB usage).
 
 
 lltag (0.12)
