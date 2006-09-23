@@ -1,3 +1,8 @@
+
+  * Add %F, %E and %P to be replaced by original basename, extension
+    and path of the file when renaming.
+
+
 lltag (0.12)
 
   * Add CDDB support with -C or --cddb (or C in the main menu):

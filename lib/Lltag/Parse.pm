@@ -9,8 +9,8 @@ use vars qw(@EXPORT) ;
 	      ) ;
 
 # ignoring fields during parsing
-my $ignore_letter = 'i' ;
-my $ignore_name = 'IGNORE' ;
+use constant IGNORE_LETTER => 'i' ;
+use constant IGNORE_NAME => 'IGNORE' ;
 
 # subregexp
 my $match_path = '(?:[^/]*\/)*' ;
@@ -48,13 +48,11 @@ sub init_parsing {
 }
 
 #######################################################
-# parsing specific usage
+# parsing format specific usage
 
-sub parsing_usage {
+sub parsing_format_usage {
     my $self = shift ;
-    print " Format is composed of anything you want with special fields:\n" ;
-    print map { "  %". $self->{field_name_letter}{$_} ." means ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
-    print "  %$ignore_letter means that the text has to be ignored\n" ;
+    print "  %".IGNORE_LETTER." means that the text has to be ignored\n" ;
     print "  %% means %\n" ;
 }
 
@@ -80,7 +78,7 @@ sub apply_parser {
 	# traverse matched values (stored in ${$i}
 	while ( $i <= @field_table ) {
 	    my $field = $field_table[$i-1] ;
-	    if ($field ne $ignore_name) {
+	    if ($field ne IGNORE_NAME) {
 		my $val = ${$i} ;
 		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
 		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
@@ -186,15 +184,15 @@ sub read_internal_parsers {
 	} elsif (/^indices = (.*)$/) {
 	    @field_table = map {
 		my $field ;
-		if (defined $self->{field_name_letter}{$_} or $_ eq $ignore_name) {
+		if (defined $self->{field_name_letter}{$_} or $_ eq IGNORE_NAME) {
 		    # full field name, keep as it is
 		    $field = $_
 		} elsif (defined $self->{field_letter_name}{$_}) {
 		    # field letter
 		    $field = $self->{field_letter_name}{$_} ;
-		} elsif ($_ eq $ignore_letter) {
+		} elsif ($_ eq IGNORE_LETTER) {
 		    # ignore letter
-		    $field = $ignore_name ;
+		    $field = IGNORE_NAME ;
 		} else {
 		    die "Unrecognized field '$_' on line $. in file '$file'\n" ;
 		}
@@ -351,14 +349,14 @@ sub generate_user_parser {
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$self->{field_letters_union}|$ignore_letter/) {
+	} elsif ($array[$i] =~ /$self->{field_letters_union}|IGNORE_LETTER/) {
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
 	}
 	# store the indice
-	if ($char eq $ignore_letter) {
-	    push @field_table, $ignore_name ;
+	if ($char eq IGNORE_LETTER) {
+	    push @field_table, IGNORE_NAME ;
 	} else {
 	    push @field_table, $self->{field_letter_name}{$char} ;
 	}

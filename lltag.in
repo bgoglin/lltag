@@ -124,7 +124,10 @@ sub usage {
     print "  -L, --list             List internal formats\n" ;
     print "  -V, --version          Show lltag version\n" ;
     print "  -h, --help             Show this help\n" ;
-    Lltag::Parse::parsing_usage ($self) ;
+    print " Format is composed of anything you want with special fields:\n" ;
+    print map { "  %". $self->{field_name_letter}{$_} ." means ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
+    Lltag::Parse::parsing_format_usage ($self) ;
+    Lltag::Rename::rename_format_usage ($self) ;
     print "\n" ;
     print "Author:    Brice Goglin\n" ;
     print "Homepage:  http://home.gna.org/lltag\n" ;
