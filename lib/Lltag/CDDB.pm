@@ -179,6 +179,8 @@ my $cddb_track_usage_forced = 1 ;
 sub cddb_track_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose Track in CDDB CD") ;
     print "      <index> => Choose a track of the current CD (current default is Track $previous_track)\n" ;
+    print "      <index> a => Choose a track and do not ask for confirmation anymore\n" ;
+    print "      a => Use default track and do not ask for confirmation anymore\n" ;
     print "      E => Edit current CD common tags\n" ;
     print "      v => View the list of CD matching the keywords\n" ;
     print "      c => Change the CD chosen in keywords query results list\n" ;
@@ -206,12 +208,13 @@ sub get_cddb_tags_from_tracks {
     my $cd = shift ;
     my $tracknumber = undef ;
 
-    print_cd $cd ;
-
     if ($current_cddb_yes_opt and defined $previous_track and $previous_track < $cd->{TRACKS}) {
 	$tracknumber = $previous_track + 1 ;
+	print "    Automatically choosing next CDDB track, #$tracknumber...\n" ;
 	goto FOUND ;
     }
+
+    print_cd $cd ;
 
     if (defined $previous_track and $previous_track == $cd->{TRACKS}) {
 	undef $previous_track ;
@@ -230,7 +233,7 @@ sub get_cddb_tags_from_tracks {
 	if $cddb_track_usage_forced ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter track index [<index>Evckq]".
+	Lltag::Misc::print_question "  Enter track index [<index>aEvckq]".
 	    " (default is Track $previous_track, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
@@ -257,6 +260,15 @@ sub get_cddb_tags_from_tracks {
 	    print_cd $cd ;
 	    next ;
 	} ;
+
+	if ($reply =~ /^a/) {
+	    $reply = $previous_track ;
+	    $current_cddb_yes_opt = 1 ;
+	}
+	if ($reply =~ /^(\d+) *a/) {
+	    $current_cddb_yes_opt = 1 ;
+	    $reply = $1 ;
+	}
 
 	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= $cd->{TRACKS}) {
 	    $tracknumber = $reply ;

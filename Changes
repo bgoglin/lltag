@@ -6,6 +6,8 @@
   * When using 'a' to switch to automatic mode, only change the mode
     for the local menu (i.e. automatic parsing does not make automatic
     tagging or CDDB usage).
+  * Add 'a' and '<index> a' to switch to automatic CDDB mode while
+    choosing a track in a CD.
   * Use DELETE or <DELETE> to erase a tag when editing.
 
 
