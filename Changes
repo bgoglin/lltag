@@ -6,6 +6,7 @@
   * When using 'a' to switch to automatic mode, only change the mode
     for the local menu (i.e. automatic parsing does not make automatic
     tagging or CDDB usage).
+  * Use DELETE or <DELETE> to erase a tag when editing.
 
 
 lltag (0.12)

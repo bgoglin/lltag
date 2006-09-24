@@ -130,6 +130,7 @@ sub edit_values_usage {
     print "      V => View current fields\n" ;
     print "      y/E => End edition\n" ;
     print "      q/C => Cancel edition\n" ;
+    print "    During edition, enter <DELETE> to drop a value.\n" ;
 
     $edit_values_usage_forced = 0 ;
 }
@@ -158,7 +159,12 @@ sub edit_values {
 
 	if ($edit_reply =~ /^($letters_union)/) {
 	    my $field = $self->{field_letter_name}{$1} ;
-	    $values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+	    if ($value eq "DELETE" or $value eq "<DELETE>") {
+		delete $values->{$field} ;
+	    } else {
+		$values->{$field} = $value ;
+	    }
 
 	} elsif ($edit_reply =~ /^y/ or $edit_reply =~ /^E/) {
 	    return $values ;
