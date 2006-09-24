@@ -288,7 +288,6 @@ sub get_cddb_tags_from_tracks {
 
 my $cddb_cd_usage_forced = 1 ;
 
-# FIXME: needs a default ?
 sub cddb_cd_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose CD in CDDB Query Results") ;
     print "      <index> => Choose a CD in the current keywords query results list\n" ;
@@ -339,12 +338,10 @@ sub get_cddb_tags_from_cdids {
 	if $cddb_cd_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default ?
 	Lltag::Misc::print_question "  Enter CD index [<index>vkq] (no default, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 
-	# FIXME: needs a default ?
 	next if $reply eq '' ;
 
 	return (CDDB_ABORT, undef)
@@ -372,7 +369,6 @@ sub get_cddb_tags_from_cdids {
 
 my $cddb_keywords_usage_forced = 1 ;
 
-# FIXME: needs a default ?
 sub cddb_keywords_usage {
     Lltag::Misc::print_usage_header ("    ", "CDDB Query by Keywords") ;
     print "      <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
@@ -407,11 +403,9 @@ sub get_cddb_tags {
 	if $cddb_keywords_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default ?
 	my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
 	chomp $keywords ;
 
-	# FIXME: needs a default ?
 	next if $keywords eq '' ;
 
 	# be careful to match the whole reply, not only the first char

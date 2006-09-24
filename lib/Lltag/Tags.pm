@@ -102,9 +102,6 @@ sub get_additional_tag_values {
 
 my $edit_values_usage_forced = 1 ;
 
-# FIXME: y for E, q for C
-
-# FIXME: needs a default
 sub edit_values_usage {
     my $self = shift ;
     my $values = shift ;
@@ -152,7 +149,6 @@ sub edit_values {
 	if $edit_values_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default
 	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."Vyq] (no default, h for help) ? ") ;
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
