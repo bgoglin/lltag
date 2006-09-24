@@ -5,18 +5,6 @@ use strict ;
 use Term::ReadLine;
 use Term::ANSIColor ;
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      system_with_output
-	      init_readline
-	      exit_readline
-	      readline
-	      print_question
-	      print_usage_header
-	      print_warning
-	  ) ;
-
 ###################################################################
 # rewrite of system which returns a descriptor of a stream
 # containing both stdout and stderr

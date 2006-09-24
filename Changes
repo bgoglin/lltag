@@ -9,6 +9,8 @@
   * Add 'a' and '<index> a' to switch to automatic CDDB mode while
     choosing a track in a CD.
   * Use DELETE or <DELETE> to erase a tag when editing.
+  * Fix Perl modularization, no need to use Exporter module since we
+    access modular functions by prefixing with the module name.
 
 
 lltag (0.12)

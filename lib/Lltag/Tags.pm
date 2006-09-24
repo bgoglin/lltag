@@ -3,18 +3,6 @@ package Lltag::Tags ;
 use strict ;
 no strict "refs" ;
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      append_tag_value
-	      get_tag_value_array
-	      get_tag_unique_value
-	      get_values_non_regular_keys
-	      get_values_non_regular_keys
-	      get_additional_tag_values
-	      edit_values
-	      ) ;
-
 # add a value to a field, creating an array if required
 sub append_tag_value {
     my $self = shift ;

@@ -5,14 +5,6 @@ use strict ;
 require Lltag::Tags ;
 require Lltag::Misc ;
 
-#use Exporter ;
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      read_tags
-	      tagging_system_args
-	  ) ;
-
 sub read_tags {
     my $self = shift ;
     my $file = shift ;

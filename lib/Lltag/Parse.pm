@@ -3,11 +3,6 @@ package Lltag::Parse ;
 use strict ;
 no strict "refs" ; # for ${$i}
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      ) ;
-
 # ignoring fields during parsing
 use constant IGNORE_LETTER => 'i' ;
 use constant IGNORE_NAME => 'IGNORE' ;

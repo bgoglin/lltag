@@ -6,14 +6,6 @@ use IO::Socket ;
 
 use Lltag::Misc ;
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      get_cddb_tags
-	      CDDB_SUCCESS
-	      CDDB_ABORT
-	      ) ;
-
 # return values that are passed to lltag
 use constant CDDB_SUCCESS => 0 ;
 use constant CDDB_ABORT => -1 ;
