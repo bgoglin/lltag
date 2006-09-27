@@ -423,9 +423,9 @@ die "Unrecognized file type '$self->{type_opt}'.\n"
     if defined $self->{type_opt} and not defined $backends{$self->{type_opt}} ;
 
 #######################################################
-# extract file type and parsename
+# extract backend and parsename
 
-sub extract_parsename_and_type {
+sub extract_parsename_and_backend {
     my $file = shift ;
 
     # split into parsename and extension, and remove the path if asked
@@ -437,13 +437,16 @@ sub extract_parsename_and_type {
 	$parsename = pop @parts ;
     }
 
-    my $file_type = $self->{type_opt} ;
+    my $backend ;
+    if (defined $self->{type_opt}) {
+	$backend = $backends{$self->{type_opt}} ;
+    } else {
+	# if not forced, get the type from the extension
+	my $file_type = $file_extension_to_backend_type{lc($extension)} ;
+	$backend = $backends{$file_type} ;
+    }
 
-    # if not forced, get the type from the extension
-    $file_type = $file_extension_to_backend_type{lc($extension)}
-	unless defined $file_type ;
-
-    return ($parsename, $file_type) ;
+    return ($parsename, $backend) ;
 }
 
 #######################################################
@@ -579,12 +582,11 @@ if ($self->{show_tags_opt}) {
 	print "$file:\n"
 	    if @files ;
 
-	my ($parsename, $file_type) = extract_parsename_and_type $file ;
-	if (not defined $file_type) {
+	my ($parsename, $backend) = extract_parsename_and_backend $file ;
+	if (not defined $backend) {
 	    print "  Skipping this unknown-type file.\n" ;
 	    next ;
 	}
-	my $backend = $backends{$file_type} ;
 
 	my $values = read_tags $file, $backend ;
 
@@ -612,12 +614,11 @@ while ( @files ) {
     print "\n" ;
     print "Processing file \"".$file."\"...\n" ;
 
-    my ($parsename, $file_type) = extract_parsename_and_type $file ;
-    if (not defined $file_type) {
+    my ($parsename, $backend) = extract_parsename_and_backend $file ;
+    if (not defined $backend) {
 	print "  Skipping this file '$file' with unknown type.\n" ;
 	goto NEXT_FILE ;
     }
-    my $backend = $backends{$file_type} ;
 
     # read old tags
     my $old_values = read_tags $file, $backend ;
