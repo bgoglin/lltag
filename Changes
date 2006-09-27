@@ -1,4 +1,5 @@
 
+  * Add --type to make file type selection more flexible.
   * Add %F, %E and %P to be replaced by original basename, extension
     and path of the file when renaming.
   * If CDDB query by keywords find nothing, go back to keywords query

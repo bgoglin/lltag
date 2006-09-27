@@ -32,6 +32,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ "--sep\ <s1|s2|...>" ]
 .RB [ "--regexp <regexp>" ]
 .RB [ --mp3/--ogg/--flac ]
+.RB [ "--type <type>" ]
 .RB [ --clear ]
 .RB [ --append ]
 .RB [ --no-tagging ]
@@ -320,6 +321,12 @@ Add an additional tag.
 Might be used several times.
 Note that mp3 tags do not support whatever
 .IR TAG .
+
+.TP
+.BI "--type" " <type>"
+Tag all files as
+.B <type>
+files.
 
 .TP
 .B "-v, --verbose"

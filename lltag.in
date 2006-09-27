@@ -101,7 +101,8 @@ sub usage {
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "  --regexp <regexp>      Apply a replace regexp to tags before tagging\n" ;
-    print "  --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
+    print "  --mp3/--ogg/--flac     Force mp3, ogg or flac instead of by-extension detection\n" ;
+    print "  --type <type>          Force <tyle> instead of by-extension detection\n" ;
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
     print "  --no-tagging           Do not actually tag files\n" ;
@@ -227,8 +228,6 @@ sub process_option {
     } elsif (/^type\s*=\s*(.+)$/) {
 	if ($1 eq "none") {
 	    $self->{type_opt} = undef ;
-	} elsif ($1 ne $mp3_type and $1 ne $ogg_type and $1 ne $flac_type) {
-	    die "Unrecognized type '$1' line #$\n" ;
 	} else {
 	    $self->{type_opt} = $1 ;
 	}
@@ -325,6 +324,7 @@ GetOptions(
 	   'mp3'          => sub { $self->{type_opt} = $mp3_type ; },
 	   'ogg'          => sub { $self->{type_opt} = $ogg_type ; },
 	   'flac'         => sub { $self->{type_opt} = $flac_type ; },
+	   'type=s'	  => sub { shift ; $self->{type_opt} = shift ; },
 	   'clear'        => \$self->{clear_opt},
 	   'append'       => \$self->{append_opt},
 	   'no-tagging'   => \$self->{no_tagging_opt},
@@ -380,6 +380,12 @@ my $current_main_yes_opt = $self->{yes_opt} ;
 Lltag::CDDB::init_cddb ($self) ;
 Lltag::Parse::init_parsing ($self) ;
 Lltag::Rename::init_renaming ($self) ;
+
+#######################################################
+# check that the file type is correct
+
+die "Unrecognized file type '$self->{type_opt}'.\n"
+    if $self->{type_opt} ne $mp3_type and $self->{type_opt} ne $ogg_type and $self->{type_opt} ne $flac_type ;
 
 #######################################################
 # extract file type and parsename
