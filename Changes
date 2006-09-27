@@ -14,6 +14,7 @@
   * Use DELETE or <DELETE> to erase a tag when editing.
   * Fix Perl modularization, no need to use Exporter module since we
     access modular functions by prefixing with the module name.
+  * Improve some messages.
 
 
 lltag (0.12)

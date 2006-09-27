@@ -665,10 +665,14 @@ while ( @files ) {
 	}
 
       CONFIRM:
-	print "    Current tag values are:\n" ;
-	foreach my $field (@{$self->{field_names}}) {
-	    print "      ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
-		if defined $values->{$field} ;
+	if (keys %{$values}) {
+	    print "    Current tag values are:\n" ;
+	    foreach my $field (@{$self->{field_names}}) {
+		print "      ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
+		    if defined $values->{$field} ;
+	    }
+	} else {
+	    print "    There are no current tag values.\n" ;
 	}
 
 	goto TAG
