@@ -610,7 +610,7 @@ while ( @files ) {
     while (1) {
 
 	# try preferred parser first
-	($res, $values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename, $file_type) ;
+	($res, $values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename) ;
 	goto ADD_DEFAULTS
 	    if $res == Lltag::Parse->PARSE_SUCCESS ;
 	die "Unknown tag return value: $res.\n"
@@ -632,7 +632,7 @@ while ( @files ) {
 
 	# try to parse this file
       TRY_PARSE:
-	($res, $values) = Lltag::Parse::try_to_parse ($self, $file, $parsename, $file_type) ;
+	($res, $values) = Lltag::Parse::try_to_parse ($self, $file, $parsename) ;
 	goto ADD_DEFAULTS
 	    if $res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED ;
 	die "Unknown tag return value: $res.\n"

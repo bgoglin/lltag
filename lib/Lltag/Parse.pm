@@ -66,7 +66,6 @@ sub apply_parser {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
-    my $file_type = shift ;
     my $parser = shift ;
     my $confirm = shift ;
     my $behaviors = shift ;
@@ -102,7 +101,7 @@ sub apply_parser {
 	    $i++ ;
 	}
 
-	return confirm_parser ($self, $file, $file_type, $confirm, $behaviors, $values) ;
+	return confirm_parser ($self, $file, $confirm, $behaviors, $values) ;
     } else {
 	return (PARSE_SKIP_PARSER, undef) ;
     }
@@ -248,12 +247,11 @@ sub apply_internal_basename_parsers {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
-    my $file_type = shift ;
 
     # no path, only try each basename parser
     foreach my $basename_parser (@internal_basename_parsers) {
 	# try to tag, with confirmation
-	my ($res, $values) = apply_parser $self, $file, $parsename, $file_type, $basename_parser, 1, PARSE_MAY_PREFER|PARSE_MAY_SKIP_PARSER ;
+	my ($res, $values) = apply_parser $self, $file, $parsename, $basename_parser, 1, PARSE_MAY_PREFER|PARSE_MAY_SKIP_PARSER ;
 	if ($res == PARSE_SUCCESS || $res == PARSE_SUCCESS_PREFERRED || $res == PARSE_ABORT) {
 	    if ($res == PARSE_SUCCESS_PREFERRED) {
 		$preferred_parser = $basename_parser ;
@@ -270,7 +268,6 @@ sub apply_internal_path_basename_parsers {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
-    my $file_type = shift ;
 
     # try each path parser and each basename parser
     foreach my $path_parser (@internal_path_parsers) {
@@ -278,7 +275,7 @@ sub apply_internal_path_basename_parsers {
 	    foreach my $basename_parser (@internal_basename_parsers) {
 		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
-		my ($res, $values) = apply_parser $self, $file, $parsename, $file_type, $whole_parser, 1, PARSE_MAY_PREFER|PARSE_MAY_SKIP_PARSER|PARSE_MAY_SKIP_PATH_PARSER ;
+		my ($res, $values) = apply_parser $self, $file, $parsename, $whole_parser, 1, PARSE_MAY_PREFER|PARSE_MAY_SKIP_PARSER|PARSE_MAY_SKIP_PATH_PARSER ;
 		if ($res == PARSE_SUCCESS || $res == PARSE_SUCCESS_PREFERRED || $res == PARSE_ABORT) {
 		    if ($res == PARSE_SUCCESS_PREFERRED) {
 			$preferred_parser = $whole_parser ;
@@ -402,12 +399,11 @@ sub apply_user_parsers {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
-    my $file_type = shift ;
 
     # try each format until one works
     foreach my $parser (@user_parsers) {
 	# try to tag, without confirmation
-	my ($res, $values) = apply_parser $self, $file, $parsename, $file_type, $parser, 0, PARSE_MAY_PREFER|PARSE_MAY_SKIP_PARSER ;
+	my ($res, $values) = apply_parser $self, $file, $parsename, $parser, 0, PARSE_MAY_PREFER|PARSE_MAY_SKIP_PARSER ;
 	if ($res == PARSE_SUCCESS || $res == PARSE_SUCCESS_PREFERRED || $res == PARSE_ABORT) {
 	    if ($res == PARSE_SUCCESS_PREFERRED) {
 		$preferred_parser = $parser ;
@@ -457,7 +453,6 @@ sub confirm_parser_usage {
 sub confirm_parser {
     my $self = shift ;
     my $file = shift ;
-    my $file_type = shift ;
     my $confirm = shift ;
     my $behaviors = shift ;
     my $values = shift ;
@@ -517,7 +512,6 @@ sub try_to_parse_with_preferred {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
-    my $file_type = shift ;
 
     my $values = undef ;
     my $res ;
@@ -529,7 +523,7 @@ sub try_to_parse_with_preferred {
     print "  Trying to parse filename with the previous matching parser...\n" ;
 
     # there can't be any confirmation here, SKIP is not possible
-    ($res, $values) = apply_parser $self, $file, $parsename, $file_type, $preferred_parser, 0, 0 ;
+    ($res, $values) = apply_parser $self, $file, $parsename, $preferred_parser, 0, 0 ;
     if ($res != PARSE_SKIP_PARSER) {
 	# only SUCCESS if possible
 	die "Unknown tag return value: $res.\n"
@@ -548,7 +542,6 @@ sub try_to_parse {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
-    my $file_type = shift ;
 
     my $values = undef ;
     my $res ;
@@ -556,7 +549,7 @@ sub try_to_parse {
     # try user provided parsers first
     if (@user_parsers) {
 	print "  Trying to parse filename with user-provided formats...\n" ;
-	($res, $values) = apply_user_parsers $self, $file, $parsename, $file_type ;
+	($res, $values) = apply_user_parsers $self, $file, $parsename ;
 	return ($res, $values)
 	    if $res == PARSE_SUCCESS or $res == PARSE_SUCCESS_PREFERRED or $res == PARSE_ABORT ;
     }
@@ -566,9 +559,9 @@ sub try_to_parse {
 	print "  Trying to parse filename with internal formats...\n" ;
 
 	if ($self->{nopath_opt} or not ($parsename =~ /\//)) {
-	    ($res, $values) = apply_internal_basename_parsers $self, $file, $parsename, $file_type ;
+	    ($res, $values) = apply_internal_basename_parsers $self, $file, $parsename ;
 	} else {
-	    ($res, $values) = apply_internal_path_basename_parsers $self, $file, $parsename, $file_type ;
+	    ($res, $values) = apply_internal_path_basename_parsers $self, $file, $parsename ;
 	}
 	return ($res, $values)
 	    if $res == PARSE_SUCCESS or $res == PARSE_SUCCESS_PREFERRED or $res == PARSE_ABORT ;
