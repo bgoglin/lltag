@@ -385,7 +385,8 @@ Lltag::Rename::init_renaming ($self) ;
 # check that the file type is correct
 
 die "Unrecognized file type '$self->{type_opt}'.\n"
-    if $self->{type_opt} ne $mp3_type and $self->{type_opt} ne $ogg_type and $self->{type_opt} ne $flac_type ;
+    if defined $self->{type_opt}
+       and $self->{type_opt} ne $mp3_type and $self->{type_opt} ne $ogg_type and $self->{type_opt} ne $flac_type ;
 
 #######################################################
 # extract file type and parsename
