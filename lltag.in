@@ -461,7 +461,7 @@ sub read_tags {
     my ($status, @output) = &$read_tags_func ($self, $file) ;
     if ($status) {
 	print "  Failed to get tags from file.\n" ;
-	next ;
+	return undef ;
     }
 
     # extract tags from the stream
