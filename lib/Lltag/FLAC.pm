@@ -52,4 +52,15 @@ sub tagging_system_args {
 	     ) ;
 }
 
+sub register_backend {
+    # FIXME: check metaflac
+    return {
+       name => "Flac (using metaflac)",
+       type => "flac",
+       extension => "flac",
+       read_tags => \&read_tags,
+       tagging_system_args => \&tagging_system_args,
+    } ;
+}
+
 1 ;

@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict ;
+no strict "refs" ; # for $backend{$file_type}
 
 require Lltag::Tags ;
 require Lltag::Misc ;
@@ -135,17 +136,6 @@ sub usage {
     print "Report bugs to:  <lltag-users AT gna.org>\n" ;
     exit 1;
 }
-
-#######################################################
-# globals
-
-my $mp3_type = "mp3" ;
-my $ogg_type = "ogg" ;
-my $flac_type = "flac" ;
-
-my $mp3_ext = "mp3" ;
-my $ogg_ext = "ogg" ;
-my $flac_ext = "flac" ;
 
 #######################################################
 # options
@@ -321,9 +311,11 @@ GetOptions(
 	   'maj'          => \$self->{maj_opt},
 	   'sep=s'        => \$self->{sep_opt},
 	   'regexp=s'     => \@{$self->{regexp_opts}},
-	   'mp3'          => sub { $self->{type_opt} = $mp3_type ; },
-	   'ogg'          => sub { $self->{type_opt} = $ogg_type ; },
-	   'flac'         => sub { $self->{type_opt} = $flac_type ; },
+	   # we do not use backends here since it would require to load them
+	   # before parsing the command-line, and is useless anyway
+	   'mp3'          => sub { $self->{type_opt} = "mp3" ; },
+	   'ogg'          => sub { $self->{type_opt} = "ogg" ; },
+	   'flac'         => sub { $self->{type_opt} = "flac" ; },
 	   'type=s'	  => sub { shift ; $self->{type_opt} = shift ; },
 	   'clear'        => \$self->{clear_opt},
 	   'append'       => \$self->{append_opt},
@@ -382,11 +374,53 @@ Lltag::Parse::init_parsing ($self) ;
 Lltag::Rename::init_renaming ($self) ;
 
 #######################################################
+# backends
+
+# hash backends by type
+my %backends = () ;
+
+# hash types by file extention
+my %file_extension_to_backend_type = () ;
+
+# return 0 on success, -1 on error, 1 on busy
+sub register_backend {
+    my $backend = shift ;
+    return -1
+	if not defined $backend ;
+
+    my $backend_extension = $backend->{extension} ;
+    my $backend_type = $backend->{type} ;
+    my $backend_name = $backend->{name} ;
+
+    if (defined $backends{$backend_type}) {
+	print "Failed to register backend '$backend_name' since file type '$backend_type' already exists.\n"
+	    if $self->{verbose_opt} ;
+	return 1 ;
+    }
+    if (defined $file_extension_to_backend_type{$backend_extension}) {
+	print "Failed to register backend '$backend_name' since file extenstion '$backend_extension' already exists.\n"
+	    if $self->{verbose_opt} ;
+	return 1 ;
+    }
+
+    $backends{$backend_type} = $backend ;
+    $file_extension_to_backend_type{$backend_extension} = $backend_type ;
+
+    print "Registered backend '$backend_name' for type '$backend_type' extension '$backend_extension'.\n"
+	if $self->{verbose_opt} ;
+
+    return 0 ;
+}
+
+register_backend (Lltag::MP3::register_backend ()) ;
+register_backend (Lltag::OGG::register_backend ()) ;
+register_backend (Lltag::FLAC::register_backend ()) ;
+
+#######################################################
 # check that the file type is correct
 
 die "Unrecognized file type '$self->{type_opt}'.\n"
-    if defined $self->{type_opt}
-       and $self->{type_opt} ne $mp3_type and $self->{type_opt} ne $ogg_type and $self->{type_opt} ne $flac_type ;
+    if defined $self->{type_opt} and not defined $backends{$self->{type_opt}} ;
 
 #######################################################
 # extract file type and parsename
@@ -404,16 +438,10 @@ sub extract_parsename_and_type {
     }
 
     my $file_type = $self->{type_opt} ;
-    if (not defined $self->{type_opt}) {
+
     # if not forced, get the type from the extension
-	if ($extension =~ /$mp3_ext/i) {
-	    $file_type = $mp3_type ;
-	} elsif ($extension =~ /$ogg_ext/i) {
-	    $file_type = $ogg_type ;
-	} elsif ($extension =~ /$flac_ext/i) {
-	    $file_type = $flac_type ;
-	}
-    }
+    $file_type = $file_extension_to_backend_type{lc($extension)}
+	unless defined $file_type ;
 
     return ($parsename, $file_type) ;
 }
@@ -423,18 +451,11 @@ sub extract_parsename_and_type {
 
 sub read_tags {
     my $file = shift ;
-    my $file_type = shift ;
+    my $backend = shift ;
 
     # extract tags as a stream
-    my $status ;
-    my @output ;
-    if ($file_type eq $mp3_type) {
-	($status, @output) = Lltag::MP3::read_tags ($self, $file) ;
-    } elsif ($file_type eq $ogg_type) {
-	($status, @output) = Lltag::OGG::read_tags ($self, $file) ;
-    } elsif ($file_type eq $flac_type) {
-	($status, @output) = Lltag::FLAC::read_tags ($self, $file) ;
-    }
+    my $read_tags_func = $backend->{read_tags} ;
+    my ($status, @output) = &$read_tags_func ($self, $file) ;
     if ($status) {
 	print "  Failed to get tags from file.\n" ;
 	next ;
@@ -480,7 +501,7 @@ sub apply_regexp_to_tag {
 
 sub tag_with_values {
     my $file = shift ;
-    my $file_type = shift ;
+    my $backend = shift ;
     my $values = shift ;
 
     # is there actually something to do ?
@@ -490,14 +511,9 @@ sub tag_with_values {
     }
 
     # tagging command line
-    my @system_args ;
-    if ($file_type eq $mp3_type) {
-	@system_args = ( (Lltag::MP3::tagging_system_args ($self, $values)), $file) ;
-    } elsif ($file_type eq $ogg_type) {
-	@system_args = ( (Lltag::OGG::tagging_system_args ($self, $values)), $file) ;
-    } elsif ($file_type eq $flac_type) {
-	@system_args = ( (Lltag::FLAC::tagging_system_args ($self, $values)), $file) ;
-    }
+    my $tagging_system_args_func = $backend->{tagging_system_args} ;
+    my @tagging_system_args = &{$tagging_system_args_func} ($self, $values) ;
+    my @system_args = ( @tagging_system_args, $file) ;
 
     # show command line and really tag if asked
     if ($self->{dry_run_opt} or $self->{verbose_opt}) {
@@ -568,8 +584,9 @@ if ($self->{show_tags_opt}) {
 	    print "  Skipping this unknown-type file.\n" ;
 	    next ;
 	}
+	my $backend = $backends{$file_type} ;
 
-	my $values = read_tags $file, $file_type ;
+	my $values = read_tags $file, $backend ;
 
 	foreach my $field (@{$self->{field_names}}, (Lltag::Tags::get_values_non_regular_keys ($self, $values))) {
 	    next if not defined $values->{$field} ;
@@ -597,12 +614,13 @@ while ( @files ) {
 
     my ($parsename, $file_type) = extract_parsename_and_type $file ;
     if (not defined $file_type) {
-	print "  Skipping this unknown-type file '$file'\n" ;
+	print "  Skipping this file '$file' with unknown type.\n" ;
 	goto NEXT_FILE ;
     }
+    my $backend = $backends{$file_type} ;
 
     # read old tags
-    my $old_values = read_tags $file, $file_type ;
+    my $old_values = read_tags $file, $backend ;
 
     # FIXME: parse first, to get the track number?
 
@@ -714,19 +732,12 @@ while ( @files ) {
     $new_values = Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # actually tagging
-    tag_with_values $file, $file_type, $new_values
+    tag_with_values $file, $backend, $new_values
 	unless $self->{no_tagging_opt} ;
 
     # renaming
     if (defined $self->{rename_opt}) {
-	my $extension ;
-	if ($file_type eq $mp3_type) {
-	    $extension = $mp3_ext ;
-	} elsif ($file_type eq $ogg_type) {
-	    $extension = $ogg_ext ;
-	} elsif ($file_type eq $flac_type) {
-	    $extension = $flac_ext ;
-	}
+	my $extension = $backend->{extension} ;
 	Lltag::Rename::rename_with_values ($self, $file, $extension, $new_values) ;
     }
 

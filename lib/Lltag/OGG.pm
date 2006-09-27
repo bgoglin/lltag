@@ -51,4 +51,15 @@ sub tagging_system_args {
 	     ) ;
 }
 
+sub register_backend {
+    # FIXME: check vorbiscomment
+    return {
+       name => "OGG (using vorbiscomment)",
+       type => "ogg",
+       extension => "ogg",
+       read_tags => \&read_tags,
+       tagging_system_args => \&tagging_system_args,
+    } ;
+}
+
 1 ;

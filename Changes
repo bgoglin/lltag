@@ -1,4 +1,6 @@
 
+  * Add a easy-to-use backend interface to help adding support for
+    other file types.
   * Add --type to make file type selection more flexible.
   * Add %F, %E and %P to be replaced by original basename, extension
     and path of the file when renaming.

@@ -47,4 +47,15 @@ sub tagging_system_args {
 	     ) ;
 }
 
+sub register_backend {
+    # FIXME: check mp3info
+    return {
+       name => "MP3 (using mp3info)",
+       type => "mp3",
+       extension => "mp3",
+       read_tags => \&read_tags,
+       tagging_system_args => \&tagging_system_args,
+    } ;
+}
+
 1 ;
