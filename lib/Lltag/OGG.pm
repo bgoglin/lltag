@@ -51,8 +51,20 @@ sub tagging_system_args {
 	     ) ;
 }
 
+sub test_vorbiscomment {
+    my $self = shift ;
+    my ($status, @output) = Lltag::Misc::system_with_output ("vorbiscomment", "-h") ;
+    print "vorbiscomment does not seem to work, disabling 'OGG' backend.\n"
+	if $status and $self->{verbose_opt} ;
+    return $status ;
+}
+
 sub register_backend {
-    # FIXME: check vorbiscomment
+    my $self = shift ;
+
+    return undef
+	if test_vorbiscomment $self ;
+
     return {
        name => "OGG (using vorbiscomment)",
        type => "ogg",

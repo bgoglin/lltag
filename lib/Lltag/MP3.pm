@@ -47,8 +47,20 @@ sub tagging_system_args {
 	     ) ;
 }
 
+sub test_mp3info {
+    my $self = shift ;
+    my ($status, @output) = Lltag::Misc::system_with_output ("mp3info", "-h") ;
+    print "mp3info does not seem to work, disabling 'MP3' backend.\n"
+	if $status and $self->{verbose_opt} ;
+    return $status ;
+}
+
 sub register_backend {
-    # FIXME: check mp3info
+    my $self = shift ;
+
+    return undef
+	if test_mp3info $self ;
+
     return {
        name => "MP3 (using mp3info)",
        type => "mp3",

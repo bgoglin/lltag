@@ -412,9 +412,9 @@ sub register_backend {
     return 0 ;
 }
 
-register_backend (Lltag::MP3::register_backend ()) ;
-register_backend (Lltag::OGG::register_backend ()) ;
-register_backend (Lltag::FLAC::register_backend ()) ;
+register_backend (Lltag::MP3::register_backend ($self)) ;
+register_backend (Lltag::OGG::register_backend ($self)) ;
+register_backend (Lltag::FLAC::register_backend ($self)) ;
 
 #######################################################
 # check that the file type is correct
@@ -437,16 +437,18 @@ sub extract_parsename_and_backend {
 	$parsename = pop @parts ;
     }
 
-    my $backend ;
+    my $file_type ;
     if (defined $self->{type_opt}) {
-	$backend = $backends{$self->{type_opt}} ;
+	$file_type = $self->{type_opt} ;
     } else {
 	# if not forced, get the type from the extension
-	my $file_type = $file_extension_to_backend_type{lc($extension)} ;
-	$backend = $backends{$file_type} ;
+	$file_type = $file_extension_to_backend_type{lc($extension)} ;
     }
 
-    return ($parsename, $backend) ;
+    return ($parsename, undef)
+	unless defined $file_type ;
+
+    return ($parsename, $backends{$file_type}) ;
 }
 
 #######################################################
