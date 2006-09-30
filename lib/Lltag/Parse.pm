@@ -60,6 +60,94 @@ sub parsing_format_usage {
 }
 
 #######################################################
+# parsing confirmation
+
+sub confirm_parser_letters {
+    my $behaviors = shift ;
+    my $string = "[y" ;
+    $string .= "u" if $behaviors & PARSE_MAY_PREFER ;
+    $string .= "a" ;
+    $string .= "n" if $behaviors & PARSE_MAY_SKIP_PARSER ;
+    $string .= "p" if $behaviors & PARSE_MAY_SKIP_PATH_PARSER ;
+    $string .= "q]" ;
+    return $string ;
+}
+
+my $confirm_parser_usage_forced = 1 ;
+
+sub confirm_parser_usage {
+    my $behaviors = shift ;
+    Lltag::Misc::print_usage_header ("  ", "Parsing filenames") ;
+    print "    y => Yes, use this matching (default)\n" ;
+    print "    u => Use this format for all files until one does not match\n"
+	if $behaviors & PARSE_MAY_PREFER ;
+    print "    a => Always yes, stop asking for a confirmation\n" ;
+    print "    n => No, try the next matching format\n"
+	if $behaviors & PARSE_MAY_SKIP_PARSER ;
+    print "    p => No, try the next path matching format\n"
+	if $behaviors & PARSE_MAY_SKIP_PATH_PARSER ;
+    print "    q => Quit parsing, stop trying to parse this filename\n" ;
+    print "    h => Show this help\n" ;
+
+    $confirm_parser_usage_forced = 0 ;
+}
+
+sub confirm_parser {
+    my $self = shift ;
+    my $file = shift ;
+    my $confirm = shift ;
+    my $behaviors = shift ;
+    my $values = shift ;
+
+    # prefer this type of tagging ?
+    my $preferred = 0 ;
+
+    # confirm if required
+    if ($current_parse_ask_opt or ($confirm and !$current_parse_yes_opt)) {
+
+	confirm_parser_usage $behaviors
+	    if $confirm_parser_usage_forced ;
+
+	while (1) {
+	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help) ? ") ;
+	    my $reply = <> ;
+	    chomp $reply ;
+
+	    if ($reply eq "" or $reply =~ /^y/) {
+		last ;
+
+	    } elsif ($reply =~ /^a/) {
+		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
+		last ;
+
+	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/) {
+		$preferred = 1 ;
+		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
+		last ;
+
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/) {
+		return (PARSE_SKIP_PARSER, undef) ;
+
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/) {
+		return (PARSE_SKIP_PATH_PARSER, undef) ;
+
+	    } elsif ($reply =~ /^q/) {
+		return (PARSE_ABORT, undef) ;
+
+	    } else {
+		confirm_parser_usage $behaviors ;
+	    }
+	}
+    }
+
+    if ($preferred) {
+	return (PARSE_SUCCESS_PREFERRED, $values) ;
+    } else {
+	return (PARSE_SUCCESS, $values) ;
+    }
+}
+
+#######################################################
 # actual parsing
 
 sub apply_parser {
@@ -415,94 +503,6 @@ sub apply_user_parsers {
 	die "Unknown tag return value: $res.\n" if $res != PARSE_SKIP_PARSER ;
     }
     return (PARSE_NO_MATCH, undef) ;
-}
-
-#######################################################
-# parsing confirmation
-
-sub confirm_parser_letters {
-    my $behaviors = shift ;
-    my $string = "[y" ;
-    $string .= "u" if $behaviors & PARSE_MAY_PREFER ;
-    $string .= "a" ;
-    $string .= "n" if $behaviors & PARSE_MAY_SKIP_PARSER ;
-    $string .= "p" if $behaviors & PARSE_MAY_SKIP_PATH_PARSER ;
-    $string .= "q]" ;
-    return $string ;
-}
-
-my $confirm_parser_usage_forced = 1 ;
-
-sub confirm_parser_usage {
-    my $behaviors = shift ;
-    Lltag::Misc::print_usage_header ("  ", "Parsing filenames") ;
-    print "    y => Yes, use this matching (default)\n" ;
-    print "    u => Use this format for all files until one does not match\n"
-	if $behaviors & PARSE_MAY_PREFER ;
-    print "    a => Always yes, stop asking for a confirmation\n" ;
-    print "    n => No, try the next matching format\n"
-	if $behaviors & PARSE_MAY_SKIP_PARSER ;
-    print "    p => No, try the next path matching format\n"
-	if $behaviors & PARSE_MAY_SKIP_PATH_PARSER ;
-    print "    q => Quit parsing, stop trying to parse this filename\n" ;
-    print "    h => Show this help\n" ;
-
-    $confirm_parser_usage_forced = 0 ;
-}
-
-sub confirm_parser {
-    my $self = shift ;
-    my $file = shift ;
-    my $confirm = shift ;
-    my $behaviors = shift ;
-    my $values = shift ;
-
-    # prefer this type of tagging ?
-    my $preferred = 0 ;
-
-    # confirm if required
-    if ($current_parse_ask_opt or ($confirm and !$current_parse_yes_opt)) {
-
-	confirm_parser_usage $behaviors
-	    if $confirm_parser_usage_forced ;
-
-	while (1) {
-	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help) ? ") ;
-	    my $reply = <> ;
-	    chomp $reply ;
-
-	    if ($reply eq "" or $reply =~ /^y/) {
-		last ;
-
-	    } elsif ($reply =~ /^a/) {
-		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
-		last ;
-
-	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/) {
-		$preferred = 1 ;
-		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
-		last ;
-
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/) {
-		return (PARSE_SKIP_PARSER, undef) ;
-
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/) {
-		return (PARSE_SKIP_PATH_PARSER, undef) ;
-
-	    } elsif ($reply =~ /^q/) {
-		return (PARSE_ABORT, undef) ;
-
-	    } else {
-		confirm_parser_usage $behaviors ;
-	    }
-	}
-    }
-
-    if ($preferred) {
-	return (PARSE_SUCCESS_PREFERRED, $values) ;
-    } else {
-	return (PARSE_SUCCESS, $values) ;
-    }
 }
 
 #######################################################
