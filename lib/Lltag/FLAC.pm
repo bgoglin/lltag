@@ -5,6 +5,15 @@ use strict ;
 require Lltag::Tags ;
 require Lltag::Misc ;
 
+sub test_metaflac {
+    my $self = shift ;
+    # cannot test with "metaflac -h" since it returns 1
+    my ($status, @output) = Lltag::Misc::system_with_output ("metaflac", "/dev/null") ;
+    print "metaflac does not seem to work, disabling 'Flac' backend.\n"
+        if $status and $self->{verbose_opt} ;
+    return $status ;
+}
+
 sub read_tags {
     my $self = shift ;
     my $file = shift ;
@@ -52,16 +61,7 @@ sub tagging_system_args {
 	     ) ;
 }
 
-sub test_metaflac {
-    my $self = shift ;
-    # cannot test with "metaflac -h" since it returns 1
-    my ($status, @output) = Lltag::Misc::system_with_output ("metaflac", "/dev/null") ;
-    print "metaflac does not seem to work, disabling 'Flac' backend.\n"
-        if $status and $self->{verbose_opt} ;
-    return $status ;
-}
-
-sub register_backend {
+sub new {
     my $self = shift ;
 
     return undef

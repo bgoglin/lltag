@@ -5,6 +5,14 @@ use strict ;
 require Lltag::Tags ;
 require Lltag::Misc ;
 
+sub test_vorbiscomment {
+    my $self = shift ;
+    my ($status, @output) = Lltag::Misc::system_with_output ("vorbiscomment", "-h") ;
+    print "vorbiscomment does not seem to work, disabling 'OGG' backend.\n"
+	if $status and $self->{verbose_opt} ;
+    return $status ;
+}
+
 sub read_tags {
     my $self = shift ;
     my $file = shift ;
@@ -51,15 +59,7 @@ sub tagging_system_args {
 	     ) ;
 }
 
-sub test_vorbiscomment {
-    my $self = shift ;
-    my ($status, @output) = Lltag::Misc::system_with_output ("vorbiscomment", "-h") ;
-    print "vorbiscomment does not seem to work, disabling 'OGG' backend.\n"
-	if $status and $self->{verbose_opt} ;
-    return $status ;
-}
-
-sub register_backend {
+sub new {
     my $self = shift ;
 
     return undef

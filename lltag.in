@@ -412,9 +412,14 @@ sub register_backend {
     return 0 ;
 }
 
-register_backend (Lltag::MP3::register_backend ($self)) ;
-register_backend (Lltag::OGG::register_backend ($self)) ;
-register_backend (Lltag::FLAC::register_backend ($self)) ;
+# register MP3 backend
+register_backend (Lltag::MP3->new ($self) ;
+
+# register OGG backend
+register_backend (Lltag::OGG->new ($self)) ;
+
+# register FLAC backend
+register_backend (Lltag::FLAC->new ($self)) ;
 
 #######################################################
 # check that the file type is correct
