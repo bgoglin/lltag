@@ -118,6 +118,7 @@ sub usage {
     print "  --config <file>        Read additional configuration file\n" ;
     print "  --gencfg <file>        Generate additional configuration file\n" ;
     print " CDDB options:\n" ;
+    print "  --cddb-query <query>   Start with CDDB query <query> by keywords or id\n" ;
     print "  --cddb-server <server> Change the CDDB server and port\n" ;
     print "  --cddb-proxy <server>  Use a HTTP proxy to access the CDDB server\n" ;
     print " Behavior options:\n" ;
@@ -177,6 +178,9 @@ $self->{cddb_server_name} = "www.freedb.org" ;
 $self->{cddb_server_port} = 80 ;
 $self->{cddb_proxy_name} = undef ;
 $self->{cddb_proxy_port} = undef ;
+
+# command line given cddb query, undefined afterwards
+$self->{requested_cddb_query} = undef ;
 
 #######################################################
 # parse config files first
@@ -347,6 +351,7 @@ GetOptions(
 					$self->{cddb_proxy_port} = 80 ;
 				   }
 			     },
+	   'cddb-query=s'    => \$self->{requested_cddb_query},
 	   'v|verbose'    => \$self->{verbose_opt},
 	   'gencfg=s'     => \$self->{gencfg_file},
 	   'h|help'       => sub { usage () ; },
@@ -366,6 +371,10 @@ $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
 			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
 			       and !$self->{list_formats_opt} ) ;
+
+# if --cddb-query is passed, enable cddb too
+$self->{cddb_opt} = 1
+    if defined $self->{requested_cddb_query} ;
 
 # yes/ask option status may vary with user confirmation replies
 my $current_main_yes_opt = $self->{yes_opt} ;

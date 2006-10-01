@@ -44,6 +44,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ --dry-run ]
 .RB [ --yes ]
 .RB [ --ask ]
+.RB [ "--cddb-query <query>" ]
 .RB [ "--cddb-server <server[:port]>" ]
 .RB [ "--cddb-proxy <server[:port]>" ]
 .RB [ -R ]
@@ -129,6 +130,16 @@ below for details.
 Try to find tags in the CDDB online database before trying to parse filenames.
 The queries are sent using the HTTP interface, which means a HTTP proxy might
 be used when required.
+
+.TP
+.BI "--cddb-query" " <keywords>"
+.TP
+.BI "--cddb-query" " <cat>/<id>"
+Automatically search for CD matching <keywords> or matching category <cat>
+and id <id>
+as if the user passed
+.B --cddb
+and entered the query interactively in the module.
 
 .TP
 .BI "--cddb-server" " <server[:port]>"

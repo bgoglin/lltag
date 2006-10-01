@@ -407,8 +407,16 @@ sub get_cddb_tags {
 	if $cddb_keywords_usage_forced ;
 
     while (1) {
-	my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
-	chomp $keywords ;
+	my $keywords ;
+	if (defined $self->{requested_cddb_query}) {
+	    $keywords = $self->{requested_cddb_query} ;
+	    print "  Using command-line given keywords '$self->{requested_cddb_query}'...\n" ;
+	    undef $self->{requested_cddb_query} ;
+	    # FIXME: either put it in the history, or preput it next time
+        } else {
+	    $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
+	    chomp $keywords ;
+	}
 
 	next if $keywords eq '' ;
 
