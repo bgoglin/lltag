@@ -30,7 +30,7 @@ sub init_cddb {
     my $self = shift ;
 
     # default confirmation behavior
-    $current_cddb_yes_opt = $self->{current_yes_opt} ;
+    $current_cddb_yes_opt = $self->{yes_opt} ;
 }
 
 #########################################
@@ -200,26 +200,30 @@ sub get_cddb_tags_from_tracks {
     my $cd = shift ;
     my $tracknumber = undef ;
 
-    if ($current_cddb_yes_opt and defined $previous_track and $previous_track < $cd->{TRACKS}) {
-	$tracknumber = $previous_track + 1 ;
+    # update previous_track to 1 or ++
+    $previous_track = 0
+	unless defined $previous_track ;
+    $previous_track++ ;
+
+    # if automatic mode and still in the CD, let's go
+    if ($current_cddb_yes_opt and $previous_track <= $cd->{TRACKS}) {
+	$tracknumber = $previous_track ;
 	print "    Automatically choosing next CDDB track, #$tracknumber...\n" ;
 	goto FOUND ;
     }
 
+    # either in non-automatic or reached the end of the CD, dump the contents
     print_cd $cd ;
 
-    if (defined $previous_track and $previous_track == $cd->{TRACKS}) {
-	undef $previous_track ;
+    # reached the end of CD, reset to the beginning
+    if ($previous_track == $cd->{TRACKS} + 1) {
+	$previous_track = 1;
 	if ($current_cddb_yes_opt) {
 	    Lltag::Misc::print_warning ("  ", "Reached the end of the CD, returning to interactive mode") ;
 	    # return to previous confirmation behavior
 	    $current_cddb_yes_opt = $self->{yes_opt} ;
 	}
     }
-
-    $previous_track = 0
-	unless defined $previous_track ;
-    $previous_track++ ;
 
     cddb_track_usage
 	if $cddb_track_usage_forced ;

@@ -45,7 +45,6 @@ sub init_renaming {
     $current_rename_yes_opt = $self->{yes_opt} ;
 }
 
-
 #######################################################
 # rename confirmation
 
