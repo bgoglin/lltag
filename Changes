@@ -1,9 +1,10 @@
 
-  * Add --cddb-query to search in CDDB automatically from the command
-    line with either keywords or category.id.
-  * Add 'a' and '<index> a' to switch to automatic CDDB mode while
-    choosing a track in a CD.
-  * Fix automization of CDDB with --yes.
+  * Improve automatization of CDDB:
+    + Add --cddb-query to search in CDDB automatically from the
+      command-line with either keywords or category/id.
+    + Add 'a' and '<index> a' to switch to automatic CDDB mode
+      while interactively choosing a track in a CD.
+    + Fix automization of CDDB with --yes.
   * When using 'a' to switch to automatic mode, only change the mode
     for the local menu (i.e. automatic parsing does not make automatic
     tagging or CDDB usage).
