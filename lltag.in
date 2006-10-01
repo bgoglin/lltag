@@ -413,7 +413,7 @@ sub register_backend {
 }
 
 # register MP3 backend
-register_backend (Lltag::MP3->new ($self) ;
+register_backend (Lltag::MP3->new ($self)) ;
 
 # register OGG backend
 register_backend (Lltag::OGG->new ($self)) ;
