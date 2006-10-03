@@ -1,3 +1,4 @@
+lltag (0.12.1)
 
   * Improve automatization of CDDB:
     + Add --cddb-query to search in CDDB automatically from the
@@ -22,6 +23,7 @@
     access modular functions by prefixing with the module name.
   * Improve some messages.
 
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 03 Oct 2006 16:22:00 +0200
 
 lltag (0.12)
 
