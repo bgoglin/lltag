@@ -89,11 +89,13 @@ sub dummy_readline {
     my $clear_allowed = shift ;
     # 0 = no clearing, 1 = clearing allowed and documented, -1 = clearing allowed (normal behavior)
     $preput = "" if not defined $preput ;
-    print $indent."The current value is given in parenthesis, <ENTER> to keep it"
-	. ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
-	. ".\n"
-	if $readline_firsttime ;
-    $readline_firsttime = 0 ;
+    if ($readline_firsttime) {
+	print $indent."You might want to install an advanced Perl readline module such as 'Term::ReadLine::GNU'.\n" ;
+	print $indent."The current value is given in parenthesis, <ENTER> to keep it"
+	    . ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
+	    . ".\n" ;
+	$readline_firsttime = 0 ;
+    }
   ASK:
     my $val = $term->readline ("$indent$prompt ($preput) ? ") ;
     return $preput if !$val ;
