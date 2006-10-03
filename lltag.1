@@ -32,6 +32,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ "--sep\ <s1|s2|...>" ]
 .RB [ "--regexp <regexp>" ]
 .RB [ --mp3/--ogg/--flac ]
+.RB [ "--type <type>" ]
 .RB [ --clear ]
 .RB [ --append ]
 .RB [ --no-tagging ]
@@ -43,6 +44,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ --dry-run ]
 .RB [ --yes ]
 .RB [ --ask ]
+.RB [ "--cddb-query <query>" ]
 .RB [ "--cddb-server <server[:port]>" ]
 .RB [ "--cddb-proxy <server[:port]>" ]
 .RB [ -R ]
@@ -128,6 +130,16 @@ below for details.
 Try to find tags in the CDDB online database before trying to parse filenames.
 The queries are sent using the HTTP interface, which means a HTTP proxy might
 be used when required.
+
+.TP
+.BI "--cddb-query" " <keywords>"
+.TP
+.BI "--cddb-query" " <cat>/<id>"
+Automatically search for CD matching <keywords> or matching category <cat>
+and id <id>
+as if the user passed
+.B --cddb
+and entered the query interactively in the module.
 
 .TP
 .BI "--cddb-server" " <server[:port]>"
@@ -322,6 +334,12 @@ Note that mp3 tags do not support whatever
 .IR TAG .
 
 .TP
+.BI "--type" " <type>"
+Tag all files as
+.B <type>
+files.
+
+.TP
 .B "-v, --verbose"
 Show verbose messages.
 
@@ -458,6 +476,12 @@ Once a CD have been chosen, the user needs to choose a track
 .B <index>
 Choose a track of the current CD
 .TP
+.B <index> a
+Choose a track and do not ask for confirmation anymore
+.TP
+.B a
+Use default track and do not ask for confirmation anymore
+.TP
 .B E
 Edit current CD common tags, see
 .B EDITING MENU
@@ -520,6 +544,8 @@ Skip the current file, don't tag it at all.
 It is possible to edit tags, either before tagging or file, or before
 choosing a track in a CD obtained by CDDB.
 The current value of all regular fields is shown and may be modified
+by entering another value, deleted by entering
+.BR <DELETE> ,
 or cleared.
 
 The behavior depends on the installed readline library.
@@ -614,6 +640,18 @@ to match anything and ignore it.
 
 .I "%%"
 to match %.
+
+Additionaly, while renaming, the following codes are available:
+.RS
+
+.I "%F"
+is replaced by the original basename of the file.
+
+.I "%E"
+is replaced by the original extension of the file.
+
+.I "%P"
+is replaced by the original path of the file.
 
 
 

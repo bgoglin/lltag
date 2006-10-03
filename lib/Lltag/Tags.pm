@@ -3,18 +3,6 @@ package Lltag::Tags ;
 use strict ;
 no strict "refs" ;
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      append_tag_value
-	      get_tag_value_array
-	      get_tag_unique_value
-	      get_values_non_regular_keys
-	      get_values_non_regular_keys
-	      get_additional_tag_values
-	      edit_values
-	      ) ;
-
 # add a value to a field, creating an array if required
 sub append_tag_value {
     my $self = shift ;
@@ -102,9 +90,6 @@ sub get_additional_tag_values {
 
 my $edit_values_usage_forced = 1 ;
 
-# FIXME: y for E, q for C
-
-# FIXME: needs a default
 sub edit_values_usage {
     my $self = shift ;
     my $values = shift ;
@@ -130,6 +115,7 @@ sub edit_values_usage {
     print "      V => View current fields\n" ;
     print "      y/E => End edition\n" ;
     print "      q/C => Cancel edition\n" ;
+    print "    During edition, enter <DELETE> to drop a value.\n" ;
 
     $edit_values_usage_forced = 0 ;
 }
@@ -151,14 +137,18 @@ sub edit_values {
 	if $edit_values_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default
 	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."Vyq] (no default, h for help) ? ") ;
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
 
 	if ($edit_reply =~ /^($letters_union)/) {
 	    my $field = $self->{field_letter_name}{$1} ;
-	    $values->{$field} = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+	    if ($value eq "DELETE" or $value eq "<DELETE>") {
+		delete $values->{$field} ;
+	    } else {
+		$values->{$field} = $value ;
+	    }
 
 	} elsif ($edit_reply =~ /^y/ or $edit_reply =~ /^E/) {
 	    return $values ;

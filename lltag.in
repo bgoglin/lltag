@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict ;
+no strict "refs" ; # for $backend{$file_type}
 
 require Lltag::Tags ;
 require Lltag::Misc ;
@@ -101,7 +102,8 @@ sub usage {
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "  --regexp <regexp>      Apply a replace regexp to tags before tagging\n" ;
-    print "  --mp3/--ogg/--flac     Force mp3, ogg of flac instead of by-extension detection\n" ;
+    print "  --mp3/--ogg/--flac     Force mp3, ogg or flac instead of by-extension detection\n" ;
+    print "  --type <type>          Force <tyle> instead of by-extension detection\n" ;
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
     print "  --no-tagging           Do not actually tag files\n" ;
@@ -116,6 +118,7 @@ sub usage {
     print "  --config <file>        Read additional configuration file\n" ;
     print "  --gencfg <file>        Generate additional configuration file\n" ;
     print " CDDB options:\n" ;
+    print "  --cddb-query <query>   Start with CDDB query <query> by keywords or id\n" ;
     print "  --cddb-server <server> Change the CDDB server and port\n" ;
     print "  --cddb-proxy <server>  Use a HTTP proxy to access the CDDB server\n" ;
     print " Behavior options:\n" ;
@@ -124,24 +127,16 @@ sub usage {
     print "  -L, --list             List internal formats\n" ;
     print "  -V, --version          Show lltag version\n" ;
     print "  -h, --help             Show this help\n" ;
-    Lltag::Parse::parsing_usage ($self) ;
+    print " Format is composed of anything you want with special fields:\n" ;
+    print map { "  %". $self->{field_name_letter}{$_} ." means ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
+    Lltag::Parse::parsing_format_usage ($self) ;
+    Lltag::Rename::rename_format_usage ($self) ;
     print "\n" ;
     print "Author:    Brice Goglin\n" ;
     print "Homepage:  http://home.gna.org/lltag\n" ;
     print "Report bugs to:  <lltag-users AT gna.org>\n" ;
     exit 1;
 }
-
-#######################################################
-# globals
-
-my $mp3_type = "mp3" ;
-my $ogg_type = "ogg" ;
-my $flac_type = "flac" ;
-
-my $mp3_ext = "mp3" ;
-my $ogg_ext = "ogg" ;
-my $flac_ext = "flac" ;
 
 #######################################################
 # options
@@ -184,6 +179,9 @@ $self->{cddb_server_port} = 80 ;
 $self->{cddb_proxy_name} = undef ;
 $self->{cddb_proxy_port} = undef ;
 
+# command line given cddb query, undefined afterwards
+$self->{requested_cddb_query} = undef ;
+
 #######################################################
 # parse config files first
 
@@ -224,8 +222,6 @@ sub process_option {
     } elsif (/^type\s*=\s*(.+)$/) {
 	if ($1 eq "none") {
 	    $self->{type_opt} = undef ;
-	} elsif ($1 ne $mp3_type and $1 ne $ogg_type and $1 ne $flac_type) {
-	    die "Unrecognized type '$1' line #$\n" ;
 	} else {
 	    $self->{type_opt} = $1 ;
 	}
@@ -319,9 +315,12 @@ GetOptions(
 	   'maj'          => \$self->{maj_opt},
 	   'sep=s'        => \$self->{sep_opt},
 	   'regexp=s'     => \@{$self->{regexp_opts}},
-	   'mp3'          => sub { $self->{type_opt} = $mp3_type ; },
-	   'ogg'          => sub { $self->{type_opt} = $ogg_type ; },
-	   'flac'         => sub { $self->{type_opt} = $flac_type ; },
+	   # we do not use backends here since it would require to load them
+	   # before parsing the command-line, and is useless anyway
+	   'mp3'          => sub { $self->{type_opt} = "mp3" ; },
+	   'ogg'          => sub { $self->{type_opt} = "ogg" ; },
+	   'flac'         => sub { $self->{type_opt} = "flac" ; },
+	   'type=s'	  => sub { shift ; $self->{type_opt} = shift ; },
 	   'clear'        => \$self->{clear_opt},
 	   'append'       => \$self->{append_opt},
 	   'no-tagging'   => \$self->{no_tagging_opt},
@@ -352,6 +351,7 @@ GetOptions(
 					$self->{cddb_proxy_port} = 80 ;
 				   }
 			     },
+	   'cddb-query=s'    => \$self->{requested_cddb_query},
 	   'v|verbose'    => \$self->{verbose_opt},
 	   'gencfg=s'     => \$self->{gencfg_file},
 	   'h|help'       => sub { usage () ; },
@@ -366,25 +366,80 @@ GetOptions(
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
 
-# yes/ask option status may vary with user confirmation replies
-$self->{current_yes_opt} = $self->{yes_opt} ;
-$self->{current_ask_opt} = $self->{ask_opt} ;
-
-# confirmation when renaming
-$self->{current_rename_yes_opt} = $self->{yes_opt} ;
-
 # if no user parsers, no defaults, no guess and no cddb, force guess
 $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
 			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
 			       and !$self->{list_formats_opt} ) ;
 
+# if --cddb-query is passed, enable cddb too
+$self->{cddb_opt} = 1
+    if defined $self->{requested_cddb_query} ;
+
+# yes/ask option status may vary with user confirmation replies
+my $current_main_yes_opt = $self->{yes_opt} ;
+Lltag::CDDB::init_cddb ($self) ;
 Lltag::Parse::init_parsing ($self) ;
+Lltag::Rename::init_renaming ($self) ;
 
 #######################################################
-# extract file type and parsename
+# backends
 
-sub extract_parsename_and_type {
+# hash backends by type
+my %backends = () ;
+
+# hash types by file extention
+my %file_extension_to_backend_type = () ;
+
+# return 0 on success, -1 on error, 1 on busy
+sub register_backend {
+    my $backend = shift ;
+    return -1
+	if not defined $backend ;
+
+    my $backend_extension = $backend->{extension} ;
+    my $backend_type = $backend->{type} ;
+    my $backend_name = $backend->{name} ;
+
+    if (defined $backends{$backend_type}) {
+	print "Failed to register backend '$backend_name' since file type '$backend_type' already exists.\n"
+	    if $self->{verbose_opt} ;
+	return 1 ;
+    }
+    if (defined $file_extension_to_backend_type{$backend_extension}) {
+	print "Failed to register backend '$backend_name' since file extenstion '$backend_extension' already exists.\n"
+	    if $self->{verbose_opt} ;
+	return 1 ;
+    }
+
+    $backends{$backend_type} = $backend ;
+    $file_extension_to_backend_type{$backend_extension} = $backend_type ;
+
+    print "Registered backend '$backend_name' for type '$backend_type' extension '$backend_extension'.\n"
+	if $self->{verbose_opt} ;
+
+    return 0 ;
+}
+
+# register MP3 backend
+register_backend (Lltag::MP3->new ($self)) ;
+
+# register OGG backend
+register_backend (Lltag::OGG->new ($self)) ;
+
+# register FLAC backend
+register_backend (Lltag::FLAC->new ($self)) ;
+
+#######################################################
+# check that the file type is correct
+
+die "Unrecognized file type '$self->{type_opt}'.\n"
+    if defined $self->{type_opt} and not defined $backends{$self->{type_opt}} ;
+
+#######################################################
+# extract backend and parsename
+
+sub extract_parsename_and_backend {
     my $file = shift ;
 
     # split into parsename and extension, and remove the path if asked
@@ -396,19 +451,18 @@ sub extract_parsename_and_type {
 	$parsename = pop @parts ;
     }
 
-    my $file_type = $self->{type_opt} ;
-    if (not defined $self->{type_opt}) {
-    # if not forced, get the type from the extension
-	if ($extension =~ /$mp3_ext/i) {
-	    $file_type = $mp3_type ;
-	} elsif ($extension =~ /$ogg_ext/i) {
-	    $file_type = $ogg_type ;
-	} elsif ($extension =~ /$flac_ext/i) {
-	    $file_type = $flac_type ;
-	}
+    my $file_type ;
+    if (defined $self->{type_opt}) {
+	$file_type = $self->{type_opt} ;
+    } else {
+	# if not forced, get the type from the extension
+	$file_type = $file_extension_to_backend_type{lc($extension)} ;
     }
 
-    return ($parsename, $file_type) ;
+    return ($parsename, undef)
+	unless defined $file_type ;
+
+    return ($parsename, $backends{$file_type}) ;
 }
 
 #######################################################
@@ -416,21 +470,14 @@ sub extract_parsename_and_type {
 
 sub read_tags {
     my $file = shift ;
-    my $file_type = shift ;
+    my $backend = shift ;
 
     # extract tags as a stream
-    my $status ;
-    my @output ;
-    if ($file_type eq $mp3_type) {
-	($status, @output) = Lltag::MP3::read_tags ($self, $file) ;
-    } elsif ($file_type eq $ogg_type) {
-	($status, @output) = Lltag::OGG::read_tags ($self, $file) ;
-    } elsif ($file_type eq $flac_type) {
-	($status, @output) = Lltag::FLAC::read_tags ($self, $file) ;
-    }
+    my $read_tags_func = $backend->{read_tags} ;
+    my ($status, @output) = &$read_tags_func ($self, $file) ;
     if ($status) {
 	print "  Failed to get tags from file.\n" ;
-	next ;
+	return undef ;
     }
 
     # extract tags from the stream
@@ -473,7 +520,7 @@ sub apply_regexp_to_tag {
 
 sub tag_with_values {
     my $file = shift ;
-    my $file_type = shift ;
+    my $backend = shift ;
     my $values = shift ;
 
     # is there actually something to do ?
@@ -483,14 +530,9 @@ sub tag_with_values {
     }
 
     # tagging command line
-    my @system_args ;
-    if ($file_type eq $mp3_type) {
-	@system_args = ( (Lltag::MP3::tagging_system_args ($self, $values)), $file) ;
-    } elsif ($file_type eq $ogg_type) {
-	@system_args = ( (Lltag::OGG::tagging_system_args ($self, $values)), $file) ;
-    } elsif ($file_type eq $flac_type) {
-	@system_args = ( (Lltag::FLAC::tagging_system_args ($self, $values)), $file) ;
-    }
+    my $tagging_system_args_func = $backend->{tagging_system_args} ;
+    my @tagging_system_args = &{$tagging_system_args_func} ($self, $values) ;
+    my @system_args = ( @tagging_system_args, $file) ;
 
     # show command line and really tag if asked
     if ($self->{dry_run_opt} or $self->{verbose_opt}) {
@@ -556,13 +598,13 @@ if ($self->{show_tags_opt}) {
 	print "$file:\n"
 	    if @files ;
 
-	my ($parsename, $file_type) = extract_parsename_and_type $file ;
-	if (not defined $file_type) {
+	my ($parsename, $backend) = extract_parsename_and_backend $file ;
+	if (not defined $backend) {
 	    print "  Skipping this unknown-type file.\n" ;
 	    next ;
 	}
 
-	my $values = read_tags $file, $file_type ;
+	my $values = read_tags $file, $backend ;
 
 	foreach my $field (@{$self->{field_names}}, (Lltag::Tags::get_values_non_regular_keys ($self, $values))) {
 	    next if not defined $values->{$field} ;
@@ -588,14 +630,14 @@ while ( @files ) {
     print "\n" ;
     print "Processing file \"".$file."\"...\n" ;
 
-    my ($parsename, $file_type) = extract_parsename_and_type $file ;
-    if (not defined $file_type) {
-	print "  Skipping this unknown-type file '$file'\n" ;
+    my ($parsename, $backend) = extract_parsename_and_backend $file ;
+    if (not defined $backend) {
+	print "  Skipping this file '$file' with unknown type.\n" ;
 	goto NEXT_FILE ;
     }
 
     # read old tags
-    my $old_values = read_tags $file, $file_type ;
+    my $old_values = read_tags $file, $backend ;
 
     # FIXME: parse first, to get the track number?
 
@@ -603,7 +645,7 @@ while ( @files ) {
     while (1) {
 
 	# try preferred parser first
-	($res, $values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename, $file_type) ;
+	($res, $values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename) ;
 	goto ADD_DEFAULTS
 	    if $res == Lltag::Parse->PARSE_SUCCESS ;
 	die "Unknown tag return value: $res.\n"
@@ -625,7 +667,7 @@ while ( @files ) {
 
 	# try to parse this file
       TRY_PARSE:
-	($res, $values) = Lltag::Parse::try_to_parse ($self, $file, $parsename, $file_type) ;
+	($res, $values) = Lltag::Parse::try_to_parse ($self, $file, $parsename) ;
 	goto ADD_DEFAULTS
 	    if $res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED ;
 	die "Unknown tag return value: $res.\n"
@@ -640,14 +682,18 @@ while ( @files ) {
 	}
 
       CONFIRM:
-	print "    Current tag values are:\n" ;
-	foreach my $field (@{$self->{field_names}}) {
-	    print "      ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
-		if defined $values->{$field} ;
+	if (keys %{$values}) {
+	    print "    Current tag values are:\n" ;
+	    foreach my $field (@{$self->{field_names}}) {
+		print "      ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
+		    if defined $values->{$field} ;
+	    }
+	} else {
+	    print "    There are no current tag values.\n" ;
 	}
 
 	goto TAG
-	    if $self->{current_yes_opt} ;
+	    if $current_main_yes_opt ;
 
 	while (1) {
 	    Lltag::Misc::print_question ("  Use these tag values [yaPCEDqQ] (default is yes, h for help) ? ") ;
@@ -671,8 +717,7 @@ while ( @files ) {
 		if $confirm_reply =~ /^Q/ ;
 
 	    if ($confirm_reply =~ /^a/) {
-		# FIXME: only change the yes_opt of the main menu, do not touch ask/yes of parsing and others
-		$self->{current_ask_opt} = 0 ; $self->{current_yes_opt} = 1 ;
+		$current_main_yes_opt = 1 ;
 		goto TAG ;
 
 	    } elsif ($confirm_reply =~ /^E/) {
@@ -708,19 +753,12 @@ while ( @files ) {
     $new_values = Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # actually tagging
-    tag_with_values $file, $file_type, $new_values
+    tag_with_values $file, $backend, $new_values
 	unless $self->{no_tagging_opt} ;
 
     # renaming
     if (defined $self->{rename_opt}) {
-	my $extension ;
-	if ($file_type eq $mp3_type) {
-	    $extension = $mp3_ext ;
-	} elsif ($file_type eq $ogg_type) {
-	    $extension = $ogg_ext ;
-	} elsif ($file_type eq $flac_type) {
-	    $extension = $flac_ext ;
-	}
+	my $extension = $backend->{extension} ;
 	Lltag::Rename::rename_with_values ($self, $file, $extension, $new_values) ;
     }
 

@@ -5,12 +5,14 @@ use strict ;
 require Lltag::Tags ;
 require Lltag::Misc ;
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      read_tags
-	      tagging_system_args
-	  ) ;
+sub test_metaflac {
+    my $self = shift ;
+    # cannot test with "metaflac -h" since it returns 1
+    my ($status, @output) = Lltag::Misc::system_with_output ("metaflac", "/dev/null") ;
+    print "metaflac does not seem to work, disabling 'Flac' backend.\n"
+        if $status and $self->{verbose_opt} ;
+    return $status ;
+}
 
 sub read_tags {
     my $self = shift ;
@@ -57,6 +59,21 @@ sub tagging_system_args {
 		 } Lltag::Tags::get_values_non_regular_keys ($self, $values)
 	       ),
 	     ) ;
+}
+
+sub new {
+    my $self = shift ;
+
+    return undef
+	if test_metaflac $self ;
+
+    return {
+       name => "Flac (using metaflac)",
+       type => "flac",
+       extension => "flac",
+       read_tags => \&read_tags,
+       tagging_system_args => \&tagging_system_args,
+    } ;
 }
 
 1 ;

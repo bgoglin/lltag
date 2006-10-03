@@ -4,6 +4,17 @@ use strict ;
 
 use Lltag::Misc ;
 
+# constants for rename format specific letters
+use constant DIRNAME_LETTER => "P" ;
+use constant BASENAME_LETTER => "F" ;
+use constant EXTENSION_LETTER => "E" ;
+
+# confirmation behavior
+my $current_rename_yes_opt ;
+
+#######################################################
+# rename specific usage
+
 sub rename_usage {
     my $self = shift ;
     print " Renaming options:\n" ;
@@ -13,6 +24,29 @@ sub rename_usage {
     print "  --rename-regexp <reg>  Apply a replace regexp to tags before renaming\n" ;
     print "  --rename-ext           Assume the rename format provides an extension\n" ;
 }
+
+#######################################################
+# rename format specific usage
+
+sub rename_format_usage {
+    my $self = shift ;
+    print "  %".BASENAME_LETTER." means the original basename of the file\n" ;
+    print "  %".EXTENSION_LETTER." means the original extension of the file\n" ;
+    print "  %".DIRNAME_LETTER." means the original path of the file\n" ;
+}
+
+#######################################################
+# init
+
+sub init_renaming {
+    my $self = shift ;
+
+    # default confirmation behavior
+    $current_rename_yes_opt = $self->{yes_opt} ;
+}
+
+#######################################################
+# rename confirmation
 
 my $rename_confirm_usage_forced = 1 ;
 
@@ -25,6 +59,9 @@ sub rename_confirm_usage {
     print "      h => Show this help\n" ;
     $rename_confirm_usage_forced = 0 ;
 }
+
+#######################################################
+# main rename routine
 
 sub rename_with_values {
     my $self = shift ;
@@ -76,6 +113,36 @@ sub rename_with_values {
 		$val = '0'.$val if $val < 10 and length $val < 2 ;
 	    }
 	    $array[$i] = $val ;
+
+	} elsif ($char eq BASENAME_LETTER) {
+	    my $basename ;
+	    if ($file =~ m@([^/]+)\.[^./]+$@) {
+		$basename = $1 ;
+	    } elsif ($file =~ m@([^/]+)$@) {
+		$basename = $1 ;
+	    } else {
+		$basename = $file ;
+	    }
+	    $array[$i] = $basename ;
+
+	} elsif ($char eq EXTENSION_LETTER) {
+	    my $extension ;
+	    if ($file =~ m@\.([^./]+)$@) {
+		$extension = $1 ;
+	    } else {
+		$extension = "" ;
+	    }
+	    $array[$i] = $extension ;
+
+	} elsif ($char eq DIRNAME_LETTER) {
+	    my $path ;
+	    if ($file =~ m@^(.*/)[^/]+@) {
+		$path = $1 ;
+	    } else {
+		$path = "" ;
+	    }
+	    $array[$i] = $1 ;
+
 	} else {
 	    $array[$i] = "%".$char ;
 	}
@@ -89,7 +156,7 @@ sub rename_with_values {
     print "    New filename is '$new_name'\n" ;
 
     # confirm if required or if any field undefined
-    if ($undefined or !$self->{current_rename_yes_opt}) {
+    if ($undefined or !$current_rename_yes_opt) {
 
 	rename_confirm_usage
 	    if $rename_confirm_usage_forced ;
@@ -103,7 +170,7 @@ sub rename_with_values {
             goto RENAME_IT ;
 
 	} elsif ($reply =~ /^a/) {
-	    $self->{current_rename_yes_opt} = 1 ;
+	    $current_rename_yes_opt = 1 ;
             goto RENAME_IT ;
 
 	} elsif ($reply =~ /^n/ or $reply =~ /^q/) {

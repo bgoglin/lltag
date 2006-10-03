@@ -6,14 +6,6 @@ use IO::Socket ;
 
 use Lltag::Misc ;
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      get_cddb_tags
-	      CDDB_SUCCESS
-	      CDDB_ABORT
-	      ) ;
-
 # return values that are passed to lltag
 use constant CDDB_SUCCESS => 0 ;
 use constant CDDB_ABORT => -1 ;
@@ -26,6 +18,20 @@ use constant CDDB_ABORT_TO_CDIDS => -11 ;
 my $previous_cdids = undef ;
 my $previous_cd = undef ;
 my $previous_track = undef ;
+
+# confirmation behavior
+# FIXME: find a way to enable it
+my $current_cddb_yes_opt = undef ;
+
+#########################################
+# init
+
+sub init_cddb {
+    my $self = shift ;
+
+    # default confirmation behavior
+    $current_cddb_yes_opt = $self->{yes_opt} ;
+}
 
 #########################################
 # low level CDDB http requests
@@ -165,6 +171,8 @@ my $cddb_track_usage_forced = 1 ;
 sub cddb_track_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose Track in CDDB CD") ;
     print "      <index> => Choose a track of the current CD (current default is Track $previous_track)\n" ;
+    print "      <index> a => Choose a track and do not ask for confirmation anymore\n" ;
+    print "      a => Use default track and do not ask for confirmation anymore\n" ;
     print "      E => Edit current CD common tags\n" ;
     print "      v => View the list of CD matching the keywords\n" ;
     print "      c => Change the CD chosen in keywords query results list\n" ;
@@ -192,28 +200,36 @@ sub get_cddb_tags_from_tracks {
     my $cd = shift ;
     my $tracknumber = undef ;
 
-    print_cd $cd ;
-
-    if ($self->{current_yes_opt} and defined $previous_track and $previous_track < $cd->{TRACKS}) {
-	$tracknumber = $previous_track + 1 ;
-	goto FOUND ;
-    }
-
-    if (defined $previous_track and $previous_track == $cd->{TRACKS}) {
-	Lltag::Misc::print_warning ("  ", "Reached the end of the CD, returning to interactive mode") ;
-	undef $previous_track ;
-	# FIXME: disable current_yes_opt ?
-    }
-
+    # update previous_track to 1 or ++
     $previous_track = 0
 	unless defined $previous_track ;
     $previous_track++ ;
+
+    # if automatic mode and still in the CD, let's go
+    if ($current_cddb_yes_opt and $previous_track <= $cd->{TRACKS}) {
+	$tracknumber = $previous_track ;
+	print "    Automatically choosing next CDDB track, #$tracknumber...\n" ;
+	goto FOUND ;
+    }
+
+    # either in non-automatic or reached the end of the CD, dump the contents
+    print_cd $cd ;
+
+    # reached the end of CD, reset to the beginning
+    if ($previous_track == $cd->{TRACKS} + 1) {
+	$previous_track = 1;
+	if ($current_cddb_yes_opt) {
+	    Lltag::Misc::print_warning ("  ", "Reached the end of the CD, returning to interactive mode") ;
+	    # return to previous confirmation behavior
+	    $current_cddb_yes_opt = $self->{yes_opt} ;
+	}
+    }
 
     cddb_track_usage
 	if $cddb_track_usage_forced ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter track index [<index>Evckq]".
+	Lltag::Misc::print_question "  Enter track index [<index>aEvckq]".
 	    " (default is Track $previous_track, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
@@ -240,6 +256,15 @@ sub get_cddb_tags_from_tracks {
 	    print_cd $cd ;
 	    next ;
 	} ;
+
+	if ($reply =~ /^a/) {
+	    $reply = $previous_track ;
+	    $current_cddb_yes_opt = 1 ;
+	}
+	if ($reply =~ /^(\d+) *a/) {
+	    $current_cddb_yes_opt = 1 ;
+	    $reply = $1 ;
+	}
 
 	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= $cd->{TRACKS}) {
 	    $tracknumber = $reply ;
@@ -271,7 +296,6 @@ sub get_cddb_tags_from_tracks {
 
 my $cddb_cd_usage_forced = 1 ;
 
-# FIXME: needs a default ?
 sub cddb_cd_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose CD in CDDB Query Results") ;
     print "      <index> => Choose a CD in the current keywords query results list\n" ;
@@ -322,12 +346,10 @@ sub get_cddb_tags_from_cdids {
 	if $cddb_cd_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default ?
 	Lltag::Misc::print_question "  Enter CD index [<index>vkq] (no default, h for help) ? " ;
 	my $reply = <> ;
 	chomp $reply ;
 
-	# FIXME: needs a default ?
 	next if $reply eq '' ;
 
 	return (CDDB_ABORT, undef)
@@ -355,7 +377,6 @@ sub get_cddb_tags_from_cdids {
 
 my $cddb_keywords_usage_forced = 1 ;
 
-# FIXME: needs a default ?
 sub cddb_keywords_usage {
     Lltag::Misc::print_usage_header ("    ", "CDDB Query by Keywords") ;
     print "      <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
@@ -390,11 +411,17 @@ sub get_cddb_tags {
 	if $cddb_keywords_usage_forced ;
 
     while (1) {
-	# FIXME: needs a default ?
-	my $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
-	chomp $keywords ;
+	my $keywords ;
+	if (defined $self->{requested_cddb_query}) {
+	    $keywords = $self->{requested_cddb_query} ;
+	    print "  Using command-line given keywords '$self->{requested_cddb_query}'...\n" ;
+	    undef $self->{requested_cddb_query} ;
+	    # FIXME: either put it in the history, or preput it next time
+        } else {
+	    $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
+	    chomp $keywords ;
+	}
 
-	# FIXME: needs a default ?
 	next if $keywords eq '' ;
 
 	# be careful to match the whole reply, not only the first char
@@ -441,6 +468,11 @@ sub get_cddb_tags {
 	my $cdids ;
 	($res, $cdids) = cddb_query_cd_by_keywords $self, $keywords, $fields, $cats ;
 	goto ABORT if $res == CDDB_ABORT ;
+
+	if (!@{$cdids}) {
+	    print "    No CD found.\n" ;
+	    next ;
+	}
 
 	$previous_cdids = $cdids ;
 	$previous_cd = undef ;

@@ -5,13 +5,13 @@ use strict ;
 require Lltag::Tags ;
 require Lltag::Misc ;
 
-#use Exporter ;
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      read_tags
-	      tagging_system_args
-	  ) ;
+sub test_vorbiscomment {
+    my $self = shift ;
+    my ($status, @output) = Lltag::Misc::system_with_output ("vorbiscomment", "-h") ;
+    print "vorbiscomment does not seem to work, disabling 'OGG' backend.\n"
+	if $status and $self->{verbose_opt} ;
+    return $status ;
+}
 
 sub read_tags {
     my $self = shift ;
@@ -57,6 +57,21 @@ sub tagging_system_args {
 		 } Lltag::Tags::get_values_non_regular_keys ($self, $values)
 	       ),
 	     ) ;
+}
+
+sub new {
+    my $self = shift ;
+
+    return undef
+	if test_vorbiscomment $self ;
+
+    return {
+       name => "OGG (using vorbiscomment)",
+       type => "ogg",
+       extension => "ogg",
+       read_tags => \&read_tags,
+       tagging_system_args => \&tagging_system_args,
+    } ;
 }
 
 1 ;

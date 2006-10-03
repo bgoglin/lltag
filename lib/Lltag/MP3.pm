@@ -5,12 +5,13 @@ use strict ;
 require Lltag::Tags ;
 require Lltag::Misc ;
 
-use vars qw(@EXPORT) ;
-
-@EXPORT = qw (
-	      read_tags
-	      tagging_system_args
-	  ) ;
+sub test_mp3info {
+    my $self = shift ;
+    my ($status, @output) = Lltag::Misc::system_with_output ("mp3info", "-h") ;
+    print "mp3info does not seem to work, disabling 'MP3' backend.\n"
+	if $status and $self->{verbose_opt} ;
+    return $status ;
+}
 
 sub read_tags {
     my $self = shift ;
@@ -52,6 +53,21 @@ sub tagging_system_args {
 		 } ( grep { defined $values->{$_} } @{$self->{field_names}} )
 	       ),
 	     ) ;
+}
+
+sub new {
+    my $self = shift ;
+
+    return undef
+	if test_mp3info $self ;
+
+    return {
+       name => "MP3 (using mp3info)",
+       type => "mp3",
+       extension => "mp3",
+       read_tags => \&read_tags,
+       tagging_system_args => \&tagging_system_args,
+    } ;
 }
 
 1 ;
