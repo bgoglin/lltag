@@ -1,8 +1,10 @@
 lltag (0.12.1-1) unstable; urgency=low
 
   * New upstream release.
+  * Include /usr/share/quilt/quilt.make in debian/rules to manage
+    patches and add quilt (>= 0.40) to Build-Depends.
 
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  3 Oct 2006 19:37:21 +0200
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  3 Oct 2006 16:29:19 +0200
 
 lltag (0.12-1) unstable; urgency=low
 
