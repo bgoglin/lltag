@@ -1,14 +1,14 @@
 ---
  lib/Lltag/FLAC.pm |    2 +-
  lib/Lltag/MP3.pm  |    2 +-
- lib/Lltag/Misc.pm |    2 ++
- lib/Lltag/OGG.pm  |    3 ++-
- 4 files changed, 6 insertions(+), 3 deletions(-)
+ lib/Lltag/Misc.pm |    2 +-
+ lib/Lltag/OGG.pm  |    2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
 
-Index: debian/lib/Lltag/FLAC.pm
+Index: lltag-0.12.1/lib/Lltag/FLAC.pm
 ===================================================================
---- debian.orig/lib/Lltag/FLAC.pm	2006-10-03 20:02:44.000000000 +0200
-+++ debian/lib/Lltag/FLAC.pm	2006-10-03 20:02:56.000000000 +0200
+--- lltag-0.12.1.orig/lib/Lltag/FLAC.pm	2006-10-03 20:06:25.000000000 +0200
++++ lltag-0.12.1/lib/Lltag/FLAC.pm	2006-10-03 23:06:38.000000000 +0200
 @@ -9,7 +9,7 @@
      my $self = shift ;
      # cannot test with "metaflac -h" since it returns 1
@@ -18,10 +18,10 @@ Index: debian/lib/Lltag/FLAC.pm
          if $status and $self->{verbose_opt} ;
      return $status ;
  }
-Index: debian/lib/Lltag/MP3.pm
+Index: lltag-0.12.1/lib/Lltag/MP3.pm
 ===================================================================
---- debian.orig/lib/Lltag/MP3.pm	2006-10-03 20:02:03.000000000 +0200
-+++ debian/lib/Lltag/MP3.pm	2006-10-03 20:02:18.000000000 +0200
+--- lltag-0.12.1.orig/lib/Lltag/MP3.pm	2006-10-03 20:06:25.000000000 +0200
++++ lltag-0.12.1/lib/Lltag/MP3.pm	2006-10-03 23:06:38.000000000 +0200
 @@ -8,7 +8,7 @@
  sub test_mp3info {
      my $self = shift ;
@@ -31,30 +31,30 @@ Index: debian/lib/Lltag/MP3.pm
  	if $status and $self->{verbose_opt} ;
      return $status ;
  }
-Index: debian/lib/Lltag/Misc.pm
+Index: lltag-0.12.1/lib/Lltag/Misc.pm
 ===================================================================
---- debian.orig/lib/Lltag/Misc.pm	2006-10-03 20:03:12.000000000 +0200
-+++ debian/lib/Lltag/Misc.pm	2006-10-03 20:04:40.000000000 +0200
-@@ -89,6 +89,8 @@
-     my $clear_allowed = shift ;
+--- lltag-0.12.1.orig/lib/Lltag/Misc.pm	2006-10-03 23:05:59.000000000 +0200
++++ lltag-0.12.1/lib/Lltag/Misc.pm	2006-10-03 23:06:38.000000000 +0200
+@@ -90,7 +90,8 @@
      # 0 = no clearing, 1 = clearing allowed and documented, -1 = clearing allowed (normal behavior)
      $preput = "" if not defined $preput ;
-+    print $indent."You might want to install an advanced Perl readline package such as 'libterm-readline-gnu-perl'.\n"
-+	if $readline_firsttime ;
-     print $indent."The current value is given in parenthesis, <ENTER> to keep it"
- 	. ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
- 	. ".\n"
-Index: debian/lib/Lltag/OGG.pm
+     if ($readline_firsttime) {
+-	print $indent."You might want to install an advanced Perl readline module such as 'Term::ReadLine::GNU'.\n" ;
++	print $indent."You might want to install an advanced Perl readline module such as 'Term::ReadLine::GNU'\n" ;
++	print $indent."(provided by package 'libterm-readline-gnu-perl').\n" ;
+ 	print $indent."The current value is given in parenthesis, <ENTER> to keep it"
+ 	    . ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
+ 	    . ".\n" ;
+Index: lltag-0.12.1/lib/Lltag/OGG.pm
 ===================================================================
---- debian.orig/lib/Lltag/OGG.pm	2006-10-03 20:02:23.000000000 +0200
-+++ debian/lib/Lltag/OGG.pm	2006-10-03 20:02:36.000000000 +0200
-@@ -8,7 +8,8 @@
+--- lltag-0.12.1.orig/lib/Lltag/OGG.pm	2006-10-03 20:06:25.000000000 +0200
++++ lltag-0.12.1/lib/Lltag/OGG.pm	2006-10-03 23:06:38.000000000 +0200
+@@ -8,7 +8,7 @@
  sub test_vorbiscomment {
      my $self = shift ;
      my ($status, @output) = Lltag::Misc::system_with_output ("vorbiscomment", "-h") ;
 -    print "vorbiscomment does not seem to work, disabling 'OGG' backend.\n"
-+    print "vorbiscomment does not seem to work (is the 'vorbis-tools' package installed?), disabling 'OGG' 
-+backend.\n"
++    print "vorbiscomment does not seem to work (is the 'vorbis-tools' package installed?), disabling 'OGG' backend.\n"
  	if $status and $self->{verbose_opt} ;
      return $status ;
  }
