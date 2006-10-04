@@ -1,3 +1,11 @@
+lltag (xxx) unstable; urgency=low
+
+  * Rename use_debian_package_names_when_warning_about_dependencies.patch
+    into debianize_dependencies_in_warnings.patch.
+
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Wed,  4 Oct 2006 19:39:36 +0200
+
 lltag (0.12.1-1) unstable; urgency=low
 
   * New upstream release.
