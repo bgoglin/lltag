@@ -113,25 +113,25 @@ sub confirm_parser {
 	    my $reply = <> ;
 	    chomp $reply ;
 
-	    if ($reply eq "" or $reply =~ /^y/) {
+	    if ($reply eq "" or $reply =~ m/^y/) {
 		last ;
 
-	    } elsif ($reply =~ /^a/) {
+	    } elsif ($reply =~ m/^a/) {
 		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
 		last ;
 
-	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/) {
+	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ m/^u/) {
 		$preferred = 1 ;
 		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
 		last ;
 
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/) {
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ m/^n/) {
 		return (PARSE_SKIP_PARSER, undef) ;
 
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/) {
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ m/^p/) {
 		return (PARSE_SKIP_PATH_PARSER, undef) ;
 
-	    } elsif ($reply =~ /^q/) {
+	    } elsif ($reply =~ m/^q/) {
 		return (PARSE_ABORT, undef) ;
 
 	    } else {
@@ -158,7 +158,7 @@ sub apply_parser {
     my $confirm = shift ;
     my $behaviors = shift ;
 
-    if ($parsename =~ /^$parser->{regexp}$/) {
+    if ($parsename =~ m/^$parser->{regexp}$/) {
 	print "    '$parser->{title}' matches this file...\n" ;
 
 	my @field_table = @{$parser->{field_table}} ;
@@ -359,7 +359,7 @@ sub apply_internal_path_basename_parsers {
 
     # try each path parser and each basename parser
     foreach my $path_parser (@internal_path_parsers) {
-	if ($parsename =~ /^$path_parser->{regexp}\/[^\/]+$/) {
+	if ($parsename =~ m@^$path_parser->{regexp}/[^/]+$@) {
 	    foreach my $basename_parser (@internal_basename_parsers) {
 		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
@@ -437,7 +437,7 @@ sub generate_user_parser {
 	next if $char eq "%" ;
 	if ($array[$i] eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$self->{field_letters_union}|IGNORE_LETTER/) {
+	} elsif ($array[$i] =~ m/$self->{field_letters_union}|IGNORE_LETTER/) {
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
@@ -558,7 +558,7 @@ sub try_to_parse {
     if ($self->{try_internals_opt}) {
 	print "  Trying to parse filename with internal formats...\n" ;
 
-	if ($self->{nopath_opt} or not ($parsename =~ /\//)) {
+	if ($self->{nopath_opt} or $parsename !~ m@/@) {
 	    ($res, $values) = apply_internal_basename_parsers $self, $file, $parsename ;
 	} else {
 	    ($res, $values) = apply_internal_path_basename_parsers $self, $file, $parsename ;

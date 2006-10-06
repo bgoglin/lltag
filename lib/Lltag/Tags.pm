@@ -77,7 +77,7 @@ sub get_values_non_regular_keys {
 sub get_additional_tag_values {
     my $self = shift ;
     foreach my $string (@{$self->{additional_tags}}) {
-	if ($string =~ /^([^=]+)=(.*)$/) {
+	if ($string =~ m/^([^=]+)=(.*)$/) {
 	    append_tag_value $self, $self->{additional_values}, $1, $2 ;
 	} else {
 	    die "Additional tags must be given as 'TAG=value'.\n" ;
@@ -141,7 +141,7 @@ sub edit_values {
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
 
-	if ($edit_reply =~ /^($letters_union)/) {
+	if ($edit_reply =~ m/^($letters_union)/) {
 	    my $field = $self->{field_letter_name}{$1} ;
 	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
 	    if ($value eq "DELETE" or $value eq "<DELETE>") {
@@ -150,13 +150,13 @@ sub edit_values {
 		$values->{$field} = $value ;
 	    }
 
-	} elsif ($edit_reply =~ /^y/ or $edit_reply =~ /^E/) {
+	} elsif ($edit_reply =~ m/^y/ or $edit_reply =~ m/^E/) {
 	    return $values ;
 
-	} elsif ($edit_reply =~ /^q/ or $edit_reply =~ /^C/) {
+	} elsif ($edit_reply =~ m/^q/ or $edit_reply =~ m/^C/) {
 	    return $old_values ;
 
-	} elsif ($edit_reply =~ /^V/) {
+	} elsif ($edit_reply =~ m/^V/) {
 	    print "      Current tag values are:\n" ;
 	    foreach my $field (@field_names) {
 		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": "

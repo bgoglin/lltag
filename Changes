@@ -1,5 +1,6 @@
 
   * Update the How-to about automatic CDDB and --cddb-query.
+  * Cleanup Perl regexps.
 
 
 lltag (0.12.1)

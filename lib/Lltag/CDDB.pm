@@ -86,7 +86,7 @@ sub cddb_query_cd_by_keywords {
 
     while (my $line = <$socket>) {
 	next if $line !~ /<a href=\"/ ;
-	if ($line =~ /<tr>/) {
+	if ($line =~ m/<tr>/) {
 	    $same = 0 ;
 	    $samename = undef ;
 	} else {
@@ -123,15 +123,15 @@ sub cddb_query_tracks_by_id {
     $cd->{ID} = $id ;
 
     while (my $line = <$socket>) {
-	if ($line =~ /tracks: (\d+)/i) {
+	if ($line =~ m/tracks: (\d+)/i) {
 	    $cd->{TRACKS} = $1 ;
-	} elsif ($line =~ /total time: ([\d:]+)/i) {
+	} elsif ($line =~ m/total time: ([\d:]+)/i) {
 	    $cd->{"TOTAL TIME"} = $1 ;
-	} elsif ($line =~ /genre: (\w+)/i) {
+	} elsif ($line =~ m/genre: (\w+)/i) {
 	    $cd->{GENRE} = $1 ;
-	} elsif ($line =~ /id3g: (\d+)/i) {
+	} elsif ($line =~ m/id3g: (\d+)/i) {
 	    $cd->{ID3G} = $1 ;
-	} elsif ($line =~ /year: (\d+)/i) {
+	} elsif ($line =~ m/year: (\d+)/i) {
 	    $cd->{DATE} = $1 ;
 	} elsif ($line =~ m@ *(\d+)\.</td><td valign=top> *(-?[\d:]+)</td><td><b>(.*)</b>@) {
 	    # '-?' because there are some buggy entries...
@@ -238,35 +238,35 @@ sub get_cddb_tags_from_tracks {
 	    if $reply eq '' ;
 
 	return (CDDB_ABORT, undef)
-	    if $reply =~ /^q/ ;
+	    if $reply =~ m/^q/ ;
 
 	return (CDDB_ABORT_TO_KEYWORDS, undef)
-	    if $reply =~ /^k/ ;
+	    if $reply =~ m/^k/ ;
 
 	return (CDDB_ABORT_TO_CDIDS, undef)
-	    if $reply =~ /^c/ ;
+	    if $reply =~ m/^c/ ;
 
-	if ($reply =~ /^E/) {
+	if ($reply =~ m/^E/) {
 	    my @field_names = grep { $_ ne 'TITLE' and $_ ne 'NUMBER' } @{$self->{field_names}} ;
 	    $cd = Lltag::Tags::edit_values ($self, $cd, \@field_names) ;
 	    next ;
 	}
 
-	if ($reply =~ /^v/) {
+	if ($reply =~ m/^v/) {
 	    print_cd $cd ;
 	    next ;
 	} ;
 
-	if ($reply =~ /^a/) {
+	if ($reply =~ m/^a/) {
 	    $reply = $previous_track ;
 	    $current_cddb_yes_opt = 1 ;
 	}
-	if ($reply =~ /^(\d+) *a/) {
+	if ($reply =~ m/^(\d+) *a/) {
 	    $current_cddb_yes_opt = 1 ;
 	    $reply = $1 ;
 	}
 
-	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= $cd->{TRACKS}) {
+	if ($reply =~ m/^\d+$/ and $reply >= 1 and $reply <= $cd->{TRACKS}) {
 	    $tracknumber = $reply ;
 	    last ;
 	}
@@ -353,15 +353,15 @@ sub get_cddb_tags_from_cdids {
 	next if $reply eq '' ;
 
 	return (CDDB_ABORT, undef)
-	    if $reply =~ /^q/ ;
+	    if $reply =~ m/^q/ ;
 
 	return (CDDB_ABORT_TO_KEYWORDS, undef)
-	    if $reply =~ /^k/ ;
+	    if $reply =~ m/^k/ ;
 
 	goto AGAIN
-	    if $reply =~ /^v/ ;
+	    if $reply =~ m/^v/ ;
 
-	if ($reply =~ /^\d+$/ and $reply >= 1 and $reply <= @{$cdids}) {
+	if ($reply =~ m/^\d+$/ and $reply >= 1 and $reply <= @{$cdids}) {
 	    # do the actual query for CD contents
 	    my ($res, $values) = get_cddb_tags_from_cdid $self, $cdids->[$reply-1] ;
 	    goto AGAIN if $res == CDDB_ABORT_TO_CDIDS or ($res == CDDB_SUCCESS and not defined $values) ;
@@ -454,9 +454,9 @@ sub get_cddb_tags {
 	# extract fields and cat from the keywords
 	my @keywords_list = map {
 	    my $val = $_ ;
-	    if ($val =~ /^fields=(.+)$/) {
+	    if ($val =~ m/^fields=(.+)$/) {
 		$fields = $1 ; () ;
-	    } elsif ($val =~ /^cats=(.+)$/) {
+	    } elsif ($val =~ m/^cats=(.+)$/) {
 		$cats = $1 ; () ;
 	    } else {
 		$_ ;
