@@ -435,9 +435,11 @@ sub generate_user_parser {
 	# replace the char with the matching
 	$char = $array[$i] ;
 	next if $char eq "%" ;
-	if ($array[$i] eq "n") {
+	if ($char eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ m/$self->{field_letters_union}|IGNORE_LETTER/) {
+	} elsif ($char =~ m/$self->{field_letters_union}/) {
+	    $array[$i] = $match_any ;
+	} elsif ($char eq IGNORE_LETTER) { # looks like constants do not work in regexp
 	    $array[$i] = $match_any ;
 	} else {
 	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
