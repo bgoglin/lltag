@@ -163,7 +163,15 @@ sub print_usage_header {
 }
 
 ###################################################################
-# Print an error or a warning in underlined
+# Print a notice or a warning in underlined
+
+sub print_notice {
+    print shift ;
+    print color 'underline' ;
+    print "NOTICE:" ;
+    print color 'reset' ;
+    print " ".(shift)."\n" ;
+}
 
 sub print_warning {
     print shift ;
@@ -172,6 +180,9 @@ sub print_warning {
     print color 'reset' ;
     print " ".(shift)."\n" ;
 }
+
+###################################################################
+# Print an error in underlined and bold
 
 sub format_error {
     return (color 'bold').(color 'underline')."ERROR:".(color 'reset')." "

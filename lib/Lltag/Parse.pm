@@ -536,7 +536,7 @@ sub try_to_parse_with_preferred {
 	return ($res, $values) ;
 
     } else {
-	Lltag::Misc::print_warning ("    ", "'$preferred_parser->{title}' does not match anymore, returning to original mode") ;
+	Lltag::Misc::print_notice ("    ", "'$preferred_parser->{title}' does not match anymore, returning to original mode") ;
 	$current_parse_ask_opt = $self->{ask_opt} ; $current_parse_yes_opt = $self->{yes_opt} ;
 	$preferred_parser = undef ;
 	return (PARSE_NO_MATCH, undef) ;

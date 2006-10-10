@@ -209,7 +209,7 @@ sub get_cddb_tags_from_tracks {
     # if automatic mode and still in the CD, let's go
     if ($current_cddb_yes_opt and $previous_track <= $cd->{TRACKS}) {
 	$tracknumber = $previous_track ;
-	print "    Automatically choosing next CDDB track, #$tracknumber...\n" ;
+	Lltag::Misc::print_notice ("    ", "Automatically choosing next CDDB track, #$tracknumber...") ;
 	goto FOUND ;
     }
 
@@ -220,7 +220,7 @@ sub get_cddb_tags_from_tracks {
     if ($previous_track == $cd->{TRACKS} + 1) {
 	$previous_track = 1;
 	if ($current_cddb_yes_opt) {
-	    Lltag::Misc::print_warning ("  ", "Reached the end of the CD, returning to interactive mode") ;
+	    Lltag::Misc::print_notice ("  ", "Reached the end of the CD, returning to interactive mode") ;
 	    # return to previous confirmation behavior
 	    $current_cddb_yes_opt = $self->{yes_opt} ;
 	}
