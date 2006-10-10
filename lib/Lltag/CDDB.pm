@@ -47,14 +47,15 @@ sub cddb_socket {
 				       Proto    => "tcp",
 				       Type     => SOCK_STREAM) ;
     if (not defined $socket) {
-	print "  ERROR: Failed to connect CDDB server "
+	Lltag::Misc::print_error ("  ",
+		"Failed to connect CDDB server "
 		. $self->{cddb_server_name} .":". $self->{cddb_server_port}
 		. ($self->{cddb_proxy_name} ?
 			(" (proxy $self->{cddb_proxy_name}:"
 			 . ($self->{cddb_proxy_port} ? $self->{cddb_proxy_port} : $self->{cddb_server_port})
 			 . ")")
 			: "")
-		. " ($!)\n" ;
+		. " ($!).") ;
 	return undef ;
     }
 

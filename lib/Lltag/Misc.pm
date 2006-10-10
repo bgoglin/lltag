@@ -41,38 +41,6 @@ sub system_with_output {
 }
 
 ###################################################################
-# print a question in bold
-
-sub print_question {
-    print color 'bold' ;
-    print shift ;
-    print color 'reset' ;
-}
-
-###################################################################
-# Print a usage header in underlined
-
-sub print_usage_header {
-    print shift ;
-    print color 'underline' ;
-    print shift ;
-    print " - Usage:" ;
-    print color 'reset' ;
-    print "\n" ;
-}
-
-###################################################################
-# Print warning in underlined
-
-sub print_warning {
-    print shift ;
-    print color 'underline' ;
-    print "WARNING:" ;
-    print color 'reset' ;
-    print " ".(shift)."\n" ;
-}
-
-###################################################################
 # configure readline depending on the features provided by the installation
 my $term ;
 my $attribs ;
@@ -171,6 +139,54 @@ sub exit_readline {
 	$term->WriteHistory ($history_dir."/".$history_file)
 	    or warn "Failed to write history file $history_dir/$history_file: $!.\n" ;
     } unless $term->Features->{WriteHistory} ;
+}
+
+###################################################################
+# print a question in bold
+
+sub print_question {
+    print color 'bold' ;
+    print shift ;
+    print color 'reset' ;
+}
+
+###################################################################
+# Print a usage header in underlined
+
+sub print_usage_header {
+    print shift ;
+    print color 'underline' ;
+    print shift ;
+    print " - Usage:" ;
+    print color 'reset' ;
+    print "\n" ;
+}
+
+###################################################################
+# Print an error or a warning in underlined
+
+sub print_warning {
+    print shift ;
+    print color 'underline' ;
+    print "WARNING:" ;
+    print color 'reset' ;
+    print " ".(shift)."\n" ;
+}
+
+sub format_error {
+    return (color 'bold').(color 'underline')."ERROR:".(color 'reset')." "
+	.(color 'bold').(shift).(color 'reset') ;
+}
+
+sub print_error {
+    print shift ;
+    print ((format_error(shift))."\n") ;
+}
+
+sub die_error {
+    print ((format_error(shift))."\n") ;
+    exit_readline () ;
+    exit -1 ;
 }
 
 1 ;

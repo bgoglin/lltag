@@ -208,7 +208,7 @@ sub rename_with_values {
 	if (!-d $path) {
 	    print "      Creating directory '$path'\n" ;
 	    if (!mkdir $path) {
-		print "      ERROR: Failed to create directory ($!)\n" ;
+		Lltag::Misc::print_error ("      ", "Failed to create directory ($!).") ;
 		return ;
 	    }
 	}
@@ -216,7 +216,7 @@ sub rename_with_values {
 
     print "    Renaming.\n" ;
     rename $file, $new_name
-	or print "    ERROR: Failed to rename ($!)\n" ;
+	or Lltag::Misc::print_error ("    ", "Failed to rename ($!).") ;
 }
 
 1 ;

@@ -1,6 +1,7 @@
 
   * Fix %i processing (was broken since 0.12).
   * Update the How-to about automatic CDDB and --cddb-query.
+  * Improve error messaging.
   * Cleanup Perl regexps.
 
 

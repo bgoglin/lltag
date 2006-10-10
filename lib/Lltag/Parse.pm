@@ -240,13 +240,13 @@ sub read_internal_parsers {
 		    push (@internal_path_parsers, $parser) ;
 		}
 	    } elsif ($type or $title or $regexp or @field_table) {
-		die "Incomplete format at line $. in file '$file'\n" ;
+		Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
 	    }
 	    $type = undef ; $regexp = undef ; @field_table = () ;
 	    $title = $1 ;
 	    # stocker la ligne ?
 	} elsif (/^type = (.*)$/) {
-	    die "Unsupported format type '$1' at line $. in file '$file'\n"
+	    Lltag::Misc::die_error ("Unsupported format type '$1' at line $. in file '$file'.")
 		if $1 ne "basename" and $1 ne "filename" and $1 ne "path" ;
 	    # TODO: drop filename support on september 20 2006
 	    $type = $1 ;
@@ -284,11 +284,11 @@ sub read_internal_parsers {
 		    # ignore letter
 		    $field = IGNORE_NAME ;
 		} else {
-		    die "Unrecognized field '$_' on line $. in file '$file'\n" ;
+		    Lltag::Misc::die_error ("Unrecognized field '$_' on line $. in file '$file'.") ;
 		}
 		$field } split (/,/, $1) ;
 	} else {
-	    die "Unrecognized line $. in file '$file': '$_'\n" ;
+	    Lltag::Misc::die_error ("Unrecognized line $. in file '$file': '$_'.") ;
 	}
     }
     close FORMAT ;
@@ -308,7 +308,7 @@ sub read_internal_parsers {
 	    push (@internal_path_parsers, $parser) ;
 	}
     } elsif ($type or $title or $regexp or @field_table) {
-	die "Incomplete format at line $. in file '$file'\n" ;
+	Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
     }
   NO_FORMATS_FILE_FOUND:
 }
@@ -347,7 +347,8 @@ sub apply_internal_basename_parsers {
 	    return ($res, $values) ;
 	}
 	# try next parser
-	die "Unknown tag return value: $res\n" if $res != PARSE_SKIP_PARSER ;
+	die "Unknown tag return value: $res.\n" # this is a bug
+	    if $res != PARSE_SKIP_PARSER ;
     }
     return (PARSE_NO_MATCH, undef) ;
 }
@@ -375,7 +376,8 @@ sub apply_internal_path_basename_parsers {
 		    if $res == PARSE_SKIP_PATH_PARSER ;
 
 		# try next parser
-		die "Unknown tag return value: $res\n" if $res != PARSE_SKIP_PARSER ;
+		die "Unknown tag return value: $res.\n" # this is a bug
+		    if $res != PARSE_SKIP_PARSER ;
 	    }
 	}
       NEXT_PATH_PARSER:
@@ -442,7 +444,7 @@ sub generate_user_parser {
 	} elsif ($char eq IGNORE_LETTER) { # looks like constants do not work in regexp
 	    $array[$i] = $match_any ;
 	} else {
-	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	    Lltag::Misc::die_error ("Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.") ;
 	}
 	# store the indice
 	if ($char eq IGNORE_LETTER) {
@@ -502,7 +504,8 @@ sub apply_user_parsers {
 	}
 	print "    '". $parser->{title} ."' does not match.\n" ;
 	# try next parser
-	die "Unknown tag return value: $res.\n" if $res != PARSE_SKIP_PARSER ;
+	die "Unknown tag return value: $res.\n" # this is a bug
+	    if $res != PARSE_SKIP_PARSER ;
     }
     return (PARSE_NO_MATCH, undef) ;
 }
@@ -528,7 +531,7 @@ sub try_to_parse_with_preferred {
     ($res, $values) = apply_parser $self, $file, $parsename, $preferred_parser, 0, 0 ;
     if ($res != PARSE_SKIP_PARSER) {
 	# only SUCCESS if possible
-	die "Unknown tag return value: $res.\n"
+	die "Unknown tag return value: $res.\n" # this is a bug
 	    if $res != PARSE_SUCCESS ;
 	return ($res, $values) ;
 
