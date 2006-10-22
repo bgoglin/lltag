@@ -170,4 +170,27 @@ sub edit_values {
     }
 }
 
+#######################################################
+# apply user-given regexp
+
+sub apply_regexp_to_tag {
+    my $val = shift ;
+    my $regexp = shift ;
+    my $tag = shift ;
+
+    # parse the regexp
+    if ($regexp =~ m@(?:([^:]+):)?s/([^/]+)/([^/]*)/$@) {
+	my @tags = () ;
+	@tags = split (/,/, $1) if $1;
+	my $from = $2 ;
+	my $to = $3 ;
+	$val =~ s/$from/$to/g
+	    if !@tags or grep { $tag eq $_ } @tags ;
+    } else {
+	die "Unrecognized user regexp '$regexp'.\n" ;
+    }
+
+    return $val ;
+}
+
 1 ;

@@ -172,7 +172,7 @@ sub apply_parser {
 		my $val = ${$i} ;
 		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
 		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
-		map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
+		map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
 		if (defined $values->{$field}) {
 		    Lltag::Misc::print_warning ("      ", ucfirst($field)." already set to '".$values->{$field}
 		    ."', skipping new value '$val'")
