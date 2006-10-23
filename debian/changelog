@@ -1,5 +1,6 @@
 lltag (0.12.2-1) unstable; urgency=low
 
+  * New upstream release.
   * Rename use_debian_package_names_when_warning_about_dependencies.patch
     into debianize_dependencies_in_warnings.patch.
 
