@@ -81,7 +81,7 @@ sub rename_with_values {
 	    if $self->{rename_min_opt} ;
 	$val =~ s/ /$self->{rename_sep_opt}/g
 	    if $self->{rename_sep_opt} ;
-	map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{rename_regexp_opts}} ;
+	map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{rename_regexp_opts}} ;
 	$rename_values->{$field} = $val ;
     }
 
