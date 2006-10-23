@@ -334,7 +334,7 @@ GetOptions(
 	   'yes'          => sub { $self->{yes_opt} = 1 ; $self->{ask_opt} = 0 ; },
 	   'ask'          => sub { $self->{ask_opt} = 1 ; $self->{yes_opt} = 0 ; },
 	   'cddb-server=s'=> sub { shift ; my $name = shift ;
-				   if ($name =~ /(.*):(.*)/) {
+				   if ($name =~ m/(.*):(.*)/) {
 					$self->{cddb_server_name} = $1 ;
 					$self->{cddb_server_port} = $2 ;
 				   } else {
@@ -343,7 +343,7 @@ GetOptions(
 				   }
 			     },
 	   'cddb-proxy=s' => sub { shift ; my $name = shift ;
-				   if ($name =~ /(.*):(.*)/) {
+				   if ($name =~ m/(.*):(.*)/) {
 					$self->{cddb_proxy_name} = $1 ;
 					$self->{cddb_proxy_port} = $2 ;
 				   } else {
@@ -484,35 +484,12 @@ sub read_tags {
     my $values = {} ;
     while (my $line = shift @output) {
 	chomp $line ;
-	my ($field, $value) = ($line =~ /^(.*)=(.*)$/) ;
+	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
 	next if !$value ;
 	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
     }
 
     return $values ;
-}
-
-#######################################################
-# apply user-given regexp
-
-sub apply_regexp_to_tag {
-    my $val = shift ;
-    my $regexp = shift ;
-    my $tag = shift ;
-
-    # parse the regexp
-    if ($regexp =~ /(?:([^:]+):)?s\/([^\/]+)\/([^\/]*)\/$/) {
-	my @tags = () ;
-	@tags = split (/,/, $1) if $1;
-	my $from = $2 ;
-	my $to = $3 ;
-	$val =~ s/$from/$to/g
-	    if !@tags or grep { $tag eq $_ } @tags ;
-    } else {
-	die "Unrecognized user regexp '$regexp'.\n" ;
-    }
-
-    return $val ;
 }
 
 #######################################################
@@ -706,25 +683,25 @@ while ( @files ) {
 
 	    goto TAG
 		# FIXME: check confirm options and always, except if cddb
-		if $confirm_reply =~ /^y/ or $confirm_reply eq "" ;
+		if $confirm_reply =~ m/^y/ or $confirm_reply eq "" ;
 	    goto TRY_PARSE
-		if $confirm_reply =~ /^P/ ;
+		if $confirm_reply =~ m/^P/ ;
 	    goto TRY_CDDB
-		if $confirm_reply =~ /^C/ ;
+		if $confirm_reply =~ m/^C/ ;
 	    goto NEXT_FILE
-		if $confirm_reply =~ /^s/ or $confirm_reply =~ /^q/ ;
+		if $confirm_reply =~ m/^s/ or $confirm_reply =~ m/^q/ ;
 	    goto EXIT
-		if $confirm_reply =~ /^Q/ ;
+		if $confirm_reply =~ m/^Q/ ;
 
-	    if ($confirm_reply =~ /^a/) {
+	    if ($confirm_reply =~ m/^a/) {
 		$current_main_yes_opt = 1 ;
 		goto TAG ;
 
-	    } elsif ($confirm_reply =~ /^E/) {
+	    } elsif ($confirm_reply =~ m/^E/) {
 		$values = Lltag::Tags::edit_values ($self, $values, $self->{field_names}) ;
 		goto CONFIRM ;
 
-	    } elsif ($confirm_reply =~ /^D/) {
+	    } elsif ($confirm_reply =~ m/^D/) {
 		$values = undef ;
 		goto ADD_DEFAULTS ;
 

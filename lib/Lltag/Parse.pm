@@ -113,25 +113,25 @@ sub confirm_parser {
 	    my $reply = <> ;
 	    chomp $reply ;
 
-	    if ($reply eq "" or $reply =~ /^y/) {
+	    if ($reply eq "" or $reply =~ m/^y/) {
 		last ;
 
-	    } elsif ($reply =~ /^a/) {
+	    } elsif ($reply =~ m/^a/) {
 		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
 		last ;
 
-	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ /^u/) {
+	    } elsif ($behaviors & PARSE_MAY_PREFER and $reply =~ m/^u/) {
 		$preferred = 1 ;
 		$current_parse_ask_opt = 0 ; $current_parse_yes_opt = 1 ;
 		last ;
 
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ /^n/) {
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PARSER and $reply =~ m/^n/) {
 		return (PARSE_SKIP_PARSER, undef) ;
 
-	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ /^p/) {
+	    } elsif ($behaviors & PARSE_MAY_SKIP_PATH_PARSER and $reply =~ m/^p/) {
 		return (PARSE_SKIP_PATH_PARSER, undef) ;
 
-	    } elsif ($reply =~ /^q/) {
+	    } elsif ($reply =~ m/^q/) {
 		return (PARSE_ABORT, undef) ;
 
 	    } else {
@@ -158,7 +158,7 @@ sub apply_parser {
     my $confirm = shift ;
     my $behaviors = shift ;
 
-    if ($parsename =~ /^$parser->{regexp}$/) {
+    if ($parsename =~ m/^$parser->{regexp}$/) {
 	print "    '$parser->{title}' matches this file...\n" ;
 
 	my @field_table = @{$parser->{field_table}} ;
@@ -172,7 +172,7 @@ sub apply_parser {
 		my $val = ${$i} ;
 		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
 		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
-		map { $val = apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
+		map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
 		if (defined $values->{$field}) {
 		    Lltag::Misc::print_warning ("      ", ucfirst($field)." already set to '".$values->{$field}
 		    ."', skipping new value '$val'")
@@ -240,13 +240,13 @@ sub read_internal_parsers {
 		    push (@internal_path_parsers, $parser) ;
 		}
 	    } elsif ($type or $title or $regexp or @field_table) {
-		die "Incomplete format at line $. in file '$file'\n" ;
+		Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
 	    }
 	    $type = undef ; $regexp = undef ; @field_table = () ;
 	    $title = $1 ;
 	    # stocker la ligne ?
 	} elsif (/^type = (.*)$/) {
-	    die "Unsupported format type '$1' at line $. in file '$file'\n"
+	    Lltag::Misc::die_error ("Unsupported format type '$1' at line $. in file '$file'.")
 		if $1 ne "basename" and $1 ne "filename" and $1 ne "path" ;
 	    # TODO: drop filename support on september 20 2006
 	    $type = $1 ;
@@ -284,11 +284,11 @@ sub read_internal_parsers {
 		    # ignore letter
 		    $field = IGNORE_NAME ;
 		} else {
-		    die "Unrecognized field '$_' on line $. in file '$file'\n" ;
+		    Lltag::Misc::die_error ("Unrecognized field '$_' on line $. in file '$file'.") ;
 		}
 		$field } split (/,/, $1) ;
 	} else {
-	    die "Unrecognized line $. in file '$file': '$_'\n" ;
+	    Lltag::Misc::die_error ("Unrecognized line $. in file '$file': '$_'.") ;
 	}
     }
     close FORMAT ;
@@ -308,7 +308,7 @@ sub read_internal_parsers {
 	    push (@internal_path_parsers, $parser) ;
 	}
     } elsif ($type or $title or $regexp or @field_table) {
-	die "Incomplete format at line $. in file '$file'\n" ;
+	Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
     }
   NO_FORMATS_FILE_FOUND:
 }
@@ -347,7 +347,8 @@ sub apply_internal_basename_parsers {
 	    return ($res, $values) ;
 	}
 	# try next parser
-	die "Unknown tag return value: $res\n" if $res != PARSE_SKIP_PARSER ;
+	die "Unknown tag return value: $res.\n" # this is a bug
+	    if $res != PARSE_SKIP_PARSER ;
     }
     return (PARSE_NO_MATCH, undef) ;
 }
@@ -359,7 +360,7 @@ sub apply_internal_path_basename_parsers {
 
     # try each path parser and each basename parser
     foreach my $path_parser (@internal_path_parsers) {
-	if ($parsename =~ /^$path_parser->{regexp}\/[^\/]+$/) {
+	if ($parsename =~ m@^$path_parser->{regexp}/[^/]+$@) {
 	    foreach my $basename_parser (@internal_basename_parsers) {
 		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
@@ -375,7 +376,8 @@ sub apply_internal_path_basename_parsers {
 		    if $res == PARSE_SKIP_PATH_PARSER ;
 
 		# try next parser
-		die "Unknown tag return value: $res\n" if $res != PARSE_SKIP_PARSER ;
+		die "Unknown tag return value: $res.\n" # this is a bug
+		    if $res != PARSE_SKIP_PARSER ;
 	    }
 	}
       NEXT_PATH_PARSER:
@@ -435,12 +437,14 @@ sub generate_user_parser {
 	# replace the char with the matching
 	$char = $array[$i] ;
 	next if $char eq "%" ;
-	if ($array[$i] eq "n") {
+	if ($char eq "n") {
 	    $array[$i] = $match_num ;
-	} elsif ($array[$i] =~ /$self->{field_letters_union}|IGNORE_LETTER/) {
+	} elsif ($char =~ m/$self->{field_letters_union}/) {
+	    $array[$i] = $match_any ;
+	} elsif ($char eq IGNORE_LETTER) { # looks like constants do not work in regexp
 	    $array[$i] = $match_any ;
 	} else {
-	    die "  ERROR: Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.\n" ;
+	    Lltag::Misc::die_error ("Format '". $format_string ."' contains unrecognized operator '%". $array[$i] ."'.") ;
 	}
 	# store the indice
 	if ($char eq IGNORE_LETTER) {
@@ -500,7 +504,8 @@ sub apply_user_parsers {
 	}
 	print "    '". $parser->{title} ."' does not match.\n" ;
 	# try next parser
-	die "Unknown tag return value: $res.\n" if $res != PARSE_SKIP_PARSER ;
+	die "Unknown tag return value: $res.\n" # this is a bug
+	    if $res != PARSE_SKIP_PARSER ;
     }
     return (PARSE_NO_MATCH, undef) ;
 }
@@ -526,12 +531,12 @@ sub try_to_parse_with_preferred {
     ($res, $values) = apply_parser $self, $file, $parsename, $preferred_parser, 0, 0 ;
     if ($res != PARSE_SKIP_PARSER) {
 	# only SUCCESS if possible
-	die "Unknown tag return value: $res.\n"
+	die "Unknown tag return value: $res.\n" # this is a bug
 	    if $res != PARSE_SUCCESS ;
 	return ($res, $values) ;
 
     } else {
-	Lltag::Misc::print_warning ("    ", "'$preferred_parser->{title}' does not match anymore, returning to original mode") ;
+	Lltag::Misc::print_notice ("    ", "'$preferred_parser->{title}' does not match anymore, returning to original mode") ;
 	$current_parse_ask_opt = $self->{ask_opt} ; $current_parse_yes_opt = $self->{yes_opt} ;
 	$preferred_parser = undef ;
 	return (PARSE_NO_MATCH, undef) ;
@@ -558,7 +563,7 @@ sub try_to_parse {
     if ($self->{try_internals_opt}) {
 	print "  Trying to parse filename with internal formats...\n" ;
 
-	if ($self->{nopath_opt} or not ($parsename =~ /\//)) {
+	if ($self->{nopath_opt} or $parsename !~ m@/@) {
 	    ($res, $values) = apply_internal_basename_parsers $self, $file, $parsename ;
 	} else {
 	    ($res, $values) = apply_internal_path_basename_parsers $self, $file, $parsename ;

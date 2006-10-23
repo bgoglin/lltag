@@ -171,6 +171,28 @@ of keywords to get a precise CD quickly.
 
 
 
+<h3 class="question">Is the interactive interface always required to access CDDB?</h3>
+
+The CDDB interface seems to be designed for interactive usage since the user
+is supposed to choose a CD in the list of CDs returned by the keywords query,
+and then choose a track in the CD.
+But, it is also possible to use CDDB automatically if the CD id is known and
+the files are ordered by track numbers.
+<br />
+
+The CD id may be given on the command line:
+<pre>
+  lltag --cddb-query rock/a0b2c4d7 --yes *
+</pre>
+Using --yes enables automatic mode which means <tt>lltag</tt> will tag the
+first file as the first track of the CD returned by CDDB, the second file as
+the second track, ...
+
+If <tt>lltag</tt> ever reaches the end of the CD, it will return to interactive
+mode so that the user may choose another CD to tag the remaining files.
+
+
+
 <h2 class="section">Managing tags</h2>
 
 

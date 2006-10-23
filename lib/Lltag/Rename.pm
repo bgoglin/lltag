@@ -97,7 +97,7 @@ sub rename_with_values {
 	# replace the char with the matching
 	my $char = $array[$i] ;
 	next if $char eq "%" ;
-	if ($char =~ /$self->{field_letters_union}/) {
+	if ($char =~ m/$self->{field_letters_union}/) {
 	    my $field = $self->{field_letter_name}{$char} ;
 	    my $val = $rename_values->{$field} ;
 	    # rename does not contain an array anymore
@@ -166,17 +166,17 @@ sub rename_with_values {
 	my $reply = <> ;
 	chomp $reply ;
 
-        if ($reply eq "" or $reply =~ /^y/i) {
+        if ($reply eq "" or $reply =~ m/^y/i) {
             goto RENAME_IT ;
 
-	} elsif ($reply =~ /^a/) {
+	} elsif ($reply =~ m/^a/) {
 	    $current_rename_yes_opt = 1 ;
             goto RENAME_IT ;
 
-	} elsif ($reply =~ /^n/ or $reply =~ /^q/) {
+	} elsif ($reply =~ m/^n/ or $reply =~ m/^q/) {
 	    return ;
 
-	} elsif ($reply =~ /^e/) {
+	} elsif ($reply =~ m/^e/) {
 	    $new_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
 	    goto ASK_CONFIRM ;
 
@@ -202,13 +202,13 @@ sub rename_with_values {
 
     my $remain = $new_name ;
     my $path = '' ;
-    while ($remain =~ /^([^\/]*\/+)(.*)$/) {
+    while ($remain =~ m@^([^/]*/+)(.*)$@) {
         $path .= $1 ;
 	$remain = $2 ;
 	if (!-d $path) {
 	    print "      Creating directory '$path'\n" ;
 	    if (!mkdir $path) {
-		print "      ERROR: Failed to create directory ($!)\n" ;
+		Lltag::Misc::print_error ("      ", "Failed to create directory ($!).") ;
 		return ;
 	    }
 	}
@@ -216,7 +216,7 @@ sub rename_with_values {
 
     print "    Renaming.\n" ;
     rename $file, $new_name
-	or print "    ERROR: Failed to rename ($!)\n" ;
+	or Lltag::Misc::print_error ("    ", "Failed to rename ($!).") ;
 }
 
 1 ;

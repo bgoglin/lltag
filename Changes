@@ -1,3 +1,14 @@
+lltag (0.12.2)
+
+  * Fix %i processing (was broken since 0.12).
+  * Fix regexp application.
+  * Update the How-to about automatic CDDB and --cddb-query.
+  * Improve error messaging.
+  * Improve messaging in automatic mode.
+  * Cleanup Perl regexps.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon, 23 Oct 2006 13:38:00 +0200
+
 lltag (0.12.1)
 
   * Improve automatization of CDDB:
