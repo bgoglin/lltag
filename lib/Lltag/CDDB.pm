@@ -103,7 +103,7 @@ sub cddb_query_cd_by_keywords {
 	my @links = split (/<a href=\"/, $line) ;
 	shift @links ;
 	while (my $link = shift @links) {
-	    if ($link =~ m@http://www\.freedb\.org/freedb_search_fmt\.php\?cat=([a-z]+)\&id=([0-9a-f]+)\">(.*)</a>@) {
+	    if ($link =~ m@http://.*/freedb_search_fmt\.php\?cat=([a-z]+)\&id=([0-9a-f]+)\">(.*)</a>@) {
 		my %cdid = ( CAT => $1, ID => $2, NAME => $same ? $samename : $3 ) ;
 		push @cdids, \%cdid ;
 		$samename = $cdid{NAME} unless $same ;
