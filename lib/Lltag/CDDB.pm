@@ -20,7 +20,6 @@ my $previous_cd = undef ;
 my $previous_track = undef ;
 
 # confirmation behavior
-# FIXME: find a way to enable it
 my $current_cddb_yes_opt = undef ;
 
 # HTTP browser
