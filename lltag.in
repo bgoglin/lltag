@@ -120,7 +120,6 @@ sub usage {
     print " CDDB options:\n" ;
     print "  --cddb-query <query>   Start with CDDB query <query> by keywords or id\n" ;
     print "  --cddb-server <server> Change the CDDB server and port\n" ;
-    print "  --cddb-proxy <server>  Use a HTTP proxy to access the CDDB server\n" ;
     print " Behavior options:\n" ;
     print "  -S                     Show all tags from files\n" ;
     print "  --show-tags <tag,..>   Show several tags from files\n" ;
@@ -176,8 +175,6 @@ $self->{gencfg_file} = undef ;
 
 $self->{cddb_server_name} = "www.freedb.org" ;
 $self->{cddb_server_port} = 80 ;
-$self->{cddb_proxy_name} = undef ;
-$self->{cddb_proxy_port} = undef ;
 
 # command line given cddb query, undefined afterwards
 $self->{requested_cddb_query} = undef ;
@@ -265,10 +262,6 @@ sub process_option {
 	$self->{cddb_server_name} = $1 ;
     } elsif (/^cddb_server_port\s*=\s*(\d+)$/) {
 	$self->{cddb_server_port} = $1 ;
-    } elsif (/^cddb_proxy_name\s*=\s*"(.*)"$/) {
-	$self->{cddb_proxy_name} = $1 ;
-    } elsif (/^cddb_proxy_port\s*=\s*(\d*)$/) {
-	$self->{cddb_proxy_port} = $1 ;
 # Error
     } elsif (/^[^#]/ && !/^(\s*)$/) {
         die "Unrecognized option line #$.: \"$_\"\n" ;
@@ -340,15 +333,6 @@ GetOptions(
 				   } else {
 					$self->{cddb_server_name} = $name ;
 					$self->{cddb_server_port} = 80 ;
-				   }
-			     },
-	   'cddb-proxy=s' => sub { shift ; my $name = shift ;
-				   if ($name =~ m/(.*):(.*)/) {
-					$self->{cddb_proxy_name} = $1 ;
-					$self->{cddb_proxy_port} = $2 ;
-				   } else {
-					$self->{cddb_proxy_name} = $name ;
-					$self->{cddb_proxy_port} = 80 ;
 				   }
 			     },
 	   'cddb-query=s'    => \$self->{requested_cddb_query},
@@ -792,8 +776,6 @@ sub generate_config {
     print NEWCFG "cddb = $self->{cddb_opt}\n" ;
     print NEWCFG "cddb_server_name = \"$self->{cddb_server_name}\"\n" ;
     print NEWCFG "cddb_server_port = $self->{cddb_server_port}\n" ;
-    print NEWCFG "cddb_proxy_name = \"$self->{cddb_proxy_name}\"\n" if defined $self->{cddb_proxy_name} ;
-    print NEWCFG "cddb_proxy_port = $self->{cddb_proxy_port}\n" if defined $self->{cddb_proxy_name} ;
 
     print NEWCFG "dry_run = $self->{dry_run_opt}\n" ;
     print NEWCFG "yes = $self->{yes_opt}\n" ;

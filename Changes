@@ -1,3 +1,8 @@
+  * Rewrite HTTP requests using libwww-perl.
+    + Drop --cddb-proxy and use the HTTP_PROXY variable in the
+      environment (set it to something like "http://my.proxy.com").
+
+
 lltag (0.12.2)
 
   * Fix %i processing (was broken since 0.12).

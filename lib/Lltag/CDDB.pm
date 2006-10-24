@@ -2,7 +2,7 @@ package Lltag::CDDB ;
 
 use strict ;
 
-use IO::Socket ;
+use LWP ;
 
 use Lltag::Misc ;
 
@@ -23,6 +23,9 @@ my $previous_track = undef ;
 # FIXME: find a way to enable it
 my $current_cddb_yes_opt = undef ;
 
+# HTTP browser
+my $browser ;
+
 #########################################
 # init
 
@@ -31,43 +34,47 @@ sub init_cddb {
 
     # default confirmation behavior
     $current_cddb_yes_opt = $self->{yes_opt} ;
+
+    # HTTP browser
+    $browser = LWP::UserAgent->new;
+    # use HTTP_PROXY environment variable
+    $browser->env_proxy ;
 }
 
 #########################################
 # low level CDDB http requests
 
-sub cddb_socket {
+sub cddb_response {
     my $self = shift ;
     my $path = shift ;
 
     print "      Sending CDDB request...\n" ;
 
-    my $socket = IO::Socket::INET->new(PeerAddr => $self->{cddb_proxy_name} ? $self->{cddb_proxy_name} : $self->{cddb_server_name},
-				       PeerPort => $self->{cddb_proxy_port} ? $self->{cddb_proxy_port} : $self->{cddb_server_port},
-				       Proto    => "tcp",
-				       Type     => SOCK_STREAM) ;
-    if (not defined $socket) {
+    my $response = $browser->get(
+	"http://"
+        . $self->{cddb_server_name}
+        . ($self->{cddb_server_port} != 80 ? $self->{cddb_server_port} : "")
+        . $path
+        . "\n"
+	) ;
+
+    if (!$response->is_success) {
 	Lltag::Misc::print_error ("  ",
-		"Failed to connect CDDB server "
+		"HTTP request to CDDB server ("
 		. $self->{cddb_server_name} .":". $self->{cddb_server_port}
-		. ($self->{cddb_proxy_name} ?
-			(" (proxy $self->{cddb_proxy_name}:"
-			 . ($self->{cddb_proxy_port} ? $self->{cddb_proxy_port} : $self->{cddb_server_port})
-			 . ")")
-			: "")
-		. " ($!).") ;
+		. ") failed.") ;
+	return undef ;
+    }
+    if ($response->content_type ne 'text/html') {
+	Lltag::Misc::print_error ("  ",
+		"Weird CDDB response (type ".$response->content_type.") from server "
+		. $self->{cddb_server_name} .":". $self->{cddb_server_port}
+		. ".") ;
 	return undef ;
     }
 
-    print $socket "GET http://"
-	. $self->{cddb_server_name}
-	. ($self->{cddb_server_port} != 80 ? $self->{cddb_server_port} : "")
-	. $path
-	. "\n" ;
-
-    return $socket ;
+    return $response->content ;
 }
-
 
 sub cddb_query_cd_by_keywords {
     my $self = shift ;
@@ -78,14 +85,14 @@ sub cddb_query_cd_by_keywords {
     my $query_fields = (grep { $_ eq "all" } @fields) ? "allfields=YES" : "allfields=NO".(join ("", map { "&fields=$_" } @fields)) ;
     my $query_cats = (grep { $_ eq "all" } @cats) ? "allcats=YES" : "allcats=NO".(join ("", map { "&cats=$_" } @cats)) ;
 
-    my $socket = cddb_socket $self, "/freedb_search.php?words=${keywords}&${query_fields}&${query_cats}&grouping=none&x=0&y=0" ;
-    return (CDDB_ABORT, undef) unless defined $socket ;
+    my $response = cddb_response $self, "/freedb_search.php?words=${keywords}&${query_fields}&${query_cats}&grouping=none&x=0&y=0" ;
+    return (CDDB_ABORT, undef) unless defined $response ;
 
     my @cdids = () ;
     my $samename = undef ;
     my $same = 0 ;
 
-    while (my $line = <$socket>) {
+    foreach my $line (split /\n/, $response) {
 	next if $line !~ /<a href=\"/ ;
 	if ($line =~ m/<tr>/) {
 	    $same = 0 ;
@@ -105,8 +112,6 @@ sub cddb_query_cd_by_keywords {
 	}
     }
 
-    close $socket ;
-
     return (CDDB_SUCCESS, \@cdids) ;
 }
 
@@ -116,14 +121,14 @@ sub cddb_query_tracks_by_id {
     my $id = shift ;
     my $name = shift ;
 
-    my $socket = cddb_socket $self, "/freedb_search_fmt.php?cat=${cat}&id=${id}\n" ;
-    return (CDDB_ABORT, undef) unless defined $socket ;
+    my $response = cddb_response $self, "/freedb_search_fmt.php?cat=${cat}&id=${id}\n" ;
+    return (CDDB_ABORT, undef) unless defined $response ;
 
     my $cd ;
     $cd->{CAT} = $cat ;
     $cd->{ID} = $id ;
 
-    while (my $line = <$socket>) {
+    foreach my $line (split /\n/, $response) {
 	if ($line =~ m/tracks: (\d+)/i) {
 	    $cd->{TRACKS} = $1 ;
 	} elsif ($line =~ m/total time: ([\d:]+)/i) {
@@ -148,8 +153,6 @@ sub cddb_query_tracks_by_id {
 	    }
 	}
     }
-
-    close $socket ;
 
     return (CDDB_SUCCESS, undef)
 	unless defined $name ;

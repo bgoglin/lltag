@@ -46,7 +46,6 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ --ask ]
 .RB [ "--cddb-query <query>" ]
 .RB [ "--cddb-server <server[:port]>" ]
-.RB [ "--cddb-proxy <server[:port]>" ]
 .RB [ -R ]
 .RB [ -v ]
 .RB [ "--config <file>" ]
@@ -146,12 +145,10 @@ and entered the query interactively in the module.
 Change the CDDB server, and eventually its port.
 The default is
 .BR www.freedb.org:80 .
-
-.TP
-.BI "--cddb-proxy" " <server[:port]>"
-Setup a HTTP proxy to contact the CDDB server.
-The default is
-.BR disabled .
+If a HTTP proxy is required to access the internet,
+the environment variable
+.B HTTP_PROXY
+may be used (set to something like "http://my.proxy.com").
 
 .TP
 .BI "-c, --comment" " <comment>"
@@ -892,18 +889,6 @@ Default is
 Change the CDDB server port.
 Default is
 .BR 80 " (" HTTP ")."
-.RE
-.I cddb_proxy_name = "hostname"
-.RS
-Use a HTTP proxy server on hostname.
-Default is 
-.BR unset " (" disabled ")."
-.RE
-.I cddb_proxy_port = <port>
-.RS
-Use a HTTP proxy server on port.
-Default is
-.BR unset " (" disabled ")."
 .RE
 
 
