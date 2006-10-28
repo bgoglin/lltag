@@ -28,9 +28,11 @@ sub read_tags {
     return Lltag::Tags::convert_tag_stream_to_values ($self, @output) ;
 }
 
-sub tagging_system_args {
+sub set_tags {
     my $self = shift ;
+    my $file = shift ;
     my $values = shift ;
+
     my %field_name_ogg_translations =
 	(
 	 'NUMBER'  => 'TRACKNUMBER',
@@ -38,25 +40,28 @@ sub tagging_system_args {
     my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
     my @ogg_tagging_clear_option = ( '-w' ) ;
 
-    return ( @ogg_tagging_cmd ,
-	     # clear all tags
-	     @ogg_tagging_clear_option ,
-	     # apply new tags
-	     ( map {
-		 my $oggname = $_ ;
-		 $oggname = $field_name_ogg_translations{$_} if defined $field_name_ogg_translations{$_} ;
-		 my @tags = (Lltag::Tags::get_tag_value_array $self, $values, $_) ;
-		 map { ( "-t" , $oggname."=".$_ ) } @tags
-		 } @{$self->{field_names}}
-	       ),
-	     # apply non-regular tags
-	     ( map {
-		 my $oggname = $_ ;
-		 my @tags = (Lltag::Tags::get_tag_value_array $self, $values, $_) ;
-		 map { ( "-t" , $oggname."=".$_ ) } @tags
-		 } Lltag::Tags::get_values_non_regular_keys ($self, $values)
-	       ),
-	     ) ;
+    my @system_args
+	= ( @ogg_tagging_cmd ,
+	    # clear all tags
+	    @ogg_tagging_clear_option ,
+	    # apply new tags
+	    ( map {
+		my $oggname = $_ ;
+		$oggname = $field_name_ogg_translations{$_} if defined $field_name_ogg_translations{$_} ;
+		my @tags = (Lltag::Tags::get_tag_value_array $self, $values, $_) ;
+		map { ( "-t" , $oggname."=".$_ ) } @tags
+		} @{$self->{field_names}}
+	      ),
+	    # apply non-regular tags
+	    ( map {
+		my $oggname = $_ ;
+		my @tags = (Lltag::Tags::get_tag_value_array $self, $values, $_) ;
+		map { ( "-t" , $oggname."=".$_ ) } @tags
+		} Lltag::Tags::get_values_non_regular_keys ($self, $values)
+	      ),
+	    $file ) ;
+
+    Lltag::Tags::set_tags_with_external_prog ($self, @system_args) ;
 }
 
 sub new {
@@ -70,7 +75,7 @@ sub new {
        type => "ogg",
        extension => "ogg",
        read_tags => \&read_tags,
-       tagging_system_args => \&tagging_system_args,
+       set_tags => \&set_tags,
     } ;
 }
 

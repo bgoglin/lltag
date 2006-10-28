@@ -23,8 +23,9 @@ sub read_tags {
     return Lltag::Tags::convert_tag_stream_to_values ($self, @output) ;
 }
 
-sub tagging_system_args {
+sub set_tags {
     my $self = shift ;
+    my $file = shift ;
     my $values = shift ;
     my %field_name_mp3info_option =
 	(
@@ -43,16 +44,19 @@ sub tagging_system_args {
 	Lltag::Misc::print_warning ("    ", "Cannot set $_ in mp3 tags") ;
     } (Lltag::Tags::get_values_non_regular_keys ($self, $values)) ;
 
-    return ( @mp3_tagging_cmd ,
-	     # clear all tags
-	     @mp3_tagging_clear_option ,
-	     # apply new tags
-	     ( map {
-		 # only one tag is allowed, use the first one
-		 ( "-".$field_name_mp3info_option{$_} , (Lltag::Tags::get_tag_unique_value ($self, $values, $_)) )
-		 } ( grep { defined $values->{$_} } @{$self->{field_names}} )
-	       ),
-	     ) ;
+    my @system_args
+	= ( @mp3_tagging_cmd ,
+	    # clear all tags
+	    @mp3_tagging_clear_option ,
+	    # apply new tags
+	    ( map {
+		# only one tag is allowed, use the first one
+		( "-".$field_name_mp3info_option{$_} , (Lltag::Tags::get_tag_unique_value ($self, $values, $_)) )
+		} ( grep { defined $values->{$_} } @{$self->{field_names}} )
+	      ),
+	    $file ) ;
+
+    Lltag::Tags::set_tags_with_external_prog ($self, @system_args) ;
 }
 
 sub new {
@@ -66,7 +70,7 @@ sub new {
        type => "mp3",
        extension => "mp3",
        read_tags => \&read_tags,
-       tagging_system_args => \&tagging_system_args,
+       set_tags => \&set_tags,
     } ;
 }
 

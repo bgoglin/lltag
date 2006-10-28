@@ -87,7 +87,7 @@ sub get_additional_tag_values {
 
 #######################################################
 # extract tags from the stream
-# to be used by backends who get the tags as the stream output of another program
+# helper to be used by backends who get the tags as the stream output of another program
 
 sub convert_tag_stream_to_values {
     my $self = shift ;
@@ -101,6 +101,30 @@ sub convert_tag_stream_to_values {
     }
 
     return $values ;
+}
+
+#######################################################
+# get tagging command line, display it if required, execute it if required
+# output the errors, ...
+# helper to be used by backends who set the tags with another program
+
+sub set_tags_with_external_prog {
+    my $self = shift ;
+
+    # show command line and really tag if asked
+    if ($self->{dry_run_opt} or $self->{verbose_opt}) {
+	print "  '". +(join "' '", @_) ."'\n" ;
+    }
+    if (!$self->{dry_run_opt}) {
+	print "  Tagging.\n" ;
+	my ($status, @output) = Lltag::Misc::system_with_output (@_) ;
+	if ($status) {
+	    print "    Tagging failed, command line was: '". join ("' '", @_) ."'.\n" ;
+	    while (my $line = shift @output) {
+		print "# $line" ;
+	    }
+	}
+    }
 }
 
 #######################################################

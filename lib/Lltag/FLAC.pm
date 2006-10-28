@@ -30,9 +30,11 @@ sub read_tags {
     return Lltag::Tags::convert_tag_stream_to_values ($self, @output) ;
 }
 
-sub tagging_system_args {
+sub set_tags {
     my $self = shift ;
+    my $file = shift ;
     my $values = shift ;
+
     my %field_name_flac_translations =
 	(
 	 'NUMBER'  => 'TRACKNUMBER',
@@ -40,25 +42,28 @@ sub tagging_system_args {
     my @flac_tagging_cmd = ( 'metaflac' ) ;
     my @flac_tagging_clear_option = ( '--remove-all-tags' ) ;
 
-    return ( @flac_tagging_cmd ,
-	     # clear all tags
-	     @flac_tagging_clear_option ,
-	     # apply new tags
-	     ( map {
-		 my $flacname = $_ ;
-		 $flacname = $field_name_flac_translations{$_} if defined $field_name_flac_translations{$_} ;
-		 my @tags = Lltag::Tags::get_tag_value_array ($self, $values, $_) ;
-		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
-		 } @{$self->{field_names}}
-	       ),
-	     # apply non-regular tags
-	     ( map {
-		 my $flacname = $_ ;
-		 my @tags = Lltag::Tags::get_tag_value_array ($self, $values, $_) ;
-		 map { ( "--set-tag", $flacname."=".$_ ) } @tags
-		 } Lltag::Tags::get_values_non_regular_keys ($self, $values)
-	       ),
-	     ) ;
+    my @system_args
+	= ( @flac_tagging_cmd ,
+	    # clear all tags
+	    @flac_tagging_clear_option ,
+	    # apply new tags
+	    ( map {
+		my $flacname = $_ ;
+		$flacname = $field_name_flac_translations{$_} if defined $field_name_flac_translations{$_} ;
+		my @tags = Lltag::Tags::get_tag_value_array ($self, $values, $_) ;
+		map { ( "--set-tag", $flacname."=".$_ ) } @tags
+		} @{$self->{field_names}}
+	      ),
+	    # apply non-regular tags
+	    ( map {
+		my $flacname = $_ ;
+		my @tags = Lltag::Tags::get_tag_value_array ($self, $values, $_) ;
+		map { ( "--set-tag", $flacname."=".$_ ) } @tags
+		} Lltag::Tags::get_values_non_regular_keys ($self, $values)
+	      ),
+	    $file ) ;
+
+    Lltag::Tags::set_tags_with_external_prog ($self, @system_args) ;
 }
 
 sub new {
@@ -72,7 +77,7 @@ sub new {
        type => "flac",
        extension => "flac",
        read_tags => \&read_tags,
-       tagging_system_args => \&tagging_system_args,
+       set_tags => \&set_tags,
     } ;
 }
 

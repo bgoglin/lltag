@@ -479,24 +479,8 @@ sub tag_with_values {
     }
 
     # tagging command line
-    my $tagging_system_args_func = $backend->{tagging_system_args} ;
-    my @tagging_system_args = &{$tagging_system_args_func} ($self, $values) ;
-    my @system_args = ( @tagging_system_args, $file) ;
-
-    # show command line and really tag if asked
-    if ($self->{dry_run_opt} or $self->{verbose_opt}) {
-	print "  '". +(join "' '", @system_args) ."'\n" ;
-    }
-    if (!$self->{dry_run_opt}) {
-	print "  Tagging.\n" ;
-	my ($status, @output) = Lltag::Misc::system_with_output (@system_args) ;
-	if ($status) {
-	    print "    Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
-	    while (my $line = shift @output) {
-		print "# $line" ;
-	    }
-	}
-    }
+    my $set_tags_func = $backend->{set_tags} ;
+    &{$set_tags_func}($self, $file, $values) ;
 }
 
 #######################################################
