@@ -1,6 +1,12 @@
+
   * Rewrite HTTP requests using libwww-perl.
     + Drop --cddb-proxy and use the HTTP_PROXY variable in the
       environment (set it to something like "http://my.proxy.com").
+  * Change the backend API to return a hash of values instead of a
+    stream when reading existing tags, to help upcoming backends
+    that won't use the output of an external program.
+    - Conversion from stream to hash is moved to a helper that some
+      backends may still use if required.
 
 
 lltag (0.12.2)

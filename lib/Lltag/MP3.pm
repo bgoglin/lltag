@@ -18,9 +18,9 @@ sub read_tags {
     my $file = shift ;
     my ($status, @output) = Lltag::Misc::system_with_output
 	("mp3info", "-p", "ARTIST=%a\nALBUM=%l\nTITLE=%t\nNUMBER=%n\nGENRE=%g\nDATE=%y\nCOMMENT=%c\n", $file) ;
-    return ($status)
+    return undef
 	if $status ;
-    return ($status, @output) ;
+    return Lltag::Tags::convert_tag_stream_to_values ($self, @output) ;
 }
 
 sub tagging_system_args {

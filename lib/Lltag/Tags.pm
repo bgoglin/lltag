@@ -86,6 +86,24 @@ sub get_additional_tag_values {
 }
 
 #######################################################
+# extract tags from the stream
+# to be used by backends who get the tags as the stream output of another program
+
+sub convert_tag_stream_to_values {
+    my $self = shift ;
+    my $values = {} ;
+
+    while (my $line = shift @_) {
+	chomp $line ;
+	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
+	next if !$value ;
+	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
+    }
+
+    return $values ;
+}
+
+#######################################################
 # edit current tags
 
 my $edit_values_usage_forced = 1 ;

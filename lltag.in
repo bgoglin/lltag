@@ -458,21 +458,9 @@ sub read_tags {
 
     # extract tags as a stream
     my $read_tags_func = $backend->{read_tags} ;
-    my ($status, @output) = &$read_tags_func ($self, $file) ;
-    if ($status) {
-	print "  Failed to get tags from file.\n" ;
-	return undef ;
-    }
-
-    # extract tags from the stream
-    my $values = {} ;
-    while (my $line = shift @output) {
-	chomp $line ;
-	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
-	next if !$value ;
-	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
-    }
-
+    my $values = &$read_tags_func ($self, $file) ;
+    Lltag::Misc::print_warning ("  ", "Failed to get tags from file.")
+	unless defined $values ;
     return $values ;
 }
 

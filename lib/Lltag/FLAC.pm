@@ -19,7 +19,7 @@ sub read_tags {
     my $file = shift ;
     my ($status, @output) = Lltag::Misc::system_with_output
 	("metaflac", "--list", "--block-type=VORBIS_COMMENT", $file) ;
-    return ($status)
+    return undef
 	if $status ;
     @output = map {
 	my $line = $_ ;
@@ -27,7 +27,7 @@ sub read_tags {
 	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
 	$line
 	} ( grep { /comment\[\d+\]/ } @output ) ;
-    return ($status, @output) ;
+    return Lltag::Tags::convert_tag_stream_to_values ($self, @output) ;
 }
 
 sub tagging_system_args {
