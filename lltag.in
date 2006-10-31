@@ -697,7 +697,6 @@ while ( @files ) {
 
     # next file
   NEXT_FILE:
-    shift ;
     next ;
 
     # exit without tagging anything anymore
