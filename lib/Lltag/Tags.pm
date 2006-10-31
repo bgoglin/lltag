@@ -12,9 +12,13 @@ sub append_tag_value {
     if (not defined $values->{$field}) {
 	$values->{$field} = $value ;
     } elsif (ref($values->{$field}) ne 'ARRAY') {
-	@{$values->{$field}} = ($values->{$field}, $value) ;
+	# create an array (except if we already have this value)
+	@{$values->{$field}} = ($values->{$field}, $value)
+	    unless $value eq $values->{$field} ;
     } else {
-	push @{$values->{$field}}, $value ;
+	# append to the array (except if we already have this value)
+	push @{$values->{$field}}, $value
+	    unless grep { $value eq $_ } @{$values->{$field}} ;
     }
 }
 

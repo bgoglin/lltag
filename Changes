@@ -6,6 +6,7 @@
     to external programs, to help upcoming backends.
     - Conversion from hash to external programs (command line and output
       stream) is moved to new helper functions for backends that need them.
+  * When tags have multiple value, do not have the same value twice.
 
 
 lltag (0.12.2)
