@@ -88,7 +88,7 @@ sub version {
 #######################################################
 # usage
 sub usage {
-    print $0." $version is a frontend to tag MP3/OGG/FLAC files automagically.\n" ;
+    print $0." $version is a frontend to tag and rename MP3/OGG/FLAC files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
     print " Tagging options:\n" ;
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
