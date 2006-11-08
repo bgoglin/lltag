@@ -1,3 +1,10 @@
+lltag (xxx) unstable; urgency=low
+
+  * New upstream release.
+  * Add homepage to the description.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  7 Nov 2006 20:10:29 +0100
+
 lltag (0.12.2-1) unstable; urgency=low
 
   * New upstream release.

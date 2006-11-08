@@ -17,3 +17,5 @@ Description: Automatic command-line mp3/ogg/flac file tagger and renamer
  lltag may also rename files according to a configurable filename format.
  The interface has been designed to be as automatic, efficient and smart
  as possible.
+ .
+  Homepage: http://home.gna.org/lltag/
