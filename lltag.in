@@ -524,12 +524,18 @@ while ( @ARGV ) {
     }
 }
 
+if (!@files) {
+    print "No files to process.\n"
+	if $self->{verbose_opt} ;
+    exit 0 ;
+}
+
 # display tags
 if ($self->{show_tags_opt}) {
     my @fields_to_show = split (/,/, $self->{show_tags_opt}) ;
     foreach my $file (@files) {
 	print "$file:\n"
-	    if @files ;
+	    if @files ; # do not print filename if there is only one file
 
 	my ($parsename, $backend) = extract_parsename_and_backend $file ;
 	if (not defined $backend) {

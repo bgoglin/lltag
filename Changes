@@ -7,6 +7,10 @@
     - Conversion from hash to external programs (command line and output
       stream) is moved to new helper functions for backends that need them.
   * When tags have multiple value, do not have the same value twice.
+  * Add "files..." to the synopsis in the manpage since lltag only operates
+    on files that are given on the command line (not on the whole directory)
+    and add a message in verbose mode when no files are given
+    (reported by Hamish Moffatt in Debian bug #397627).
 
 
 lltag (0.12.2)

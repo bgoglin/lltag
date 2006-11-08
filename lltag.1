@@ -55,6 +55,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ -L ]
 .RB [ -V ]
 .RB [ -h ]
+.RB files...
 .\"
 
 
@@ -238,7 +239,8 @@ Do not consider the path of files when matching.
 
 .TP
 .B "-R, --recursive"
-Recursively search for files in subdirectories.
+Recursively search for files in subdirectories that are given on
+the command line.
 
 .TP
 .BI --regexp " <[tag,tag:]s/from/to/>"
