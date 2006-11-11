@@ -8,7 +8,7 @@ Standards-Version: 3.7.2
 Package: lltag
 Architecture: all
 Depends: ${perl:Depends}
-Recommends: mp3info, vorbis-tools, flac, libterm-readline-gnu-perl | libterm-readline-perl-perl
+Recommends: mp3info, vorbis-tools, flac, libterm-readline-gnu-perl | libterm-readline-perl-perl, libwww-perl
 Description: Automatic command-line mp3/ogg/flac file tagger and renamer
  lltag is a command-line tool manipulating MP3 ID3, OGG or FLAC tags.
  It may be used to tag multiples files at once by comparing their filename
