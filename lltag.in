@@ -173,7 +173,7 @@ $self->{gencfg_file} = undef ;
 
 @{$self->{user_format_strings}} = () ;
 
-$self->{cddb_server_name} = "www.freedb.org" ;
+$self->{cddb_server_name} = "tracktype.org" ;
 $self->{cddb_server_port} = 80 ;
 
 # command line given cddb query, undefined afterwards

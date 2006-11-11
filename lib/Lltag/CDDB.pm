@@ -42,6 +42,8 @@ sub init_cddb {
 
 #########################################
 # freedb.org specific code
+# NOT USED ANYMORE since Magix acquired freedb.org
+# and closed the online search module for now
 #########################################
 
 sub freedborg_cddb_response {
@@ -49,6 +51,7 @@ sub freedborg_cddb_response {
     my $path = shift ;
 
     print "      Sending CDDB request...\n" ;
+    print "        '$path'\n" if $self->{verbose_opt} ;
     my $response = $browser->get(
 	"http://"
         . $self->{cddb_server_name}
@@ -71,6 +74,7 @@ sub freedborg_cddb_response {
 		. ".") ;
 	return undef ;
     }
+    # TODO: grep for something to be sure it worked
 
     return $response->content ;
 }
@@ -138,7 +142,7 @@ sub freedborg_cddb_query_tracks_by_id {
     my $id = shift ;
     my $name = shift ;
 
-    my $response = freedborg_cddb_response $self, "/freedb_search_fmt.php?cat=${cat}&id=${id}\n" ;
+    my $response = freedborg_cddb_response $self, "/freedb_search_fmt.php?cat=${cat}&id=${id}" ;
     return (CDDB_ABORT, undef) unless defined $response ;
 
     my $cd ;
@@ -194,11 +198,166 @@ sub freedborg_cddb_query_cd_by_keywords_usage {
     print $indent."<category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
 }
 
-my $cddb_backend = {
+my $freedborg_cddb_backend = {
     cddb_query_cd_by_keywords => \&freedborg_cddb_query_cd_by_keywords,
     cddb_query_tracks_by_id => \&freedborg_cddb_query_tracks_by_id,
     cddb_query_cd_by_keywords_usage => \&freedborg_cddb_query_cd_by_keywords_usage,
 } ;
+
+#########################################
+# tracktype.org specific code
+# USED since november 2006
+#########################################
+
+sub tracktypeorg_cddb_response {
+    my $self = shift ;
+    my $path = shift ;
+    my $postdata = shift ;
+
+    my $response ;
+    print "      Sending CDDB request...\n" ;
+    if (defined $postdata) {
+	print "        'POST $path'\n" if $self->{verbose_opt} ;
+	$response = $browser->post(
+				   "http://"
+				   . $self->{cddb_server_name}
+				   . ($self->{cddb_server_port} != 80 ? $self->{cddb_server_port} : "")
+				   . $path,
+				   $postdata
+				   ) ;
+    } else {
+	print "        'GET $path'\n" if $self->{verbose_opt} ;
+	$response = $browser->get(
+				  "http://"
+				  . $self->{cddb_server_name}
+				  . ($self->{cddb_server_port} != 80 ? $self->{cddb_server_port} : "")
+				  . $path
+				  ) ;
+    }
+
+    if (!$response->is_success) {
+	Lltag::Misc::print_error ("  ",
+		"HTTP request to CDDB server ("
+		. $self->{cddb_server_name} .":". $self->{cddb_server_port}
+		. ") failed.") ;
+	return undef ;
+    }
+    if ($response->content_type ne 'text/plain') {
+	Lltag::Misc::print_error ("  ",
+		"Weird CDDB response (type ".$response->content_type.") from server "
+		. $self->{cddb_server_name} .":". $self->{cddb_server_port}
+		. ".") ;
+	return undef ;
+    }
+
+    my $content = $response->content ;
+
+    # deal with windows line-break
+    $content =~ s/\r\n/\n/g ;
+
+    # convert from utf8 to current locale
+    utf8::decode($content);
+
+    return $content ;
+}
+
+sub tracktypeorg_cddb_query_cd_by_keywords {
+    my $self = shift ;
+    my $keywords = shift ;
+
+    my %postdata = ( "hello" => "lltag",
+		     "proto" => 4,
+		     "cmd" => "cddb album $keywords",
+		     ) ;
+    my $response = tracktypeorg_cddb_response $self, "/~cddb/cddb.cgi", \%postdata ;
+    return (CDDB_ABORT, undef) unless defined $response ;
+
+    my @lines = (split /\n/, $response) ;
+    # check status in header
+    my $header = shift @lines ;
+    # TODO: check status
+
+    my @cdids = () ;
+    foreach my $line (@lines) {
+	if ($line =~ m@^([^ ]+) ([^ ]+) (.+ / .+)$@) {
+	    my %cdid = ( CAT => $1, ID => $2, NAME => $3 ) ;
+	    push @cdids, \%cdid ;
+	}
+    }
+
+    return (CDDB_SUCCESS, \@cdids) ;
+}
+
+sub tracktypeorg_cddb_query_tracks_by_id {
+    my $self = shift ;
+    my $cat = shift ;
+    my $id = shift ;
+    my $name = shift ;
+
+    my $response = tracktypeorg_cddb_response $self, "/freedb/${cat}/${id}" ;
+    return (CDDB_ABORT, undef) unless defined $response ;
+
+    # TODO: grep for something to be sure it worked
+
+    my $cd ;
+    $cd->{CAT} = $cat ;
+    $cd->{ID} = $id ;
+    $cd->{TRACKS} = 0 ;
+
+    foreach my $line (split /\n/, $response) {
+	next if $line =~ /^#/ ;
+	if ($line =~ m/^DISCID=(.+)/) {
+	    if ($id ne $1) {
+		    Lltag::Misc::print_warning ("      ", "Found CD id '$1' instead of '$id', this entry might be corrupted") ;
+	    }
+	} elsif ($line =~ m@^DTITLE=(.*)@) {
+	    if (defined $name) {
+		if ($name ne $1) {
+		    Lltag::Misc::print_warning ("      ", "Found CD name '$1' instead of '$name', this entry might be corrupted") ;
+		}
+	    } else {
+		$name = $1 ;
+	    }
+	} elsif ($line =~ m/^DYEAR=(.*)/) {
+	    $cd->{DATE} = $1 ;
+	} elsif ($line =~ m/^DGENRE=(.*)/) {
+	    $cd->{GENRE} = $1 ;
+	} elsif ($line =~ m/^TTITLE(\d+)=(.*)/) {
+	    my $num = $1 + 1;
+	    if ($num != $cd->{TRACKS} + 1) {
+		Lltag::Misc::print_warning ("      ", "Found CD track '$num' instead of '".($cd->{TRACKS}+1)."', this entry might be corrupted") ;
+	    }
+	    my %track = ( TITLE => $2 ) ;
+	    $cd->{$num} = \%track ;
+	    $cd->{TRACKS} = $num ;
+	}
+    }
+
+    return (CDDB_SUCCESS, undef)
+	unless defined $name ;
+
+    # FIXME: are we sure no artist or album may contain " / " ?
+    $name =~ m@^(.+) / (.+)$@ ;
+    $cd->{ARTIST} = $1 ;
+    $cd->{ALBUM} = $2 ;
+
+    return (CDDB_SUCCESS, $cd) ;
+}
+
+sub tracktypeorg_cddb_query_cd_by_keywords_usage {
+    my $indent = shift ;
+    print $indent."<space-separated keywords> => CDDB query for CD matching the keywords\n" ;
+    print $indent."  Search in all CD categories within fields 'artist' and 'album'\n" ;
+    print $indent."<category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
+}
+
+my $tracktypeorg_cddb_backend = {
+    cddb_query_cd_by_keywords => \&tracktypeorg_cddb_query_cd_by_keywords,
+    cddb_query_tracks_by_id => \&tracktypeorg_cddb_query_tracks_by_id,
+    cddb_query_cd_by_keywords_usage => \&tracktypeorg_cddb_query_cd_by_keywords_usage,
+} ;
+
+my $cddb_backend = $tracktypeorg_cddb_backend ;
 
 ######################################################
 # interactive menu to browse CDDB, tracks in a CD
@@ -225,10 +384,14 @@ sub print_cd {
     map {
 	print "    $_: $cd->{$_}\n" ;
     } grep { $_ !~ /^\d+$/ } (keys %{$cd}) ;
-    my $track_format = "    Track %0".(length $cd->{TRACKS})."d: %s (%s)\n" ;
+    my $track_format = "    Track %0".(length $cd->{TRACKS})."d: %s%s\n" ;
     for(my $i=1; $i <= $cd->{TRACKS}; $i++) {
 	my $track = $cd->{$i} ;
-	printf ($track_format, $i, $track->{TITLE}, $track->{TIME}) ;
+	my $title = "<unknown title>" ;
+	$title = $track->{TITLE} if exists $track->{TITLE} and defined $track->{TITLE} ;
+	my $time = "" ;
+	$time = " ($track->{TIME})" if exists $track->{TIME} and defined $track->{TIME} ;
+	printf ($track_format, $i, $title, $time) ;
     }
 }
 

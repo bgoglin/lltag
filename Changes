@@ -1,4 +1,9 @@
 
+  * CDDB now uses TrackType.org instead of freedb.org since the HTTP search
+    interface of freedb.org is unavailable for now (closes Hamish Moffatt's
+    Debian bug #397626). TrackType.org is the old freedb2.org, its database
+    might not be as complete as the others, but at least it works and is
+    very convenient to use.
   * Rewrite HTTP requests using libwww-perl.
     + Drop --cddb-proxy and use the HTTP_PROXY variable in the
       environment (set it to something like "http://my.proxy.com").

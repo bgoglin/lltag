@@ -434,19 +434,23 @@ to choose a CD in the online database.
 .TP
 .B <space-separated keywords>
 CDDB query for CD matching the keywords.
-Search in all CD categories within fields artist and title by default.
-If
-.B cats=foo+bar
-is added, search in CD categories foo and bar only.
-If
-.B fields=all
-is added, search keywords in all fields.
-If
-.B fields=foo+bar
-is added, search keywords in fields foo and bar.
-.TP
-.B <category>/<hexadecinal id>
-CDDB query for CD matching category and id
+Search in all CD categories within fields artist and album.
+
+.\" freedb.org specific manual, not used anymore
+.\"Search in all CD categories within fields artist and title by default.
+.\"If
+.\".B cats=foo+bar
+.\"is added, search in CD categories foo and bar only.
+.\"If
+.\".B fields=all
+.\"is added, search keywords in all fields.
+.\"If
+.\".B fields=foo+bar
+.\"is added, search keywords in fields foo and bar.
+.\".TP
+.\".B <category>/<hexadecinal id>
+.\"CDDB query for CD matching category and id
+
 .TP
 .B q
 Quit CDDB query, see
