@@ -6,6 +6,8 @@ lltag (xxx) unstable; urgency=low
     the HTTP search interface of freedb.org is not available for now,
     closes: #397626.
   * Add libwww-perl to Recommends according to new upstream requirements.
+  * Update debianize_dependencies_in_warnings.patch to add a message
+    about libwww-perl.
   * Add homepage to the description.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  7 Nov 2006 20:10:29 +0100

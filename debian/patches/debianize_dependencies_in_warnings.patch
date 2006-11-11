@@ -1,10 +1,33 @@
 ---
+ lib/Lltag/CDDB.pm |    4 +-
  lib/Lltag/FLAC.pm |    2 +-
- lib/Lltag/MP3.pm  |    2 +-
  lib/Lltag/Misc.pm |    2 +-
+ lib/Lltag/MP3.pm  |    2 +-
  lib/Lltag/OGG.pm  |    2 +-
- 4 files changed, 4 insertions(+), 4 deletions(-)
+ 5 files changed, 6 insertions(+), 6 deletions(-)
 
+Index: lltag-0.12.1/lib/Lltag/CDDB.pm
+===================================================================
+--- lltag-0.12.1/lib/Lltag/CDDB.pm	(revision 390)
++++ lltag-0.12.1/lib/Lltag/CDDB.pm	(working copy)
+@@ -32,7 +32,7 @@
+     my $self = shift ;
+ 
+     if (not eval { use LWP ; } ) {
+-	print "LWP (libwww-perl module) does not seem to be available, disabling CDDB.\n"
++	print "LWP (libwww-perl package) does not seem to be available, disabling CDDB.\n"
+             if $self->{verbose_opt} ;
+         $cddb_supported = 0 ;
+     }
+@@ -600,7 +600,7 @@
+     my ($res, $values) ;
+ 
+     if (!$cddb_supported) {
+-	print "  Cannot use CDDB without LWP (libwww-perl module).\n" ;
++	print "  Cannot use CDDB without LWP (libwww-perl package).\n" ;
+ 	goto ABORT ;
+     }
+ 
 Index: lltag-0.12.1/lib/Lltag/FLAC.pm
 ===================================================================
 --- lltag-0.12.1.orig/lib/Lltag/FLAC.pm	2006-10-03 20:06:25.000000000 +0200
@@ -18,6 +41,20 @@ Index: lltag-0.12.1/lib/Lltag/FLAC.pm
          if $status and $self->{verbose_opt} ;
      return $status ;
  }
+Index: lltag-0.12.1/lib/Lltag/Misc.pm
+===================================================================
+--- lltag-0.12.1.orig/lib/Lltag/Misc.pm	2006-10-03 23:05:59.000000000 +0200
++++ lltag-0.12.1/lib/Lltag/Misc.pm	2006-10-03 23:06:38.000000000 +0200
+@@ -58,7 +58,8 @@
+     # 0 = no clearing, 1 = clearing allowed and documented, -1 = clearing allowed (normal behavior)
+     $preput = "" if not defined $preput ;
+     if ($readline_firsttime) {
+-	print $indent."You might want to install an advanced Perl readline module such as 'Term::ReadLine::GNU'.\n" ;
++	print $indent."You might want to install an advanced Perl readline module such as 'Term::ReadLine::GNU'\n" ;
++	print $indent."(provided by package 'libterm-readline-gnu-perl').\n" ;
+ 	print $indent."The current value is given in parenthesis, <ENTER> to keep it"
+ 	    . ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
+ 	    . ".\n" ;
 Index: lltag-0.12.1/lib/Lltag/MP3.pm
 ===================================================================
 --- lltag-0.12.1.orig/lib/Lltag/MP3.pm	2006-10-03 20:06:25.000000000 +0200
@@ -31,20 +68,6 @@ Index: lltag-0.12.1/lib/Lltag/MP3.pm
  	if $status and $self->{verbose_opt} ;
      return $status ;
  }
-Index: lltag-0.12.1/lib/Lltag/Misc.pm
-===================================================================
---- lltag-0.12.1.orig/lib/Lltag/Misc.pm	2006-10-03 23:05:59.000000000 +0200
-+++ lltag-0.12.1/lib/Lltag/Misc.pm	2006-10-03 23:06:38.000000000 +0200
-@@ -90,7 +90,8 @@
-     # 0 = no clearing, 1 = clearing allowed and documented, -1 = clearing allowed (normal behavior)
-     $preput = "" if not defined $preput ;
-     if ($readline_firsttime) {
--	print $indent."You might want to install an advanced Perl readline module such as 'Term::ReadLine::GNU'.\n" ;
-+	print $indent."You might want to install an advanced Perl readline module such as 'Term::ReadLine::GNU'\n" ;
-+	print $indent."(provided by package 'libterm-readline-gnu-perl').\n" ;
- 	print $indent."The current value is given in parenthesis, <ENTER> to keep it"
- 	    . ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
- 	    . ".\n" ;
 Index: lltag-0.12.1/lib/Lltag/OGG.pm
 ===================================================================
 --- lltag-0.12.1.orig/lib/Lltag/OGG.pm	2006-10-03 20:06:25.000000000 +0200
