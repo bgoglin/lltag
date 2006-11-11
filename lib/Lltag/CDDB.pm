@@ -226,9 +226,9 @@ sub print_cd {
 	print "    $_: $cd->{$_}\n" ;
     } grep { $_ !~ /^\d+$/ } (keys %{$cd}) ;
     my $track_format = "    Track %0".(length $cd->{TRACKS})."d: %s (%s)\n" ;
-    for(my $i=0; $i < $cd->{TRACKS}; $i++) {
-	my $track = $cd->{$i+1} ;
-	printf ($track_format, $i+1, $track->{TITLE}, $track->{TIME}) ;
+    for(my $i=1; $i <= $cd->{TRACKS}; $i++) {
+	my $track = $cd->{$i} ;
+	printf ($track_format, $i, $track->{TITLE}, $track->{TIME}) ;
     }
 }
 
