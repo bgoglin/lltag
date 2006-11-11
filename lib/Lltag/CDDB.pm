@@ -353,7 +353,7 @@ sub tracktypeorg_cddb_query_tracks_by_id {
 sub tracktypeorg_cddb_query_cd_by_keywords_usage {
     my $indent = shift ;
     print $indent."<space-separated keywords> => CDDB query for CD matching the keywords\n" ;
-    print $indent."  Search in all CD categories within fields 'artist' and 'album'\n" ;
+    print $indent."  Search in all CD categories within fields 'artist' OR 'album'\n" ;
     print $indent."<category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
 }
 
