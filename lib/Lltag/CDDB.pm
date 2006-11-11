@@ -41,14 +41,14 @@ sub init_cddb {
 }
 
 #########################################
-# low level CDDB http requests
+# freedb.org specific code
+#########################################
 
-sub cddb_response {
+sub freedborg_cddb_response {
     my $self = shift ;
     my $path = shift ;
 
     print "      Sending CDDB request...\n" ;
-
     my $response = $browser->get(
 	"http://"
         . $self->{cddb_server_name}
@@ -75,16 +75,34 @@ sub cddb_response {
     return $response->content ;
 }
 
-sub cddb_query_cd_by_keywords {
+sub freedborg_cddb_query_cd_by_keywords {
     my $self = shift ;
     my $keywords = shift ;
-    my @fields = split /\+/, shift ;
-    my @cats = split /\+/, shift ;
+
+    # extract fields and cat from the keywords
+    my @fields = () ;
+    my @cats = () ;
+    my @keywords_list = () ;
+    foreach my $word (split / +/, $keywords) {
+	if ($word =~ m/^fields=(.+)$/) {
+	    push @fields, (split /\++/, $1) ;
+	} elsif ($word =~ m/^cats=(.+)$/) {
+	    push @cats, (split /\++/, $1) ;
+	} else {
+	    push @keywords_list, $word ;
+	}
+    }
+    # assemble remaining keywords with "+"
+    $keywords = join "+", @keywords_list ;
+
+    # by default, search in all cats, within artist and title only
+    @cats = ( "all" ) unless @cats ;
+    @fields = ( "artist", "title" ) unless @fields ;
 
     my $query_fields = (grep { $_ eq "all" } @fields) ? "allfields=YES" : "allfields=NO".(join ("", map { "&fields=$_" } @fields)) ;
     my $query_cats = (grep { $_ eq "all" } @cats) ? "allcats=YES" : "allcats=NO".(join ("", map { "&cats=$_" } @cats)) ;
 
-    my $response = cddb_response $self, "/freedb_search.php?words=${keywords}&${query_fields}&${query_cats}&grouping=none&x=0&y=0" ;
+    my $response = freedborg_cddb_response $self, "/freedb_search.php?words=${keywords}&${query_fields}&${query_cats}&grouping=none&x=0&y=0" ;
     return (CDDB_ABORT, undef) unless defined $response ;
 
     my @cdids = () ;
@@ -114,13 +132,13 @@ sub cddb_query_cd_by_keywords {
     return (CDDB_SUCCESS, \@cdids) ;
 }
 
-sub cddb_query_tracks_by_id {
+sub freedborg_cddb_query_tracks_by_id {
     my $self = shift ;
     my $cat = shift ;
     my $id = shift ;
     my $name = shift ;
 
-    my $response = cddb_response $self, "/freedb_search_fmt.php?cat=${cat}&id=${id}\n" ;
+    my $response = freedborg_cddb_response $self, "/freedb_search_fmt.php?cat=${cat}&id=${id}\n" ;
     return (CDDB_ABORT, undef) unless defined $response ;
 
     my $cd ;
@@ -165,6 +183,22 @@ sub cddb_query_tracks_by_id {
 
     return (CDDB_SUCCESS, $cd) ;
 }
+
+sub freedborg_cddb_query_cd_by_keywords_usage {
+    my $indent = shift ;
+    print $indent."<space-separated keywords> => CDDB query for CD matching the keywords\n" ;
+    print $indent."  Search in all CD categories within fields 'artist' and 'title' by default\n" ;
+    print $indent."    cats=foo+bar   => Search in CD categories 'foo' and 'bar' only\n" ;
+    print $indent."    fields=all     => Search keywords in all fields\n" ;
+    print $indent."    fields=foo+bar => Search keywords in fields 'foo' and 'bar'\n" ;
+    print $indent."<category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
+}
+
+my $cddb_backend = {
+    cddb_query_cd_by_keywords => \&freedborg_cddb_query_cd_by_keywords,
+    cddb_query_tracks_by_id => \&freedborg_cddb_query_tracks_by_id,
+    cddb_query_cd_by_keywords_usage => \&freedborg_cddb_query_cd_by_keywords_usage,
+} ;
 
 ######################################################
 # interactive menu to browse CDDB, tracks in a CD
@@ -324,7 +358,9 @@ sub print_cdids {
 sub get_cddb_tags_from_cdid {
     my $self = shift ;
     my $cdid = shift ;
-    my ($res, $cd) = cddb_query_tracks_by_id ($self, $cdid->{CAT}, $cdid->{ID}, $cdid->{NAME}) ;
+
+    my $cddb_query_tracks_by_id_func = $cddb_backend->{cddb_query_tracks_by_id} ;
+    my ($res, $cd) = &{$cddb_query_tracks_by_id_func} ($self, $cdid->{CAT}, $cdid->{ID}, $cdid->{NAME}) ;
     return (CDDB_ABORT, undef) if $res == CDDB_ABORT ;
 
     if (!$cd or !$cd->{TRACKS}) {
@@ -382,12 +418,8 @@ my $cddb_keywords_usage_forced = 1 ;
 
 sub cddb_keywords_usage {
     Lltag::Misc::print_usage_header ("    ", "CDDB Query by Keywords") ;
-    print "      <space-separated keywords> => CDDB query for CD matching the keywords\n" ;
-    print "        Search in all CD categories within fields 'artist' and 'title' by default\n" ;
-    print "          cats=foo+bar   => Search in CD categories 'foo' and 'bar' only\n" ;
-    print "          fields=all     => Search keywords in all fields\n" ;
-    print "          fields=foo+bar => Search keywords in fields 'foo' and 'bar'\n" ;
-    print "      <category>/<hexadecinal id> => CDDB query for CD matching category and id\n" ;
+    my $cddb_query_cd_by_keywords_usage_func = $cddb_backend->{cddb_query_cd_by_keywords_usage} ;
+    &{$cddb_query_cd_by_keywords_usage_func} ("      ") ;
     print "      q => Quit CDDB query\n" ;
     print "      h => Show this help\n" ;
 
@@ -451,25 +483,9 @@ sub get_cddb_tags {
 	}
 
 	# do the actual query for CD id with keywords
-	my $cats = "all" ;
-	my $fields = "artist+title" ;
-
-	# extract fields and cat from the keywords
-	my @keywords_list = map {
-	    my $val = $_ ;
-	    if ($val =~ m/^fields=(.+)$/) {
-		$fields = $1 ; () ;
-	    } elsif ($val =~ m/^cats=(.+)$/) {
-		$cats = $1 ; () ;
-	    } else {
-		$_ ;
-	    }
-	} (split / +/, $keywords) ;
-	# assemble remaining keywords with "+"
-	$keywords = join "+", @keywords_list ;
-
 	my $cdids ;
-	($res, $cdids) = cddb_query_cd_by_keywords $self, $keywords, $fields, $cats ;
+	my $cddb_query_cd_by_keywords_func = $cddb_backend->{cddb_query_cd_by_keywords} ;
+	($res, $cdids) = &{$cddb_query_cd_by_keywords_func} ($self, $keywords) ;
 	goto ABORT if $res == CDDB_ABORT ;
 
 	if (!@{$cdids}) {
