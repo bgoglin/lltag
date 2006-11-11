@@ -2,8 +2,6 @@ package Lltag::CDDB ;
 
 use strict ;
 
-use LWP ;
-
 use Lltag::Misc ;
 
 # return values that are passed to lltag
@@ -28,8 +26,16 @@ my $browser ;
 #########################################
 # init
 
+my $cddb_supported = 1 ;
+
 sub init_cddb {
     my $self = shift ;
+
+    if (not eval { use LWP ; } ) {
+	print "LWP (libwww-perl module) does not seem to be available, disabling CDDB.\n"
+            if $self->{verbose_opt} ;
+        $cddb_supported = 0 ;
+    }
 
     # default confirmation behavior
     $current_cddb_yes_opt = $self->{yes_opt} ;
@@ -592,6 +598,11 @@ sub cddb_keywords_usage {
 sub get_cddb_tags {
     my $self = shift ;
     my ($res, $values) ;
+
+    if (!$cddb_supported) {
+	print "  Cannot use CDDB without LWP (libwww-perl module).\n" ;
+	goto ABORT ;
+    }
 
     if (defined $previous_cd) {
 	bless $previous_cd ;

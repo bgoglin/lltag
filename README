@@ -18,6 +18,7 @@ lltag requirements
 ==================
 
 lltag requires perl, mp3info, vorbiscomment and metaflac.
+Additionaly, when using CDDB features, libwww-perl (LWP) is required.
 These dependencies are automatically installed when installing
 Debian or Gentoo prepackaged versions.
 
