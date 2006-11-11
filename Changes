@@ -19,6 +19,7 @@
     (reported by Hamish Moffatt in Debian bug #397627).
   * Reorganize the CDDB code to make it easy to use other online CDDB site,
     using kind of a backend interface.
+  * Improve requirements in the README.
 
 
 lltag (0.12.2)

@@ -17,10 +17,13 @@ Note that 'make uninstall' (with same options) allows to uninstall.
 lltag requirements
 ==================
 
-lltag requires perl, mp3info, vorbiscomment and metaflac.
-Additionaly, when using CDDB features, libwww-perl (LWP) is required.
+lltag theoretically only requires Perl base to work. However, depending
+on what type of files you want to work on, you'll need to install either
+mp3info (for MP3 files), vorbiscomment (for OGG) or metaflac (for FLAC).
+Additionaly, when using CDDB features, LWP (the libwww-perl module) is
+required.
 These dependencies are automatically installed when installing
-Debian or Gentoo prepackaged versions.
+Debian or Gentoo prepackaged versions, or at least recommended.
 
 lltag may also benefit from a smart readline perl library when
 the user edits the tags by hand.
