@@ -2,6 +2,9 @@ lltag (xxx) unstable; urgency=low
 
   * New upstream release.
   * Add "files..." to the synopsis, closes: #397627.
+  * Uses TrackType.org instead of freedb.org for CDDB requests since
+    the HTTP search interface of freedb.org is not available for now,
+    closes: #397626.
   * Add homepage to the description.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  7 Nov 2006 20:10:29 +0100
