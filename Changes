@@ -4,6 +4,7 @@
     Debian bug #397626). TrackType.org is the old freedb2.org, its database
     might not be as complete as the others, but at least it works and is
     very convenient to use.
+  * Fix handling of multiple values for the same tag.
   * Rewrite HTTP requests using libwww-perl.
     + Drop --cddb-proxy and use the HTTP_PROXY variable in the
       environment (set it to something like "http://my.proxy.com").

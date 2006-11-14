@@ -13,8 +13,12 @@ sub append_tag_value {
 	$values->{$field} = $value ;
     } elsif (ref($values->{$field}) ne 'ARRAY') {
 	# create an array (except if we already have this value)
-	@{$values->{$field}} = ($values->{$field}, $value)
-	    unless $value eq $values->{$field} ;
+	my $tmp = $values->{$field} ;
+	if ($tmp ne $value) {
+	    # need to delete the hash ref before changing its type
+	    delete $values->{$field} ;
+	    @{$values->{$field}} = ($tmp, $value) ;
+	}
     } else {
 	# append to the array (except if we already have this value)
 	push @{$values->{$field}}, $value
