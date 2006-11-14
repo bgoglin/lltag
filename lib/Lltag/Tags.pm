@@ -26,8 +26,19 @@ sub append_tag_value {
     }
 }
 
-# append a set of unique values into and old hashes, depending of clear/append options
+# append a set of unique values into and old hashes
 sub append_tag_values {
+    my $self = shift ;
+    my $old_values = shift ;
+    my $new_values = shift ;
+
+    foreach my $field (keys %{$new_values}) {
+	append_tag_value $self, $old_values, $field, $new_values->{$field} ;
+    }
+}
+
+# add a set of unique values into and old hashes, depending of clear/append options
+sub merge_new_tag_values {
     my $self = shift ;
     my $old_values = shift ;
     my $new_values = shift ;
@@ -45,7 +56,6 @@ sub append_tag_values {
     return $old_values ;
 }
 
-
 # return values for a field as an array
 sub get_tag_value_array {
     my $self = shift ;
@@ -53,10 +63,10 @@ sub get_tag_value_array {
     my $field = shift ;
     if (not defined $values->{$field}) {
 	return () ;
-    } elsif (ref ($values->{$field}) eq 'ARRAY') {
-	return @{$values->{$field}} ;
-    } else {
+    } elsif (ref ($values->{$field}) ne 'ARRAY') {
 	return ($values->{$field}) ;
+    } else {
+	return @{$values->{$field}} ;
     }
 }
 

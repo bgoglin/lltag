@@ -563,7 +563,6 @@ Lltag::Parse::generate_user_parsers ($self) ;
 while ( @files ) {
     my $file = shift @files ;
     my $values = undef ;
-    my $new_values = undef ;
     my $res ;
 
     print "\n" ;
@@ -683,13 +682,16 @@ while ( @files ) {
     }
 
   TAG:
-    # FIXME: do that before confirmation
+    # FIXME: do that before confirmation, requires to deal with:
+    # - showing additional tags and multiple values
+    # - editing them
 
     # add new values to the old ones, depending on clear/append options
-    $new_values = Lltag::Tags::append_tag_values ($self, $old_values, $values) ;
+    my $new_values = Lltag::Tags::merge_new_tag_values ($self, $old_values, $values) ;
 
     # append additional tags too
-    $new_values = Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
+    # don't do it before because we cannot show multiple values or special tags
+    Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # actually tagging
     tag_with_values $file, $backend, $new_values
