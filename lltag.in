@@ -354,6 +354,7 @@ GetOptions(
 $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
 			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
+			       and !@{$self->{additional_tags}}
 			       and !$self->{list_formats_opt} ) ;
 
 # if --cddb-query is passed, enable cddb too
