@@ -31,10 +31,11 @@ my $cddb_supported = 1 ;
 sub init_cddb {
     my $self = shift ;
 
-    if (not eval { use LWP ; } ) {
+    if (not eval { require LWP ; } ) {
 	print "LWP (libwww-perl module) does not seem to be available, disabling CDDB.\n"
             if $self->{verbose_opt} ;
         $cddb_supported = 0 ;
+	return ;
     }
 
     # default confirmation behavior
