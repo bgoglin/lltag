@@ -8,7 +8,7 @@
 
 
 .SH NAME
-lltag - tag mp3/ogg/flac music files automagically
+lltag - tag and rename mp3/ogg/flac music files automagically
 
 
 
@@ -63,19 +63,49 @@ lltag - tag mp3/ogg/flac music files automagically
 
 .SH DESCRIPTION
 .B lltag
-is a command-line tool to automagically set tags of MP3, OGG or FLAC files.
-It parses the filenames according to different formats to get the tags.
-The formats may be either given by the user or guessed by lltag from
-its internal database.
+is a command-line tool to automagically set tags of MP3, OGG or FLAC
+files. There are 3 main ways to obtains the tags that will be set:
 
-When called with the
-.B -F
-option (once or multiple times), it will first try the user-specified formats.
-
-Internal formats will be tried later if the
+.TP
+.B Parsing the filename
+.B lltag
+may either parse the filename using its own internal database
+of commonly-used formats (default behavior, or when
 .B -G
-option was passed.
+is passed), or some user-provided formats (when
+.B -F
+is passed).
 
+.TP
+.B Requesting from CDDB
+.B lltag
+may access an online CDDB database to extract tags from a track of a CD (when
+.B -C
+is passed).
+
+.TP
+.B Explicitly setting values
+.B lltag
+provides a set of command-line option to manually set various tags.
+
+.P
+The user may choose one or several of these modes through the command-line.
+If none is set, parsing will internal formats will be used.
+It is also possible to explicitly request another way of obtaining tags
+by using the interactive menu (unless
+--yes
+is passed, or automatic mode is enabled in the menu).
+
+These tags may either replace (default), clear and replace (if
+.B --clear
+is passed) or append (if
+.B --append
+) to the existing ones in the target file.
+
+Once the tags are known, a backend program or library is used to apply
+them to the audio file (unless
+.B --no-tagging
+is passed).
 .B mp3info
 is used to tag
 .B MP3
@@ -89,9 +119,10 @@ is used for
 .B FLAC
 files.
 
-When called with
-.B --rename
-the target file will also be renamed.
+In the end, when called with
+.BR --rename ,
+the target file will also be renamed according to a user-provided format
+filled with the tag values.
 
 
 
