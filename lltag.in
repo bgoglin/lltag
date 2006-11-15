@@ -681,12 +681,11 @@ while ( @files ) {
     # - showing additional tags and multiple values
     # - editing them
 
+    # append additional tags to the new ones from above
+    Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
+
     # add new values to the old ones, depending on clear/append options
     my $new_values = Lltag::Tags::merge_new_tag_values ($self, $old_values, $values) ;
-
-    # append additional tags too
-    # don't do it before because we cannot show multiple values or special tags
-    Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # actually tagging
     tag_with_values $file, $backend, $new_values

@@ -26,18 +26,34 @@ sub append_tag_value {
     }
 }
 
-# append a set of unique values into and old hashes
+# add a value or an array of values to a tag
+sub append_tag_multiple_value {
+    my $self = shift ;
+    my $values = shift ;
+    my $field = shift ;
+    my $multiple_value = shift ;
+
+    if (ref($multiple_value) ne 'ARRAY') {
+	append_tag_value $self, $values, $field, $multiple_value ;
+    } else {
+	map {
+	    append_tag_value $self, $values, $field, $_ ;
+	} @{$multiple_value} ;
+    }
+}
+
+# append a hash of values (either unique or arrays) into another hash
 sub append_tag_values {
     my $self = shift ;
     my $old_values = shift ;
     my $new_values = shift ;
 
     foreach my $field (keys %{$new_values}) {
-	append_tag_value $self, $old_values, $field, $new_values->{$field} ;
+	append_tag_multiple_value $self, $old_values, $field, $new_values->{$field} ;
     }
 }
 
-# add a set of unique values into and old hashes, depending of clear/append options
+# add a set of unique values into another hash, depending of clear/append options
 sub merge_new_tag_values {
     my $self = shift ;
     my $old_values = shift ;
@@ -50,7 +66,7 @@ sub merge_new_tag_values {
     foreach my $field (keys %{$new_values}) {
 	$old_values->{$field} = undef
 	    if defined $old_values->{$field} and !$self->{append_opt} ;
-	append_tag_value $self, $old_values, $field, $new_values->{$field} ;
+	append_tag_multiple_value $self, $old_values, $field, $new_values->{$field} ;
     }
 
     return $old_values ;

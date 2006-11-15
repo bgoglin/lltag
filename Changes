@@ -7,7 +7,8 @@
   * Fix --clear.
   * Fix of --append, especially because handling of multiple values for the
     same tag was very broken.
-  * Fix processing of additional tags (passed with --tag).
+  * Fix processing of additional tags (passed with --tag), especially in
+    case of multiple values for the same tag.
   * Improve the main description at the beginning of the manpage.
   * Rewrite HTTP requests using libwww-perl.
     + Drop --cddb-proxy and use the HTTP_PROXY variable in the
