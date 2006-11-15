@@ -92,14 +92,13 @@ sub get_values_non_regular_keys {
 }
 
 # handle additional tags
-sub get_additional_tag_values {
+sub process_additional_tag_value {
     my $self = shift ;
-    foreach my $string (@{$self->{additional_tags}}) {
-	if ($string =~ m/^([^=]+)=(.*)$/) {
-	    append_tag_value $self, $self->{additional_values}, $1, $2 ;
-	} else {
-	    die "Additional tags must be given as 'TAG=value'.\n" ;
-	}
+    my $string = shift ;
+    if ($string =~ m/^([^=]+)=(.*)$/) {
+	append_tag_value $self, $self->{additional_values}, $1, $2 ;
+    } else {
+	die "Additional tags must be given as 'TAG=value'.\n" ;
     }
 }
 

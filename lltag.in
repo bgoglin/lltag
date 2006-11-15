@@ -60,8 +60,6 @@ Lltag::Misc::init_readline ($self) ;
 
 %{$self->{field_default}} = () ;
 
-%{$self->{additional_values}} = () ;
-
 %{$self->{field_letter_name}} =
     (
      'a' => 'ARTIST',
@@ -148,7 +146,6 @@ $self->{show_tags_opt} = "" ;
 $self->{no_tagging_opt} = 0 ;
 
 %{$self->{additional_values}} = () ;
-@{$self->{additional_tags}} = () ;
 
 $self->{ask_opt} = 0 ;
 $self->{guess_opt} = 0 ;
@@ -209,7 +206,7 @@ sub process_option {
 	# TODO: drop filename support on september 20 2006
 	$self->{field_default}{uc ($1)} = $2 ;
     } elsif (/^tag\s*=\s*"(.+)"$/) {
-	push @{$self->{additional_tags}}, $1 ;
+	Lltag::Tags::process_additional_tag_value ($self, $1) ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
 	$self->{spaces_opt} = $1 ;
     } elsif (/^maj\s*=\s*(.+)$/) {
@@ -343,7 +340,7 @@ GetOptions(
 	   'L|list'       => \$self->{list_formats_opt},
 	   'show-tags=s'  => \$self->{show_tags_opt},
 	   'S'            => sub { $self->{show_tags_opt} = "all" ; },
-	   'tag=s'        => \@{$self->{additional_tags}},
+	   'tag=s'        => sub { shift ; Lltag::Tags::process_additional_tag_value ($self, shift) ; },
 	   map { my $field = $_ ;
 		 # use a sub because \$self->{field_default}{$field} always allocates it and assigns it to undef...
 		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; $self->{field_default}{$field} = shift },
@@ -354,7 +351,7 @@ GetOptions(
 $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
 			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
-			       and !@{$self->{additional_tags}}
+			       and !(keys %{$self->{additional_values}})
 			       and !$self->{list_formats_opt} ) ;
 
 # if --cddb-query is passed, enable cddb too
@@ -497,9 +494,6 @@ if ($self->{list_formats_opt}) {
     Lltag::Parse::list_internal_parsers () ;
     exit 0 ;
 }
-
-# read additional tags
-Lltag::Tags::get_additional_tag_values ($self) ;
 
 # process remaining command-line arguments as files
 my @files = () ;
