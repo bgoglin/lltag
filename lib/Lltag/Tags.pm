@@ -44,7 +44,7 @@ sub merge_new_tag_values {
     my $new_values = shift ;
 
     if ($self->{clear_opt}) {
-	$old_values = () ;
+	$old_values = {} ;
     }
 
     foreach my $field (keys %{$new_values}) {
