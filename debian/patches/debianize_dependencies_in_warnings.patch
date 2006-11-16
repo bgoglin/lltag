@@ -13,13 +13,13 @@ Index: lltag-0.12.1/lib/Lltag/CDDB.pm
 @@ -32,7 +32,7 @@
      my $self = shift ;
  
-     if (not eval { use LWP ; } ) {
+     if (not eval { require LWP ; } ) {
 -	print "LWP (libwww-perl module) does not seem to be available, disabling CDDB.\n"
 +	print "LWP (libwww-perl package) does not seem to be available, disabling CDDB.\n"
              if $self->{verbose_opt} ;
          $cddb_supported = 0 ;
-     }
-@@ -600,7 +600,7 @@
+ 	return ;
+@@ -601,7 +601,7 @@
      my ($res, $values) ;
  
      if (!$cddb_supported) {
