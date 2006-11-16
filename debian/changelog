@@ -1,4 +1,4 @@
-lltag (xxx) unstable; urgency=low
+lltag (0.13-1) unstable; urgency=low
 
   * New upstream release.
   * Add "files..." to the synopsis, closes: #397627.
@@ -10,7 +10,7 @@ lltag (xxx) unstable; urgency=low
     about libwww-perl.
   * Add homepage to the description.
 
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue,  7 Nov 2006 20:10:29 +0100
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Thu, 16 Nov 2006 23:05:08 +0100
 
 lltag (0.12.2-1) unstable; urgency=low
 
