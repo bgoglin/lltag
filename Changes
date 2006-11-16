@@ -32,6 +32,7 @@
     might have to match within a list of specified genres.
   * Some fixes in the manpage.
   * Add missing options in the comments in the config file.
+  * --nopath (i.e. -p) is now --no-path (and no_path in the config file).
   * Improve requirements in the README.
 
 

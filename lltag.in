@@ -92,7 +92,7 @@ sub usage {
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -C, --cddb             Query tags in CDDB\n" ;
-    print "  -p, --nopath           Remove the path from filenames when matching\n" ;
+    print "  -p, --no-path          Remove the path from filenames when matching\n" ;
     print map { "  -". $self->{field_name_letter}{$_} .", --". $_.$self->{field_name_trailing_spaces}{$_}
 		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
     print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
@@ -150,7 +150,7 @@ $self->{no_tagging_opt} = 0 ;
 $self->{ask_opt} = 0 ;
 $self->{guess_opt} = 0 ;
 $self->{cddb_opt} = 0 ;
-$self->{nopath_opt} = 0 ;
+$self->{no_path_opt} = 0 ;
 $self->{maj_opt} = 0 ;
 $self->{sep_opt} = undef ;
 $self->{spaces_opt} = 0 ;
@@ -197,8 +197,8 @@ sub process_option {
 	push (@{$self->{user_format_strings}}, $1) ;
     } elsif (/^guess\s*=\s*(.+)$/) {
 	$self->{guess_opt} = $1 ;
-    } elsif (/^nopath\s*=\s*(.+)$/) {
-	$self->{nopath_opt} = $1 ;
+    } elsif (/^no_path\s*=\s*(.+)$/) {
+	$self->{no_path_opt} = $1 ;
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
         die "Unrecognized option line #$.: \"$_\"\n"
 	    # TODO: drop non-capitalized field name support on september 20 2006
@@ -300,7 +300,7 @@ GetOptions(
 	   'F|format=s'   => \@{$self->{user_format_strings}},
 	   'G|guess'      => \$self->{guess_opt},
 	   'C|cddb'       => \$self->{cddb_opt},
-	   'p|nopath'     => \$self->{nopath_opt},
+	   'p|no-path'    => \$self->{no_path_opt},
 	   'spaces'       => \$self->{spaces_opt},
 	   'maj'          => \$self->{maj_opt},
 	   'sep=s'        => \$self->{sep_opt},
@@ -428,7 +428,7 @@ sub extract_parsename_and_backend {
     my @parts = split (/\./, $file) ;
     my $extension = pop @parts ;
     my $parsename = join (".", @parts) ;
-    if ($self->{nopath_opt}) {
+    if ($self->{no_path_opt}) {
 	my @parts = split (/\//, $parsename) ;
 	$parsename = pop @parts ;
     }
@@ -724,7 +724,7 @@ sub generate_config {
     map { print NEWCFG "format = \"$_\"\n" ; } @{$self->{user_format_strings}} ;
 
     print NEWCFG "guess = $self->{guess_opt}\n" ;
-    print NEWCFG "nopath = $self->{nopath_opt}\n" ;
+    print NEWCFG "no_path = $self->{no_path_opt}\n" ;
 
     map { print NEWCFG "default_$_ = \"$self->{field_default}{$_}\"\n" ; } (keys %{$self->{field_default}}) ;
 

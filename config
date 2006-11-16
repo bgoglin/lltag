@@ -17,7 +17,7 @@
 # cddb_server_port = 80
 
 # Do not use file path when matching filename.
-# nopath = 0
+# no_path = 0
 
 # Default field values.
 # default_ARTIST = ""
