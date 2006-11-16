@@ -55,6 +55,7 @@ tarball::
 	cp Changes /tmp/$(TARBALL)
 	cp -a $(DOC_SUBDIR)/ /tmp/$(TARBALL)
 	cp -a $(LIB_SUBDIR) /tmp/$(TARBALL)
+	find /tmp/$(TARBALL)/$(LIB_SUBDIR) -name MP3v2.pm -exec rm -f {} \; # not used for now
 	cd /tmp && tar cfz $(DEBIAN_TARBALL).tar.gz $(TARBALL)
 	cd /tmp && tar cfj $(TARBALL).tar.bz2 $(TARBALL)
 	mv /tmp/$(DEBIAN_TARBALL).tar.gz /tmp/$(TARBALL).tar.bz2 ..
