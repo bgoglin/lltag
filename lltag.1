@@ -227,6 +227,9 @@ worked (default behavior).
 .TP
 .BI "-g, --genre" " <genre>"
 Set the default value of the \fIGENRE\fR tag.
+While some file types accept any string as a genre, some others
+(especially ID3v1 tags in MP3 files) require the string to match
+within a list of specified genres.
 
 .TP
 .BI --gencfg " <file>"
