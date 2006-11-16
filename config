@@ -9,8 +9,15 @@
 # Try to guess if user-defined formats do not match.
 # guess = 0
 
+# Try CDDB
+# cddb = 0
+
+# CDDB server
+# cddb_server_name = "tracktype.org"
+# cddb_server_port = 80
+
 # Do not use file path when matching filename.
-# nopath = 0
+# no_path = 0
 
 # Default field values.
 # default_ARTIST = ""

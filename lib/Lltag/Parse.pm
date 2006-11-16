@@ -563,7 +563,7 @@ sub try_to_parse {
     if ($self->{try_internals_opt}) {
 	print "  Trying to parse filename with internal formats...\n" ;
 
-	if ($self->{nopath_opt} or $parsename !~ m@/@) {
+	if ($self->{no_path_opt} or $parsename !~ m@/@) {
 	    ($res, $values) = apply_internal_basename_parsers $self, $file, $parsename ;
 	} else {
 	    ($res, $values) = apply_internal_path_basename_parsers $self, $file, $parsename ;

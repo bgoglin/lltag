@@ -1,3 +1,40 @@
+lltag (0.13)
+
+  * Fix CDDB, was broken since the HTTP search interface of freedb.org is
+    unavailable for now (closes Hamish Moffatt's Debian bug #397626).
+    + CDDB now uses TrackType.org instead of freedb.org. 
+      - Reorganize the CDDB code to make it easy to use other online CDDB
+        site, using kind of a backend interface.
+    + Rewrite HTTP requests using libwww-perl.
+    + Drop --cddb-proxy and use the HTTP_PROXY variable in the
+      environment (set it to something like "http://my.proxy.com").
+    + libwww-perl (LWP) is now recommended since required for CDDB access.
+  * Several important fixes regarding internal tag management:
+    + --clear, --append, additional tags (passed with --tag)
+    + Handling of multiple values for the same tag.
+      - When tags have multiple value, do not keep the same value twice.
+  * Improve manpage and documentation:
+    + Add "files..." to the synopsis in the manpage since lltag only
+      operates on files that are given on the command line (not on the
+      whole directory) and add a message in verbose mode when no files
+      are given (reported by Hamish Moffatt in Debian bug #397627).
+    + Add the configuration file option name near the corresponding
+      command line option in the manpage.
+    + Add a note, near -g, about the fact that the genre string might
+      have to match within a list of specified genres.
+    + Add missing options in the comments in the config file.
+    + Improve requirements in the README.
+    + Main description at the beginning of the manpage.
+    + Various fixes in the manpage.
+  * --nopath (i.e. -p) is now --no-path (and no_path in the config file).
+  * When --tag is passed, disable -G by default.
+  * Change the internal backend API to manipulate hash of values instead
+    of talking to external programs, to help upcoming backends.
+    - Conversion from hash to external programs (command line and output
+      stream) is moved to new helper functions for backends that need them.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Thu, 16 Nov 2006 22:53:00 +0200
+
 lltag (0.12.2)
 
   * Fix %i processing (was broken since 0.12).

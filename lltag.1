@@ -8,7 +8,7 @@
 
 
 .SH NAME
-lltag - tag mp3/ogg/flac music files automagically
+lltag - tag and rename mp3/ogg/flac music files automagically
 
 
 
@@ -46,7 +46,6 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ --ask ]
 .RB [ "--cddb-query <query>" ]
 .RB [ "--cddb-server <server[:port]>" ]
-.RB [ "--cddb-proxy <server[:port]>" ]
 .RB [ -R ]
 .RB [ -v ]
 .RB [ "--config <file>" ]
@@ -56,6 +55,7 @@ lltag - tag mp3/ogg/flac music files automagically
 .RB [ -L ]
 .RB [ -V ]
 .RB [ -h ]
+.RB files...
 .\"
 
 
@@ -63,19 +63,49 @@ lltag - tag mp3/ogg/flac music files automagically
 
 .SH DESCRIPTION
 .B lltag
-is a command-line tool to automagically set tags of MP3, OGG or FLAC files.
-It parses the filenames according to different formats to get the tags.
-The formats may be either given by the user or guessed by lltag from
-its internal database.
+is a command-line tool to automagically set tags of MP3, OGG or FLAC
+files. There are 3 main ways to obtains the tags that will be set:
 
-When called with the
-.B -F
-option (once or multiple times), it will first try the user-specified formats.
-
-Internal formats will be tried later if the
+.TP
+.B Parsing the filename
+.B lltag
+may either parse the filename using its own internal database
+of commonly-used formats (default behavior, or when
 .B -G
-option was passed.
+is passed), or some user-provided formats (when
+.B -F
+is passed).
 
+.TP
+.B Requesting from CDDB
+.B lltag
+may access an online CDDB database to extract tags from a track of a CD (when
+.B -C
+is passed).
+
+.TP
+.B Explicitly setting values
+.B lltag
+provides a set of command-line option to manually set various tags.
+
+.P
+The user may choose one or several of these modes through the command-line.
+If none is set, parsing will internal formats will be used.
+It is also possible to explicitly request another way of obtaining tags
+by using the interactive menu (unless
+--yes
+is passed, or automatic mode is enabled in the menu).
+
+These tags may either replace (default), clear and replace (if
+.B --clear
+is passed) or append (if
+.B --append
+) to the existing ones in the target file.
+
+Once the tags are known, a backend program or library is used to apply
+them to the audio file (unless
+.B --no-tagging
+is passed).
 .B mp3info
 is used to tag
 .B MP3
@@ -89,9 +119,10 @@ is used for
 .B FLAC
 files.
 
-When called with
-.B --rename
-the target file will also be renamed.
+In the end, when called with
+.BR --rename ,
+the target file will also be renamed according to a user-provided format
+filled with the tag values.
 
 
 
@@ -101,15 +132,21 @@ the target file will also be renamed.
 .TP
 .BI "-A, --album" " <album>"
 Set the default value of the \fIALBUM\fR tag.
+The corresponding configuration file option is
+.IR default_ALBUM .
 
 .TP
 .BI "-a, --artist" " <artist>"
 Set the default value of the \fIARTIST\fR tag.
+The corresponding configuration file option is
+.IR default_ARTIST .
 
 .TP
 .BI "--append"
 Force appending of ogg/flac tags
 (instead of replacing existing tags).
+The corresponding configuration file option is
+.IR append_tags .
 
 Since mp3 files may only get one tag of each type, appending
 does nothing, the first occurence only is stored.
@@ -119,6 +156,8 @@ does nothing, the first occurence only is stored.
 Always ask confirmation to the user before using a user-specified
 parser. By default, all actions require confirmation, except when
 a matching user-specified format is found.
+The corresponding configuration file option is
+.IR ask .
 See
 .B PARSING MENU
 in
@@ -130,6 +169,8 @@ below for details.
 Try to find tags in the CDDB online database before trying to parse filenames.
 The queries are sent using the HTTP interface, which means a HTTP proxy might
 be used when required.
+The corresponding configuration file option is
+.IR cddb .
 
 .TP
 .BI "--cddb-query" " <keywords>"
@@ -146,21 +187,25 @@ and entered the query interactively in the module.
 Change the CDDB server, and eventually its port.
 The default is
 .BR www.freedb.org:80 .
-
-.TP
-.BI "--cddb-proxy" " <server[:port]>"
-Setup a HTTP proxy to contact the CDDB server.
-The default is
-.BR disabled .
+The corresponding configuration file options are
+.IR cddb_server_name " and " cddb_server_port .
+If a HTTP proxy is required to access the internet,
+the environment variable
+.B HTTP_PROXY
+may be used (set to something like "http://my.proxy.com").
 
 .TP
 .BI "-c, --comment" " <comment>"
 Set the default value of the \fICOMMENT\fR tag.
+The corresponding configuration file option is
+.IR default_COMMENT .
 
 .TP
 .B --clear
 Force clearing of all tags before tagging
 (instead of replacing existing tags).
+The corresponding configuration file option is
+.IR clear_tags .
 
 .TP
 .BI --config " <file>"
@@ -172,15 +217,21 @@ below for details.
 .TP
 .BI "-d, --date" " <date>"
 Set the default value of the \fIDATE\fR tag.
-Note that mp3 tags may only store 4 characters (for a year).
+The corresponding configuration file option is
+.IR default_DATE .
+Note that the ID3 date tag may only store 4 characters (for a year).
 
 .TP
 .B --dry-run
 Do not really tag files, just show what would have been done.
+The corresponding configuration file option is
+.IR dry_run .
 
 .TP
 .BI "-F, --format" " <format>"
 Add the specified format string to the list of user-supplied formats.
+The corresponding configuration file option is
+.IR format .
 Might be used several times to try different formats.
 See
 .B FORMAT
@@ -189,15 +240,24 @@ below for details.
 .TP
 .B --flac
 Tag all files as FLAC files, using \fBmetaflac\fR.
+The corresponding configuration file option is
+.IR type .
 
 .TP
 .B "-G, --guess"
 Guess format using the internal database if no user-specified format
 worked (default behavior).
+The corresponding configuration file option is
+.IR guess .
 
 .TP
 .BI "-g, --genre" " <genre>"
 Set the default value of the \fIGENRE\fR tag.
+The corresponding configuration file option is
+.IR default_GENRE .
+While some file types accept any string as a genre, some others
+(especially ID3v1 tags in MP3 files) require the string to match
+within a list of specified genres.
 
 .TP
 .BI --gencfg " <file>"
@@ -217,35 +277,52 @@ List internal formats.
 .TP
 .B --maj
 Upcase the first letter of each word in tags.
+The corresponding configuration file option is
+.IR maj .
 
 .TP
 .B --mp3
 Tag all files as MP3 files, using \fBmp3info\fR.
+The corresponding configuration file option is
+.IR type .
 
 .TP
 .BI "-n, --number" " <number>"
 Set the default value of the \fINUMBER\fR tag.
+The corresponding configuration file option is
+.IR default_NUMBER .
 
 .TP
 .B --no-tagging
 Do not actually tag files. This might be used to rename files
 without tagging.
+The corresponding configuration file option is
+.IR no_tagging .
 
 .TP
 .B --ogg
 Tag all files as OGG files, using \fBvorbiscomment\fR.
+The corresponding configuration file option is
+.IR type .
 
 .TP
-.B "-p, --nopath"
+.B "-p, --no-path"
 Do not consider the path of files when matching.
+The corresponding configuration file option is
+.IR no_path .
 
 .TP
 .B "-R, --recursive"
-Recursively search for files in subdirectories.
+Recursively search for files in subdirectories that are given on
+the command line.
+The corresponding configuration file option is
+.IR recursive .
 
 .TP
 .BI --regexp " <[tag,tag:]s/from/to/>"
 Replace \fIfrom\fR with \fIto\fR in tags before tagging.
+The corresponding configuration file option is
+.IR regexp .
 If several tags (comma-separated) prefix the regexp, replacement is
 only applied to the corresponding fields.
 This option might be used multiple times to specify multiple replacing.
@@ -253,6 +330,8 @@ This option might be used multiple times to specify multiple replacing.
 .TP
 .BI --rename " <format>"
 After tagging, rename the file according to the format.
+The corresponding configuration file option is
+.IR rename_format .
 The format is filled using the first occurence of each tag that was
 used to tag the file right before.
 It means that an old existing tag may be used if no new one replaced
@@ -272,10 +351,14 @@ below for details.
 Assume that the file extension is provided by the rename format
 instead of automatically adding the extension corresponding to
 the file type.
+The corresponding configuration file option is
+.IR rename_ext .
 
 .TP
 .B --rename-min
 Lowcase all tags before renaming.
+The corresponding configuration file option is
+.IR rename_min .
 
 .TP
 .BI --rename-regexp " <[tag,tag:]s/from/to/>"
@@ -283,10 +366,14 @@ Replace \fIfrom\fR with \fIto\fR in tags before renaming.
 If several tags (comma-separated) prefix the regexp, replacement is
 only applied to the corresponding fields.
 This option might be used multiple times to specify multiple replacing.
+The corresponding configuration file option is
+.IR rename_regexp .
 
 .TP
 .BI --rename-sep " <sep>"
 Replace spaces with sep when renaming.
+The corresponding configuration file option is
+.IR rename_sep .
 See
 .B --rename-regexp
 for a more general replace feature.
@@ -302,6 +389,8 @@ to show only some tags.
 .TP
 .BI --sep " <string|string>"
 Replace the specified characters or strings with space in tags.
+The corresponding configuration file option is
+.IR sep .
 They have to be |-separated.
 See
 .B --regexp
@@ -321,14 +410,20 @@ to show all tags.
 .B --spaces
 Allow multiple or no space instead of only one when matching.
 Also allow spaces limiting path elements.
+The corresponding configuration file option is
+.IR spaces .
 
 .TP
 .BI "-t, --title" " <title>"
 Set the default value of the \fITITLE\fR tag.
+The corresponding configuration file option is
+.IR default_TITLE .
 
 .TP
 .BI "--tag" " <TAG=value>"
 Add an additional tag.
+The corresponding configuration file option is
+.IR tag .
 Might be used several times.
 Note that mp3 tags do not support whatever
 .IR TAG .
@@ -338,10 +433,14 @@ Note that mp3 tags do not support whatever
 Tag all files as
 .B <type>
 files.
+The corresponding configuration file option is
+.IR type .
 
 .TP
 .B "-v, --verbose"
 Show verbose messages.
+The corresponding configuration file option is
+.IR verbose .
 
 .TP
 .B "-V, --version"
@@ -350,6 +449,8 @@ Show the version.
 .TP
 .B --yes
 Always accept tagging without asking the user.
+The corresponding configuration file option is
+.IR yes .
 By default user-specified format matching is accepted
 while guess format matching is asked for confirmation.
 
@@ -370,7 +471,7 @@ If the
 parser exists, try to apply it.
 .TP
 .B *
-If failed, if 
+If failed, if
 .B --cddb
 was passed, trying a CDDB query.
 .TP
@@ -435,19 +536,23 @@ to choose a CD in the online database.
 .TP
 .B <space-separated keywords>
 CDDB query for CD matching the keywords.
-Search in all CD categories within fields artist and title by default.
-If
-.B cats=foo+bar
-is added, search in CD categories foo and bar only.
-If
-.B fields=all
-is added, search keywords in all fields.
-If
-.B fields=foo+bar
-is added, search keywords in fields foo and bar.
-.TP
-.B <category>/<hexadecinal id>
-CDDB query for CD matching category and id
+Search in all CD categories within fields artist OR album.
+
+.\" freedb.org specific manual, not used anymore
+.\"Search in all CD categories within fields artist and title by default.
+.\"If
+.\".B cats=foo+bar
+.\"is added, search in CD categories foo and bar only.
+.\"If
+.\".B fields=all
+.\"is added, search keywords in all fields.
+.\"If
+.\".B fields=foo+bar
+.\"is added, search keywords in fields foo and bar.
+.\".TP
+.\".B <category>/<hexadecinal id>
+.\"CDDB query for CD matching category and id
+
 .TP
 .B q
 Quit CDDB query, see
@@ -723,7 +828,7 @@ Try to guess if user-defined formats do not match
 Default is
 .BR 0 " (" disabled ") when no user-defined formats and no default field values are given."
 .RE
-.I nopath = <0/1>
+.I no_path = <0/1>
 .RS
 Do not use file path when matching filename
 .RB [ -p ].
@@ -892,18 +997,6 @@ Default is
 Change the CDDB server port.
 Default is
 .BR 80 " (" HTTP ")."
-.RE
-.I cddb_proxy_name = "hostname"
-.RS
-Use a HTTP proxy server on hostname.
-Default is 
-.BR unset " (" disabled ")."
-.RE
-.I cddb_proxy_port = <port>
-.RS
-Use a HTTP proxy server on port.
-Default is
-.BR unset " (" disabled ")."
 .RE
 
 

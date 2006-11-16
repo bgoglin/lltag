@@ -12,31 +12,65 @@ sub append_tag_value {
     if (not defined $values->{$field}) {
 	$values->{$field} = $value ;
     } elsif (ref($values->{$field}) ne 'ARRAY') {
-	@{$values->{$field}} = ($values->{$field}, $value) ;
+	# create an array (except if we already have this value)
+	my $tmp = $values->{$field} ;
+	if ($tmp ne $value) {
+	    # need to delete the hash ref before changing its type
+	    delete $values->{$field} ;
+	    @{$values->{$field}} = ($tmp, $value) ;
+	}
     } else {
-	push @{$values->{$field}}, $value ;
+	# append to the array (except if we already have this value)
+	push @{$values->{$field}}, $value
+	    unless grep { $value eq $_ } @{$values->{$field}} ;
     }
 }
 
-# append a set of unique values into and old hashes, depending of clear/append options
+# add a value or an array of values to a tag
+sub append_tag_multiple_value {
+    my $self = shift ;
+    my $values = shift ;
+    my $field = shift ;
+    my $multiple_value = shift ;
+
+    if (ref($multiple_value) ne 'ARRAY') {
+	append_tag_value $self, $values, $field, $multiple_value ;
+    } else {
+	map {
+	    append_tag_value $self, $values, $field, $_ ;
+	} @{$multiple_value} ;
+    }
+}
+
+# append a hash of values (either unique or arrays) into another hash
 sub append_tag_values {
     my $self = shift ;
     my $old_values = shift ;
     my $new_values = shift ;
 
+    foreach my $field (keys %{$new_values}) {
+	append_tag_multiple_value $self, $old_values, $field, $new_values->{$field} ;
+    }
+}
+
+# add a set of unique values into another hash, depending of clear/append options
+sub merge_new_tag_values {
+    my $self = shift ;
+    my $old_values = shift ;
+    my $new_values = shift ;
+
     if ($self->{clear_opt}) {
-	$old_values = () ;
+	$old_values = {} ;
     }
 
     foreach my $field (keys %{$new_values}) {
 	$old_values->{$field} = undef
 	    if defined $old_values->{$field} and !$self->{append_opt} ;
-	append_tag_value $self, $old_values, $field, $new_values->{$field} ;
+	append_tag_multiple_value $self, $old_values, $field, $new_values->{$field} ;
     }
 
     return $old_values ;
 }
-
 
 # return values for a field as an array
 sub get_tag_value_array {
@@ -45,10 +79,10 @@ sub get_tag_value_array {
     my $field = shift ;
     if (not defined $values->{$field}) {
 	return () ;
-    } elsif (ref ($values->{$field}) eq 'ARRAY') {
-	return @{$values->{$field}} ;
-    } else {
+    } elsif (ref ($values->{$field}) ne 'ARRAY') {
 	return ($values->{$field}) ;
+    } else {
+	return @{$values->{$field}} ;
     }
 }
 
@@ -74,13 +108,54 @@ sub get_values_non_regular_keys {
 }
 
 # handle additional tags
-sub get_additional_tag_values {
+sub process_additional_tag_value {
     my $self = shift ;
-    foreach my $string (@{$self->{additional_tags}}) {
-	if ($string =~ m/^([^=]+)=(.*)$/) {
-	    append_tag_value $self, $self->{additional_values}, $1, $2 ;
-	} else {
-	    die "Additional tags must be given as 'TAG=value'.\n" ;
+    my $string = shift ;
+    if ($string =~ m/^([^=]+)=(.*)$/) {
+	append_tag_value $self, $self->{additional_values}, $1, $2 ;
+    } else {
+	die "Additional tags must be given as 'TAG=value'.\n" ;
+    }
+}
+
+#######################################################
+# extract tags from the stream
+# helper to be used by backends who get the tags as the stream output of another program
+
+sub convert_tag_stream_to_values {
+    my $self = shift ;
+    my $values = {} ;
+
+    while (my $line = shift @_) {
+	chomp $line ;
+	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
+	next if !$value ;
+	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
+    }
+
+    return $values ;
+}
+
+#######################################################
+# get tagging command line, display it if required, execute it if required
+# output the errors, ...
+# helper to be used by backends who set the tags with another program
+
+sub set_tags_with_external_prog {
+    my $self = shift ;
+
+    # show command line and really tag if asked
+    if ($self->{dry_run_opt} or $self->{verbose_opt}) {
+	print "  '". +(join "' '", @_) ."'\n" ;
+    }
+    if (!$self->{dry_run_opt}) {
+	print "  Tagging.\n" ;
+	my ($status, @output) = Lltag::Misc::system_with_output (@_) ;
+	if ($status) {
+	    print "    Tagging failed, command line was: '". join ("' '", @_) ."'.\n" ;
+	    while (my $line = shift @output) {
+		print "# $line" ;
+	    }
 	}
     }
 }

@@ -60,8 +60,6 @@ Lltag::Misc::init_readline ($self) ;
 
 %{$self->{field_default}} = () ;
 
-%{$self->{additional_values}} = () ;
-
 %{$self->{field_letter_name}} =
     (
      'a' => 'ARTIST',
@@ -88,13 +86,13 @@ sub version {
 #######################################################
 # usage
 sub usage {
-    print $0." $version is a frontend to tag MP3/OGG/FLAC files automagically.\n" ;
+    print $0." $version is a frontend to tag and rename MP3/OGG/FLAC files automagically.\n" ;
     print "Usage: ".$0." [options] files...\n" ;
     print " Tagging options:\n" ;
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -C, --cddb             Query tags in CDDB\n" ;
-    print "  -p, --nopath           Remove the path from filenames when matching\n" ;
+    print "  -p, --no-path          Remove the path from filenames when matching\n" ;
     print map { "  -". $self->{field_name_letter}{$_} .", --". $_.$self->{field_name_trailing_spaces}{$_}
 		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
     print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
@@ -120,7 +118,6 @@ sub usage {
     print " CDDB options:\n" ;
     print "  --cddb-query <query>   Start with CDDB query <query> by keywords or id\n" ;
     print "  --cddb-server <server> Change the CDDB server and port\n" ;
-    print "  --cddb-proxy <server>  Use a HTTP proxy to access the CDDB server\n" ;
     print " Behavior options:\n" ;
     print "  -S                     Show all tags from files\n" ;
     print "  --show-tags <tag,..>   Show several tags from files\n" ;
@@ -149,12 +146,11 @@ $self->{show_tags_opt} = "" ;
 $self->{no_tagging_opt} = 0 ;
 
 %{$self->{additional_values}} = () ;
-@{$self->{additional_tags}} = () ;
 
 $self->{ask_opt} = 0 ;
 $self->{guess_opt} = 0 ;
 $self->{cddb_opt} = 0 ;
-$self->{nopath_opt} = 0 ;
+$self->{no_path_opt} = 0 ;
 $self->{maj_opt} = 0 ;
 $self->{sep_opt} = undef ;
 $self->{spaces_opt} = 0 ;
@@ -174,10 +170,8 @@ $self->{gencfg_file} = undef ;
 
 @{$self->{user_format_strings}} = () ;
 
-$self->{cddb_server_name} = "www.freedb.org" ;
+$self->{cddb_server_name} = "tracktype.org" ;
 $self->{cddb_server_port} = 80 ;
-$self->{cddb_proxy_name} = undef ;
-$self->{cddb_proxy_port} = undef ;
 
 # command line given cddb query, undefined afterwards
 $self->{requested_cddb_query} = undef ;
@@ -203,8 +197,8 @@ sub process_option {
 	push (@{$self->{user_format_strings}}, $1) ;
     } elsif (/^guess\s*=\s*(.+)$/) {
 	$self->{guess_opt} = $1 ;
-    } elsif (/^nopath\s*=\s*(.+)$/) {
-	$self->{nopath_opt} = $1 ;
+    } elsif (/^no_path\s*=\s*(.+)$/) {
+	$self->{no_path_opt} = $1 ;
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
         die "Unrecognized option line #$.: \"$_\"\n"
 	    # TODO: drop non-capitalized field name support on september 20 2006
@@ -212,7 +206,7 @@ sub process_option {
 	# TODO: drop filename support on september 20 2006
 	$self->{field_default}{uc ($1)} = $2 ;
     } elsif (/^tag\s*=\s*"(.+)"$/) {
-	push @{$self->{additional_tags}}, $1 ;
+	Lltag::Tags::process_additional_tag_value ($self, $1) ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
 	$self->{spaces_opt} = $1 ;
     } elsif (/^maj\s*=\s*(.+)$/) {
@@ -265,10 +259,6 @@ sub process_option {
 	$self->{cddb_server_name} = $1 ;
     } elsif (/^cddb_server_port\s*=\s*(\d+)$/) {
 	$self->{cddb_server_port} = $1 ;
-    } elsif (/^cddb_proxy_name\s*=\s*"(.*)"$/) {
-	$self->{cddb_proxy_name} = $1 ;
-    } elsif (/^cddb_proxy_port\s*=\s*(\d*)$/) {
-	$self->{cddb_proxy_port} = $1 ;
 # Error
     } elsif (/^[^#]/ && !/^(\s*)$/) {
         die "Unrecognized option line #$.: \"$_\"\n" ;
@@ -310,7 +300,7 @@ GetOptions(
 	   'F|format=s'   => \@{$self->{user_format_strings}},
 	   'G|guess'      => \$self->{guess_opt},
 	   'C|cddb'       => \$self->{cddb_opt},
-	   'p|nopath'     => \$self->{nopath_opt},
+	   'p|no-path'    => \$self->{no_path_opt},
 	   'spaces'       => \$self->{spaces_opt},
 	   'maj'          => \$self->{maj_opt},
 	   'sep=s'        => \$self->{sep_opt},
@@ -342,15 +332,6 @@ GetOptions(
 					$self->{cddb_server_port} = 80 ;
 				   }
 			     },
-	   'cddb-proxy=s' => sub { shift ; my $name = shift ;
-				   if ($name =~ m/(.*):(.*)/) {
-					$self->{cddb_proxy_name} = $1 ;
-					$self->{cddb_proxy_port} = $2 ;
-				   } else {
-					$self->{cddb_proxy_name} = $name ;
-					$self->{cddb_proxy_port} = 80 ;
-				   }
-			     },
 	   'cddb-query=s'    => \$self->{requested_cddb_query},
 	   'v|verbose'    => \$self->{verbose_opt},
 	   'gencfg=s'     => \$self->{gencfg_file},
@@ -359,7 +340,7 @@ GetOptions(
 	   'L|list'       => \$self->{list_formats_opt},
 	   'show-tags=s'  => \$self->{show_tags_opt},
 	   'S'            => sub { $self->{show_tags_opt} = "all" ; },
-	   'tag=s'        => \@{$self->{additional_tags}},
+	   'tag=s'        => sub { shift ; Lltag::Tags::process_additional_tag_value ($self, shift) ; },
 	   map { my $field = $_ ;
 		 # use a sub because \$self->{field_default}{$field} always allocates it and assigns it to undef...
 		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; $self->{field_default}{$field} = shift },
@@ -370,6 +351,7 @@ GetOptions(
 $self->{try_internals_opt} = 1
     if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
 			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
+			       and !(keys %{$self->{additional_values}})
 			       and !$self->{list_formats_opt} ) ;
 
 # if --cddb-query is passed, enable cddb too
@@ -446,7 +428,7 @@ sub extract_parsename_and_backend {
     my @parts = split (/\./, $file) ;
     my $extension = pop @parts ;
     my $parsename = join (".", @parts) ;
-    if ($self->{nopath_opt}) {
+    if ($self->{no_path_opt}) {
 	my @parts = split (/\//, $parsename) ;
 	$parsename = pop @parts ;
     }
@@ -474,21 +456,9 @@ sub read_tags {
 
     # extract tags as a stream
     my $read_tags_func = $backend->{read_tags} ;
-    my ($status, @output) = &$read_tags_func ($self, $file) ;
-    if ($status) {
-	print "  Failed to get tags from file.\n" ;
-	return undef ;
-    }
-
-    # extract tags from the stream
-    my $values = {} ;
-    while (my $line = shift @output) {
-	chomp $line ;
-	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
-	next if !$value ;
-	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
-    }
-
+    my $values = &$read_tags_func ($self, $file) ;
+    Lltag::Misc::print_warning ("  ", "Failed to get tags from file.")
+	unless defined $values ;
     return $values ;
 }
 
@@ -507,24 +477,8 @@ sub tag_with_values {
     }
 
     # tagging command line
-    my $tagging_system_args_func = $backend->{tagging_system_args} ;
-    my @tagging_system_args = &{$tagging_system_args_func} ($self, $values) ;
-    my @system_args = ( @tagging_system_args, $file) ;
-
-    # show command line and really tag if asked
-    if ($self->{dry_run_opt} or $self->{verbose_opt}) {
-	print "  '". +(join "' '", @system_args) ."'\n" ;
-    }
-    if (!$self->{dry_run_opt}) {
-	print "  Tagging.\n" ;
-	my ($status, @output) = Lltag::Misc::system_with_output (@system_args) ;
-	if ($status) {
-	    print "    Tagging failed, command line was: ". join (" ", @system_args) ."\n" ;
-	    while (my $line = shift @output) {
-		print "# $line" ;
-	    }
-	}
-    }
+    my $set_tags_func = $backend->{set_tags} ;
+    &{$set_tags_func}($self, $file, $values) ;
 }
 
 #######################################################
@@ -540,9 +494,6 @@ if ($self->{list_formats_opt}) {
     Lltag::Parse::list_internal_parsers () ;
     exit 0 ;
 }
-
-# read additional tags
-Lltag::Tags::get_additional_tag_values ($self) ;
 
 # process remaining command-line arguments as files
 my @files = () ;
@@ -568,12 +519,18 @@ while ( @ARGV ) {
     }
 }
 
+if (!@files) {
+    print "No files to process.\n"
+	if $self->{verbose_opt} ;
+    exit 0 ;
+}
+
 # display tags
 if ($self->{show_tags_opt}) {
     my @fields_to_show = split (/,/, $self->{show_tags_opt}) ;
     foreach my $file (@files) {
 	print "$file:\n"
-	    if @files ;
+	    if @files ; # do not print filename if there is only one file
 
 	my ($parsename, $backend) = extract_parsename_and_backend $file ;
 	if (not defined $backend) {
@@ -601,7 +558,6 @@ Lltag::Parse::generate_user_parsers ($self) ;
 while ( @files ) {
     my $file = shift @files ;
     my $values = undef ;
-    my $new_values = undef ;
     my $res ;
 
     print "\n" ;
@@ -721,13 +677,15 @@ while ( @files ) {
     }
 
   TAG:
-    # FIXME: do that before confirmation
+    # FIXME: do that before confirmation, requires to deal with:
+    # - showing additional tags and multiple values
+    # - editing them
+
+    # append additional tags to the new ones from above
+    Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
 
     # add new values to the old ones, depending on clear/append options
-    $new_values = Lltag::Tags::append_tag_values ($self, $old_values, $values) ;
-
-    # append additional tags too
-    $new_values = Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
+    my $new_values = Lltag::Tags::merge_new_tag_values ($self, $old_values, $values) ;
 
     # actually tagging
     tag_with_values $file, $backend, $new_values
@@ -741,7 +699,6 @@ while ( @files ) {
 
     # next file
   NEXT_FILE:
-    shift ;
     next ;
 
     # exit without tagging anything anymore
@@ -767,7 +724,7 @@ sub generate_config {
     map { print NEWCFG "format = \"$_\"\n" ; } @{$self->{user_format_strings}} ;
 
     print NEWCFG "guess = $self->{guess_opt}\n" ;
-    print NEWCFG "nopath = $self->{nopath_opt}\n" ;
+    print NEWCFG "no_path = $self->{no_path_opt}\n" ;
 
     map { print NEWCFG "default_$_ = \"$self->{field_default}{$_}\"\n" ; } (keys %{$self->{field_default}}) ;
 
@@ -792,8 +749,6 @@ sub generate_config {
     print NEWCFG "cddb = $self->{cddb_opt}\n" ;
     print NEWCFG "cddb_server_name = \"$self->{cddb_server_name}\"\n" ;
     print NEWCFG "cddb_server_port = $self->{cddb_server_port}\n" ;
-    print NEWCFG "cddb_proxy_name = \"$self->{cddb_proxy_name}\"\n" if defined $self->{cddb_proxy_name} ;
-    print NEWCFG "cddb_proxy_port = $self->{cddb_proxy_port}\n" if defined $self->{cddb_proxy_name} ;
 
     print NEWCFG "dry_run = $self->{dry_run_opt}\n" ;
     print NEWCFG "yes = $self->{yes_opt}\n" ;
