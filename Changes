@@ -26,8 +26,12 @@
     (reported by Hamish Moffatt in Debian bug #397627).
   * Reorganize the CDDB code to make it easy to use other online CDDB site,
     using kind of a backend interface.
+  * Add the configuration file option name near the corresponding command
+    line option in the manpage.
   * Add a note in the manpage, near -g, about the fact that the genre string
     might have to match within a list of specified genres.
+  * Some fixes in the manpage.
+  * Add missing options in the comments in the config file.
   * Improve requirements in the README.
 
 
