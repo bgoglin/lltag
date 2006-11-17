@@ -31,18 +31,16 @@ clean:: clean-lib
 	rm -f lltag
 
 install:: install-lib
-	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/ $(DESTDIR)$(MANDIR)/man1/
+	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
 	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag/
 	install -m 0644 config $(DESTDIR)$(SYSCONFDIR)/lltag/
-	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
 
 uninstall:: uninstall-lib
 	rm $(DESTDIR)$(BINDIR)/lltag
 	rm $(DESTDIR)$(SYSCONFDIR)/lltag/formats
 	rm $(DESTDIR)$(SYSCONFDIR)/lltag/config
 	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag/
-	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
 
 tarball::
 	mkdir /tmp/$(TARBALL)
@@ -84,3 +82,13 @@ clean-lib: prepare-lib
 
 uninstall-lib: prepare-lib
 	$(MAKE) -C $(LIB_SUBDIR) uninstall
+
+# Install the manpages, only called on-demand by distrib-specific Makefile
+.PHONY: install-man uninstall-man
+
+install-man::
+	install -d -m 0755 $(DESTDIR)$(MANDIR)/man1/
+        install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
+
+uninstall-man::
+	rm $(DESTDIR)$(MANDIR)/man1/lltag.1

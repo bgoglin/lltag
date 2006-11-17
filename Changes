@@ -8,6 +8,8 @@
     same number of fields after matching.
   * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
+  * Add install-man and uninstall-man in the Makefile to install
+    manpages on demand.
 
 
 lltag (0.13)
