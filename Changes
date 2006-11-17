@@ -1,5 +1,5 @@
 
-  * Print the regexp when listing internals parsers in verbose mode
+  * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
 
 

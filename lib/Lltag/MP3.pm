@@ -66,11 +66,11 @@ sub new {
 	if test_mp3info $self ;
 
     return {
-       name => "MP3 (using mp3info)",
-       type => "mp3",
-       extension => "mp3",
-       read_tags => \&read_tags,
-       set_tags => \&set_tags,
+	name => "MP3 (using mp3info)",
+	type => "mp3",
+	extension => "mp3",
+	read_tags => \&read_tags,
+	set_tags => \&set_tags,
     } ;
 }
 

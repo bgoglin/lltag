@@ -8,7 +8,7 @@ require Lltag::Misc ;
 sub test_MP3Tag {
     my $self = shift ;
     if (not eval { require MP3::Tag ; } ) {
-        print "MP3::Tag::ID3v1 does not seem to be available, disabling 'MP3v2' backend.\n"
+	print "MP3::Tag::ID3v1 does not seem to be available, disabling 'MP3v2' backend.\n"
 	    if $self->{verbose_opt} ;
 	return -1 ;
     }
@@ -234,11 +234,11 @@ sub new {
 	if test_MP3Tag $self ;
 
     return {
-       name => "MP3v2 (using MP3::Tag)",
-       type => "mp3",
-       extension => "mp3",
-       read_tags => \&read_tags,
-       set_tags => \&set_tags,
+	name => "MP3v2 (using MP3::Tag)",
+	type => "mp3",
+	extension => "mp3",
+	read_tags => \&read_tags,
+	set_tags => \&set_tags,
     } ;
 }
 

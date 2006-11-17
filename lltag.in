@@ -185,7 +185,7 @@ my @additional_config_files = () ;
 Getopt::Long::Configure('passthrough') ;
 GetOptions(
 	   'config=s'     => \@additional_config_files,
-        ) ;
+	   ) ;
 
 # restore default behavior: process all options and warn on error
 Getopt::Long::Configure('nopassthrough') ;
@@ -200,7 +200,7 @@ sub process_option {
     } elsif (/^no_path\s*=\s*(.+)$/) {
 	$self->{no_path_opt} = $1 ;
     } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
-        die "Unrecognized option line #$.: \"$_\"\n"
+	die "Unrecognized option line #$.: \"$_\"\n"
 	    # TODO: drop non-capitalized field name support on september 20 2006
 	    unless defined $self->{field_name_letter}{uc ($1)} ;
 	# TODO: drop filename support on september 20 2006
@@ -261,18 +261,18 @@ sub process_option {
 	$self->{cddb_server_port} = $1 ;
 # Error
     } elsif (/^[^#]/ && !/^(\s*)$/) {
-        die "Unrecognized option line #$.: \"$_\"\n" ;
+	die "Unrecognized option line #$.: \"$_\"\n" ;
     }
 }
 
 sub parse_generic_config_file {
     my $file = shift ;
     open CONF, $file
-        or return ;
+	or return ;
     while (<CONF>) {
-        process_option $_ ;
+	process_option $_ ;
     }
-   close CONF ;
+    close CONF ;
 }
 
 parse_generic_config_file "$self->{common_lltag_dir}/$self->{lltag_config_filename}" ;
@@ -281,11 +281,11 @@ parse_generic_config_file "$self->{user_lltag_dir}/$self->{lltag_config_filename
 sub parse_additional_config_file {
     my $file = shift ;
     open CONF, $file
-        or die "Failed to open additional configuration file '$file' ($!).\n" ;
+	or die "Failed to open additional configuration file '$file' ($!).\n" ;
     while (<CONF>) {
-        process_option $_ ;
+	process_option $_ ;
     }
-   close CONF ;
+    close CONF ;
 }
 
 foreach my $file (@additional_config_files) {
@@ -297,50 +297,50 @@ foreach my $file (@additional_config_files) {
 
 # parse options
 GetOptions(
-	   'F|format=s'   => \@{$self->{user_format_strings}},
-	   'G|guess'      => \$self->{guess_opt},
-	   'C|cddb'       => \$self->{cddb_opt},
-	   'p|no-path'    => \$self->{no_path_opt},
-	   'spaces'       => \$self->{spaces_opt},
-	   'maj'          => \$self->{maj_opt},
-	   'sep=s'        => \$self->{sep_opt},
-	   'regexp=s'     => \@{$self->{regexp_opts}},
+	   'F|format=s'		=> \@{$self->{user_format_strings}},
+	   'G|guess'		=> \$self->{guess_opt},
+	   'C|cddb'		=> \$self->{cddb_opt},
+	   'p|no-path'		=> \$self->{no_path_opt},
+	   'spaces'		=> \$self->{spaces_opt},
+	   'maj'		=> \$self->{maj_opt},
+	   'sep=s'		=> \$self->{sep_opt},
+	   'regexp=s'		=> \@{$self->{regexp_opts}},
 	   # we do not use backends here since it would require to load them
 	   # before parsing the command-line, and is useless anyway
-	   'mp3'          => sub { $self->{type_opt} = "mp3" ; },
-	   'ogg'          => sub { $self->{type_opt} = "ogg" ; },
-	   'flac'         => sub { $self->{type_opt} = "flac" ; },
-	   'type=s'	  => sub { shift ; $self->{type_opt} = shift ; },
-	   'clear'        => \$self->{clear_opt},
-	   'append'       => \$self->{append_opt},
-	   'no-tagging'   => \$self->{no_tagging_opt},
-	   'rename=s'     => \$self->{rename_opt},
-	   'rename-min'   => \$self->{rename_min_opt},
-	   'rename-sep=s' => \$self->{rename_sep_opt},
-	   'rename-regexp=s' => \@{$self->{rename_regexp_opts}},
-	   'rename-ext'   => \$self->{rename_ext_opt},
-	   'dry-run'      => \$self->{dry_run_opt},
-	   'R|recursive'  => \$self->{recursive_opt},
-	   'yes'          => sub { $self->{yes_opt} = 1 ; $self->{ask_opt} = 0 ; },
-	   'ask'          => sub { $self->{ask_opt} = 1 ; $self->{yes_opt} = 0 ; },
-	   'cddb-server=s'=> sub { shift ; my $name = shift ;
-				   if ($name =~ m/(.*):(.*)/) {
-					$self->{cddb_server_name} = $1 ;
-					$self->{cddb_server_port} = $2 ;
-				   } else {
-					$self->{cddb_server_name} = $name ;
-					$self->{cddb_server_port} = 80 ;
-				   }
-			     },
-	   'cddb-query=s'    => \$self->{requested_cddb_query},
-	   'v|verbose'    => \$self->{verbose_opt},
-	   'gencfg=s'     => \$self->{gencfg_file},
-	   'h|help'       => sub { usage () ; },
-	   'V|version'    => sub { version () ; },
-	   'L|list'       => \$self->{list_formats_opt},
-	   'show-tags=s'  => \$self->{show_tags_opt},
-	   'S'            => sub { $self->{show_tags_opt} = "all" ; },
-	   'tag=s'        => sub { shift ; Lltag::Tags::process_additional_tag_value ($self, shift) ; },
+	   'mp3'		=> sub { $self->{type_opt} = "mp3" ; },
+	   'ogg'		=> sub { $self->{type_opt} = "ogg" ; },
+	   'flac'		=> sub { $self->{type_opt} = "flac" ; },
+	   'type=s'		=> sub { shift ; $self->{type_opt} = shift ; },
+	   'clear'		=> \$self->{clear_opt},
+	   'append'		=> \$self->{append_opt},
+	   'no-tagging'		=> \$self->{no_tagging_opt},
+	   'rename=s'		=> \$self->{rename_opt},
+	   'rename-min'		=> \$self->{rename_min_opt},
+	   'rename-sep=s'	=> \$self->{rename_sep_opt},
+	   'rename-regexp=s'	=> \@{$self->{rename_regexp_opts}},
+	   'rename-ext'		=> \$self->{rename_ext_opt},
+	   'dry-run'		=> \$self->{dry_run_opt},
+	   'R|recursive'	=> \$self->{recursive_opt},
+	   'yes'		=> sub { $self->{yes_opt} = 1 ; $self->{ask_opt} = 0 ; },
+	   'ask'		=> sub { $self->{ask_opt} = 1 ; $self->{yes_opt} = 0 ; },
+	   'cddb-server=s'	=> sub { shift ; my $name = shift ;
+					 if ($name =~ m/(.*):(.*)/) {
+					     $self->{cddb_server_name} = $1 ;
+					     $self->{cddb_server_port} = $2 ;
+					 } else {
+					     $self->{cddb_server_name} = $name ;
+					     $self->{cddb_server_port} = 80 ;
+					 }
+				       },
+	   'cddb-query=s'	=> \$self->{requested_cddb_query},
+	   'v|verbose'		=> \$self->{verbose_opt},
+	   'gencfg=s'		=> \$self->{gencfg_file},
+	   'h|help'		=> sub { usage () ; },
+	   'V|version'		=> sub { version () ; },
+	   'L|list'		=> \$self->{list_formats_opt},
+	   'show-tags=s'	=> \$self->{show_tags_opt},
+	   'S'			=> sub { $self->{show_tags_opt} = "all" ; },
+	   'tag=s'		=> sub { shift ; Lltag::Tags::process_additional_tag_value ($self, shift) ; },
 	   map { my $field = $_ ;
 		 # use a sub because \$self->{field_default}{$field} always allocates it and assigns it to undef...
 		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; $self->{field_default}{$field} = shift },
@@ -712,9 +712,9 @@ while ( @files ) {
 sub generate_config {
     my $file = shift ;
     die "Cannot generate $file which already exists."
-        if -e "$file" ;
+	if -e "$file" ;
     open NEWCFG, ">$file"
-        or die "Cannot open $file ($!).\n" ;
+	or die "Cannot open $file ($!).\n" ;
 
     print NEWCFG "# This is a lltag configuration file.\n" ;
     print NEWCFG "# It was automatically generated.\n" ;

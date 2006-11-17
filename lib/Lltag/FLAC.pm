@@ -10,7 +10,7 @@ sub test_metaflac {
     # cannot test with "metaflac -h" since it returns 1
     my ($status, @output) = Lltag::Misc::system_with_output ("metaflac", "/dev/null") ;
     print "metaflac does not seem to work, disabling 'Flac' backend.\n"
-        if $status and $self->{verbose_opt} ;
+	if $status and $self->{verbose_opt} ;
     return $status ;
 }
 
@@ -73,11 +73,11 @@ sub new {
 	if test_metaflac $self ;
 
     return {
-       name => "Flac (using metaflac)",
-       type => "flac",
-       extension => "flac",
-       read_tags => \&read_tags,
-       set_tags => \&set_tags,
+	name => "Flac (using metaflac)",
+	type => "flac",
+	extension => "flac",
+	read_tags => \&read_tags,
+	set_tags => \&set_tags,
     } ;
 }
 
