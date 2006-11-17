@@ -1,3 +1,10 @@
+lltag (xxx) unstable; urgency=low
+
+  * Install lltag.1 with dh_installman instead of relying on the upstream
+    Makefile.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 17 Nov 2006 23:57:01 +0100
+
 lltag (0.13-1) unstable; urgency=low
 
   * New upstream release.
