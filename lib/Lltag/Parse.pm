@@ -204,6 +204,7 @@ my @internal_path_parsers = () ;
 sub add_internal_parser {
     my $self = shift ;
     my $file = shift ;
+    my $startline  = shift ;
     my $type = shift ;
     my $title = shift ;
     my $regexp = shift ;
@@ -215,6 +216,17 @@ sub add_internal_parser {
 	$parser->{regexp} = $regexp ;
 	@{$parser->{field_table}} = @{$field_table} ;
 
+
+	# check whether the regexp is applicable
+	eval {
+	    my $dummy = ("dummy" =~ m@^$regexp/[^/]+$@) ;
+	    # be sure to return success even if not matched
+	    1 ;
+	} or
+	    # print the parser and its formats file (not the line since we may be way later already
+	    Lltag::Misc::die_error ("  Parser '$title' regexp '$regexp' looks invalid at line $startline in file '$file'.") ;
+
+	# add the parser
 	if ($type eq "basename" or $type eq "filename") {
 	    # TODO: drop filename support on september 20 2006
 	    print "  Got basename format '$title' (regexp '$regexp')\n" if $self->{verbose_opt} ;
@@ -224,7 +236,7 @@ sub add_internal_parser {
 	    push (@internal_path_parsers, $parser) ;
 	}
     } elsif ($type or $title or $regexp or @{$field_table}) {
-	Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
+	Lltag::Misc::die_error ("Incomplete format at line $startline in file '$file'.") ;
     }
 }
 
@@ -243,6 +255,7 @@ sub read_internal_parsers {
     }
     print "Reading format file '$file'...\n" if $self->{verbose_opt} ;
 
+    my $startline = undef ;
     my $type = undef ;
     my $title = undef ;
     my $regexp = undef ;
@@ -253,7 +266,8 @@ sub read_internal_parsers {
 	next if /^#/ ;
 	next if /^$/ ;
 	if (/^\[(.*)\]$/) {
-	    add_internal_parser $self, $file, $type, $title, $regexp, \@field_table ;
+	    add_internal_parser $self, $file, $startline, $type, $title, $regexp, \@field_table ;
+	    $startline = $. ;
 	    $type = undef ; $regexp = undef ; @field_table = () ;
 	    $title = $1 ;
 	    # stocker la ligne ?
@@ -306,7 +320,7 @@ sub read_internal_parsers {
     close FORMAT ;
 
     # save the last format
-    add_internal_parser $self, $file, $type, $title, $regexp, \@field_table ;
+    add_internal_parser $self, $file, $startline, $type, $title, $regexp, \@field_table ;
 
   NO_FORMATS_FILE_FOUND:
 }

@@ -1,4 +1,7 @@
 
+  * Try to apply internal parsers immediately after reading the formats
+    file and catch error gracefully instead of dying later horribly.
+  * Report the beginning line of invalid formats instead of a later one.
   * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
 
