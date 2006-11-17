@@ -1,6 +1,7 @@
 
   * Try to apply internal parsers immediately after reading the formats
     file and catch error gracefully instead of dying later horribly.
+    + Catch errors gracefully when actually parsing filenames too.
   * Report the beginning line of invalid formats instead of a later one.
   * Check that the formats given either with -F or in the formats file
     have correct number of fields to match, and that we actually get the

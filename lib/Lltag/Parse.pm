@@ -158,7 +158,15 @@ sub apply_parser {
     my $confirm = shift ;
     my $behaviors = shift ;
 
-    my @matches = ($parsename =~ m/^$parser->{regexp}$/) ;
+    my @matches ;
+
+    # protect against bad regexp, just in case (we should have found problems during initialization)
+    eval {
+	@matches = ($parsename =~ m/^$parser->{regexp}$/) ;
+	1 ; # be sure to return success when the regexp does not match
+    } or
+	Lltag::Misc::die_error ("Failed to apply parser '$parser->{title}', regexp '$parser->{regexp}' is invalid?") ;
+
     # we ensure earlier that there is at least one field to match, so an error will return ()
     return (PARSE_SKIP_PARSER, undef) unless @matches ;
 
@@ -407,7 +415,16 @@ sub apply_internal_path_basename_parsers {
     foreach my $path_parser (@internal_path_parsers) {
 	# match the path only first, to reduce number of (path,basename) parsers to try,
 	# and to check that there are no '/' afterwards
-	if ($parsename =~ m@^$path_parser->{regexp}/[^/]+$@) {
+
+	# protect against bad regexp, just in case (we should have found problems during initialization)
+	my $res ;
+	eval {
+	    $res = ($parsename =~ m@^$path_parser->{regexp}/[^/]+$@) ;
+	    1 ; # be sure to return success when the regexp does not match
+	} or
+	    Lltag::Misc::die_error ("Failed to apply parser '$path_parser->{title}', regexp '$path_parser->{regexp}' is invalid?") ;
+
+	if ($res) {
 	    foreach my $basename_parser (@internal_basename_parsers) {
 		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
