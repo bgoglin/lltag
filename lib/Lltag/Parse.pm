@@ -158,41 +158,51 @@ sub apply_parser {
     my $confirm = shift ;
     my $behaviors = shift ;
 
-    if ($parsename =~ m/^$parser->{regexp}$/) {
-	print "    '$parser->{title}' matches this file...\n" ;
+    my @matches = ($parsename =~ m/^$parser->{regexp}$/) ;
+    # we ensure earlier that there is at least one field to match, so an error will return ()
+    return (PARSE_SKIP_PARSER, undef) unless @matches ;
 
-	my @field_table = @{$parser->{field_table}} ;
-	my $values = {} ;
-	my $i = 1 ;
+    print "    '$parser->{title}' matches this file...\n" ;
 
-	# traverse matched values (stored in ${$i}
-	while ( $i <= @field_table ) {
-	    my $field = $field_table[$i-1] ;
-	    if ($field ne IGNORE_NAME) {
-		my $val = ${$i} ;
-		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
-		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
-		map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
-		if (defined $values->{$field}) {
-		    Lltag::Misc::print_warning ("      ", ucfirst($field)." already set to '".$values->{$field}
-		    ."', skipping new value '$val'")
-			if defined $values->{$field} and $values->{$field} ne $val ;
-		    goto NEXT_FIELD ;
-		}
-		$values->{$field} = $val ;
-		if ($self->{verbose_opt} or $confirm or $current_parse_ask_opt) {
-		    print "      ". ucfirst($field)
-			.$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
-		}
+    my @field_table = @{$parser->{field_table}} ;
+
+    # check the number of matches
+    Lltag::Misc::die_error ("Matched ".(scalar @matches)." fields instead of ".(scalar @field_table).", parser invalid?")
+	unless @matches == @field_table ;
+
+    my $values = {} ;
+
+    # traverse matches
+    for(my $i=0; $i<@field_table; $i++) {
+
+	my $field = $field_table[$i] ;
+	if ($field ne IGNORE_NAME) {
+	    my $val = $matches[$i] ;
+
+	    # apply maj, sep and regexp to the value
+	    $val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
+	    $val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
+	    map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
+
+	    # check whether it's already defined.
+	    # TODO: append ?
+	    if (defined $values->{$field}) {
+		Lltag::Misc::print_warning ("      ", ucfirst($field)." already set to '".$values->{$field}
+					    ."', skipping new value '$val'")
+		    if $values->{$field} ne $val ;
+	        next ;
 	    }
-	  NEXT_FIELD:
-	    $i++ ;
-	}
 
-	return confirm_parser ($self, $file, $confirm, $behaviors, $values) ;
-    } else {
-	return (PARSE_SKIP_PARSER, undef) ;
+	    # ok
+	    $values->{$field} = $val ;
+	    if ($self->{verbose_opt} or $confirm or $current_parse_ask_opt) {
+		print "      ". ucfirst($field)
+		    .$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
+	    }
+	}
     }
+
+    return confirm_parser ($self, $file, $confirm, $behaviors, $values) ;
 }
 
 #######################################################
@@ -395,6 +405,8 @@ sub apply_internal_path_basename_parsers {
 
     # try each path parser and each basename parser
     foreach my $path_parser (@internal_path_parsers) {
+	# match the path only first, to reduce number of (path,basename) parsers to try,
+	# and to check that there are no '/' afterwards
 	if ($parsename =~ m@^$path_parser->{regexp}/[^/]+$@) {
 	    foreach my $basename_parser (@internal_basename_parsers) {
 		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
