@@ -201,6 +201,33 @@ sub apply_parser {
 my @internal_basename_parsers = () ;
 my @internal_path_parsers = () ;
 
+sub add_internal_parser {
+    my $self = shift ;
+    my $file = shift ;
+    my $type = shift ;
+    my $title = shift ;
+    my $regexp = shift ;
+    my $field_table = shift ;
+
+    if ($type and $title and $regexp and @{$field_table}) {
+	my $parser ;
+	$parser->{title} = $title ;
+	$parser->{regexp} = $regexp ;
+	@{$parser->{field_table}} = @{$field_table} ;
+
+	if ($type eq "basename" or $type eq "filename") {
+	    # TODO: drop filename support on september 20 2006
+	    print "  Got basename format '$title' (regexp '$regexp')\n" if $self->{verbose_opt} ;
+	    push (@internal_basename_parsers, $parser) ;
+	} elsif ($type eq "path") {
+	    print "  Got path format '$title' (regexp '$regexp')\n" if $self->{verbose_opt} ;
+	    push (@internal_path_parsers, $parser) ;
+	}
+    } elsif ($type or $title or $regexp or @{$field_table}) {
+	Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
+    }
+}
+
 sub read_internal_parsers {
     my $self = shift ;
 
@@ -226,22 +253,7 @@ sub read_internal_parsers {
 	next if /^#/ ;
 	next if /^$/ ;
 	if (/^\[(.*)\]$/) {
-	    if ($type and $title and $regexp and @field_table) {
-		my $parser ;
-		$parser->{title} = $title ;
-		$parser->{regexp} = $regexp ;
-		@{$parser->{field_table}} = @field_table ;
-		if ($type eq "basename" or $type eq "filename") {
-		    # TODO: drop filename support on september 20 2006
-		    print "  Got basename format '$title'\n" if $self->{verbose_opt} ;
-		    push (@internal_basename_parsers, $parser) ;
-		} elsif ($type eq "path") {
-		    print "  Got path format '$title'\n" if $self->{verbose_opt} ;
-		    push (@internal_path_parsers, $parser) ;
-		}
-	    } elsif ($type or $title or $regexp or @field_table) {
-		Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
-	    }
+	    add_internal_parser $self, $file, $type, $title, $regexp, \@field_table ;
 	    $type = undef ; $regexp = undef ; @field_table = () ;
 	    $title = $1 ;
 	    # stocker la ligne ?
@@ -294,22 +306,8 @@ sub read_internal_parsers {
     close FORMAT ;
 
     # save the last format
-    if ($type and $title and $regexp and @field_table) {
-	my $parser ;
-	$parser->{title} = $title ;
-	$parser->{regexp} = $regexp ;
-	@{$parser->{field_table}} = @field_table ;
-	if ($type eq "basename" or $type eq "filename") {
-		    # TODO: drop filename support on september 20 2006
-	    print "  Got basename format '$title'\n" if $self->{verbose_opt} ;
-	    push (@internal_basename_parsers, $parser) ;
-	} elsif ($type eq "path") {
-	    print "  Got path format '$title'\n" if $self->{verbose_opt} ;
-	    push (@internal_path_parsers, $parser) ;
-	}
-    } elsif ($type or $title or $regexp or @field_table) {
-	Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
-    }
+    add_internal_parser $self, $file, $type, $title, $regexp, \@field_table ;
+
   NO_FORMATS_FILE_FOUND:
 }
 

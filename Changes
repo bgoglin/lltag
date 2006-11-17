@@ -1,3 +1,8 @@
+
+  * Print the regexp when listing internals parsers in verbose mode
+    (requested by David Mohr).
+
+
 lltag (0.13)
 
   * Fix CDDB, was broken since the HTTP search interface of freedb.org is
