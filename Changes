@@ -2,6 +2,8 @@
   * Try to apply internal parsers immediately after reading the formats
     file and catch error gracefully instead of dying later horribly.
   * Report the beginning line of invalid formats instead of a later one.
+  * Check that the formats given either with -F or in the formats file
+    have correct number of fields to match.
   * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
 
@@ -10,7 +12,7 @@ lltag (0.13)
 
   * Fix CDDB, was broken since the HTTP search interface of freedb.org is
     unavailable for now (closes Hamish Moffatt's Debian bug #397626).
-    + CDDB now uses TrackType.org instead of freedb.org. 
+    + CDDB now uses TrackType.org instead of freedb.org.
       - Reorganize the CDDB code to make it easy to use other online CDDB
         site, using kind of a backend interface.
     + Rewrite HTTP requests using libwww-perl.
