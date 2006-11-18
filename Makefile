@@ -88,7 +88,7 @@ uninstall-lib: prepare-lib
 
 install-man::
 	install -d -m 0755 $(DESTDIR)$(MANDIR)/man1/
-        install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
+	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
 
 uninstall-man::
 	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
