@@ -16,8 +16,8 @@ Index: lltag-0.12.1/lib/Lltag/CDDB.pm
      if (not eval { require LWP ; } ) {
 -	print "LWP (libwww-perl module) does not seem to be available, disabling CDDB.\n"
 +	print "LWP (libwww-perl package) does not seem to be available, disabling CDDB.\n"
-             if $self->{verbose_opt} ;
-         $cddb_supported = 0 ;
+ 	    if $self->{verbose_opt} ;
+ 	$cddb_supported = 0 ;
  	return ;
 @@ -601,7 +601,7 @@
      my ($res, $values) ;
@@ -38,7 +38,7 @@ Index: lltag-0.12.1/lib/Lltag/FLAC.pm
      my ($status, @output) = Lltag::Misc::system_with_output ("metaflac", "/dev/null") ;
 -    print "metaflac does not seem to work, disabling 'Flac' backend.\n"
 +    print "metaflac does not seem to work (is the 'flac' package installed?), disabling 'Flac' backend.\n"
-         if $status and $self->{verbose_opt} ;
+ 	if $status and $self->{verbose_opt} ;
      return $status ;
  }
 Index: lltag-0.12.1/lib/Lltag/Misc.pm
