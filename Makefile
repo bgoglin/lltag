@@ -74,7 +74,7 @@ build-lib: prepare-lib
 	$(MAKE) -C $(LIB_SUBDIR)
 
 install-lib: prepare-lib
-	$(MAKE) -C $(LIB_SUBDIR) install
+	$(MAKE) -C $(LIB_SUBDIR) install PREFIX= SITEPREFIX=$(PREFIX) PERLPREFIX=$(PREFIX) VENDORPREFIX=$(PREFIX)
 
 clean-lib: prepare-lib
 	$(MAKE) -C $(LIB_SUBDIR) distclean

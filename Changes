@@ -12,6 +12,10 @@
     since it only contains documentation, no actual configuration.
   * Move configuration option documentation into the new lltag_config.5
     manpage.
+  * Hack the parameters that are passed during Perl modules installation
+    to deal with MakeMaker not using PREFIX in the common way. Without
+    this change, setting PREFIX=/usr/local on the make install command
+    line was installing in /usr/local/local/perl (reported by David Mohr).
   * Add install-man and uninstall-man in the Makefile to install
     manpages on demand.
   * Some fixes in the manpage.
