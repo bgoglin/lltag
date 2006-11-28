@@ -41,7 +41,7 @@ binary-indep: build install
 	dh_testdir
 	dh_testroot
 	dh_installchangelogs Changes
-	dh_installdocs doc/howto.html
+	dh_installdocs doc/howto.html doc/config
 	dh_installman lltag.1 lltag_config.5
 	dh_compress
 	dh_fixperms
