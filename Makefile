@@ -15,6 +15,7 @@ BINDIR	=	$(EXEC_PREFIX)/bin
 DATADIR	=	$(PREFIX)/share
 SYSCONFDIR	=	$(PREFIX)/etc
 MANDIR	=	$(PREFIX)/man
+DOCDIR	=	$(DATADIR)/doc
 PERL_INSTALLDIRS	=	
 
 TARBALL	=	$(NAME)-$(VERSION)
@@ -31,22 +32,19 @@ clean:: clean-lib
 	rm -f lltag
 
 install:: install-lib
-	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/ $(DESTDIR)$(DATADIR)/lltag/
+	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
 	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag/
-	install -m 0644 config $(DESTDIR)$(DATADIR)/lltag/
 
 uninstall:: uninstall-lib
 	rm $(DESTDIR)$(BINDIR)/lltag
 	rm $(DESTDIR)$(SYSCONFDIR)/lltag/formats
 	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag/
-	rm -rf $(DESTDIR)$(DATADIR)/lltag/
 
 tarball::
 	mkdir /tmp/$(TARBALL)
 	cp lltag.in /tmp/$(TARBALL)
 	cp formats /tmp/$(TARBALL)
-	cp config /tmp/$(TARBALL)
 	cp lltag.1 lltag_config.5 /tmp/$(TARBALL)
 	cp Makefile /tmp/$(TARBALL)
 	cp COPYING README VERSION /tmp/$(TARBALL)
@@ -82,6 +80,15 @@ clean-lib: prepare-lib
 
 uninstall-lib: prepare-lib
 	$(MAKE) -C $(LIB_SUBDIR) uninstall
+
+# Install the doc, only called on-demand by distrib-specific Makefile
+.PHONY: install-doc uninstall-doc
+
+install-doc:
+	$(MAKE) -C $(DOC_SUBDIR) install DOCDIR=$(DESTDIR)$(DOCDIR)
+
+uninstall-doc:
+	$(MAKE) -C $(DOC_SUBDIR) uninstall DOCDIR=$(DESTDIR)$(DOCDIR)
 
 # Install the manpages, only called on-demand by distrib-specific Makefile
 .PHONY: install-man uninstall-man

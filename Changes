@@ -8,7 +8,7 @@
     same number of fields after matching.
   * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
-  * Install the config file in the share directory instead of /etc/lltag/
+  * Install the config file in the doc/ directory instead of /etc/lltag/
     since it only contains documentation, no actual configuration.
   * Move configuration option documentation into the new lltag_config.5
     manpage.
@@ -18,6 +18,8 @@
     line was installing in /usr/local/local/perl (reported by David Mohr).
   * Add install-man and uninstall-man in the Makefile to install
     manpages on demand.
+  * Add install-doc and uninstall-doc in the Makefile to install
+    documentation on demand.
   * Some fixes in the manpage.
 
 
