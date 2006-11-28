@@ -64,6 +64,16 @@ type = path
 regexp = %P%L%A%L/%L%A%S-%S%A%L
 indices = ARTIST,ARTIST,ALBUM
 
+[%a/%A (%d)]
+type = path
+regexp = %P%L%A%L/%L%A%L%S(%N)%L
+indices = ARTIST,ALBUM,DATE
+
+[%a/%A [%d]]
+type = path
+regexp = %P%L%A%L/%L%A%L%S[%N]%L
+indices = ARTIST,ALBUM,DATE
+
 [%a/%A]
 type = path
 regexp = %P%L%A%L/%L%A%L

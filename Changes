@@ -8,6 +8,8 @@
     same number of fields after matching.
   * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
+  * Add 2 new internal formats ("%a/%A [%d]" and "%a/%A (%d)") by David
+    Mohr.
   * Install the config file in the doc/ directory instead of /etc/lltag/
     since it only contains documentation, no actual configuration.
   * Move configuration option documentation into the new lltag_config.5
