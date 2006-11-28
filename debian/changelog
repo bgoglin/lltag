@@ -1,7 +1,7 @@
 lltag (xxx) unstable; urgency=low
 
-  * Install lltag.1 with dh_installman instead of relying on the upstream
-    Makefile.
+  * Install lltag.1 and the new lltag_config.5 with dh_installman instead
+    of relying on the upstream Makefile.
   * Update Standards-Version to 3.7.2.2.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 19 Nov 2006 22:23:28 +0100
