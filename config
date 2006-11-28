@@ -1,5 +1,6 @@
-# llgal configuration options.
-# These options may be defined in /etc/lltag/config,
+# lltag configuration file example.
+#
+# The following options may be stored in /etc/lltag/config,
 # a per-user ${HOME}/.lltag/config or in a file passed
 # on the command-line with --config.
 

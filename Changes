@@ -8,8 +8,13 @@
     same number of fields after matching.
   * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
+  * Install the config file in the share directory instead of /etc/lltag/
+    since it only contains documentation, no actual configuration.
+  * Move configuration option documentation into the new lltag_config.5
+    manpage.
   * Add install-man and uninstall-man in the Makefile to install
     manpages on demand.
+  * Some fixes in the manpage.
 
 
 lltag (0.13)

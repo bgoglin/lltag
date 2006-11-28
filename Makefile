@@ -31,23 +31,23 @@ clean:: clean-lib
 	rm -f lltag
 
 install:: install-lib
-	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/
+	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/ $(DESTDIR)$(DATADIR)/lltag/
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
 	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag/
-	install -m 0644 config $(DESTDIR)$(SYSCONFDIR)/lltag/
+	install -m 0644 config $(DESTDIR)$(DATADIR)/lltag/
 
 uninstall:: uninstall-lib
 	rm $(DESTDIR)$(BINDIR)/lltag
 	rm $(DESTDIR)$(SYSCONFDIR)/lltag/formats
-	rm $(DESTDIR)$(SYSCONFDIR)/lltag/config
 	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag/
+	rm -rf $(DESTDIR)$(DATADIR)/lltag/
 
 tarball::
 	mkdir /tmp/$(TARBALL)
 	cp lltag.in /tmp/$(TARBALL)
 	cp formats /tmp/$(TARBALL)
 	cp config /tmp/$(TARBALL)
-	cp lltag.1 /tmp/$(TARBALL)
+	cp lltag.1 lltag_config.5 /tmp/$(TARBALL)
 	cp Makefile /tmp/$(TARBALL)
 	cp COPYING README VERSION /tmp/$(TARBALL)
 	cp Changes /tmp/$(TARBALL)
@@ -87,8 +87,10 @@ uninstall-lib: prepare-lib
 .PHONY: install-man uninstall-man
 
 install-man::
-	install -d -m 0755 $(DESTDIR)$(MANDIR)/man1/
+	install -d -m 0755 $(DESTDIR)$(MANDIR)/man1/ $(DESTDIR)$(MANDIR)/man5/
 	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
+	install -m 0644 lltag_config.5 $(DESTDIR)$(MANDIR)/man5/
 
 uninstall-man::
 	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
+	rm $(DESTDIR)$(MANDIR)/man5/lltag_config.5
