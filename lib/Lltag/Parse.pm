@@ -307,8 +307,13 @@ sub read_internal_parsers {
 
 	} elsif (/^regexp = (.*)$/) {
 	    $regexp = $1 ;
+	    # escape special characters
+	    # FIXME: add *+$^ ?
 	    $regexp =~ s/\./\\./g ;
+	    $regexp =~ s/\(/\\\(/g ;
 	    $regexp =~ s/\)/\\\)/g ;
+	    $regexp =~ s/\[/\\\[/g ;
+	    $regexp =~ s/\]/\\\]/g ;
 	    $regexp =~ s@/@\\/@g ;
 	    $regexp_size = 0 ;
 

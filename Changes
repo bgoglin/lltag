@@ -6,6 +6,7 @@
   * Check that the formats given either with -F or in the formats file
     have correct number of fields to match, and that we actually get the
     same number of fields after matching.
+  * Escape []() correctly in internal parsers (reported by David Mohr).
   * Print the regexp when listing internal parsers in verbose mode
     (requested by David Mohr).
   * Add 2 new internal formats ("%a/%A [%d]" and "%a/%A (%d)") by David
