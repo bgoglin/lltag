@@ -45,7 +45,7 @@ tarball::
 	mkdir /tmp/$(TARBALL)
 	cp lltag.in /tmp/$(TARBALL)
 	cp formats /tmp/$(TARBALL)
-	cp lltag.1 lltag_config.5 /tmp/$(TARBALL)
+	cp lltag.1 lltag_config.5 lltag_formats.5 /tmp/$(TARBALL)
 	cp Makefile /tmp/$(TARBALL)
 	cp COPYING README VERSION /tmp/$(TARBALL)
 	cp Changes /tmp/$(TARBALL)
@@ -97,7 +97,9 @@ install-man::
 	install -d -m 0755 $(DESTDIR)$(MANDIR)/man1/ $(DESTDIR)$(MANDIR)/man5/
 	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
 	install -m 0644 lltag_config.5 $(DESTDIR)$(MANDIR)/man5/
+	install -m 0644 lltag_formats.5 $(DESTDIR)$(MANDIR)/man5/
 
 uninstall-man::
 	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
 	rm $(DESTDIR)$(MANDIR)/man5/lltag_config.5
+	rm $(DESTDIR)$(MANDIR)/man5/lltag_formats.5

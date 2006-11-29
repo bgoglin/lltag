@@ -1,0 +1,112 @@
+.\" Process this file with
+.\" groff -man -Tascii foo.1
+.\"
+.TH lltag_formats 5 "NOVEMBER 2006"
+
+
+
+.SH NAME
+formats \- Internal formats database file for lltag
+
+
+
+
+.SH DESCRIPTION
+The internal format database is usually stored in
+.IR /etc/lltag/formats .
+The user may override this file by defining a
+.IR $HOME/.lltag/formats .
+If this file exists, the system-wide one is ignored.
+
+
+
+These files contain entries starting with a line such as:
+
+.I [%n - %a - %t]
+.RS
+A title between bracket that will be displayed at runtime.
+.RE
+
+
+
+Then, the following 3 lines must be given to explain how the format
+is actually used to parse filenames:
+
+.I type = basename
+.RS
+The type is either
+.I basename
+(to parse the last part of the path to a file)
+or
+.I path
+(to parse the directory part of the path to a file).
+When actually parsing the path to target files,
+.I basename
+and
+.I path
+parsers will be assembled.
+All possible combination will be tried.
+.RE
+
+
+
+.I regexp = %L%N%S-%S%A%S-%S%A%L
+.RS
+A string composed of any characters, with the following special fields:
+
+.I %L
+for delimiter (empty by default, multiple spaces if
+.I --spaces
+was given)
+
+.I %S
+for a space (or multiple spaces if
+.I --spaces
+was given)
+
+.I %N
+for numbers
+
+.I %A
+for an alphanumeric string without /
+
+.I %P
+for any path (alphanumeric string with /)
+
+.I %%
+for %
+.RE
+
+
+
+.I indices = NUMBER,ARTIST,TITLE
+.RS
+A list of fields to match (either given by their full name or associated letter)
+corresponding to each %N or %A field in the previous format.
+It may be
+.BR AUTHOR " (or " a "), "
+.BR ALBUM " (" A "), "
+.BR GENRE " (" g "), "
+.BR NUMBER " (" n "), "
+.BR TITLE " (" t "), "
+.BR DATE " (" d "), "
+.BR COMMENT " (" c ") or "
+.BR IGNORE " (" i ")."
+See also
+.B FORMAT
+in the manpage of
+.I lltag
+for details about these fields.
+
+
+
+
+.SH SEE ALSO
+.PP
+.BR lltag (1)
+
+
+
+
+.SH AUTHOR
+Brice Goglin

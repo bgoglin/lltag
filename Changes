@@ -14,7 +14,9 @@
   * Install the config file in the doc/ directory instead of /etc/lltag/
     since it only contains documentation, no actual configuration.
   * Move configuration option documentation into the new lltag_config.5
-    manpage.
+    manpage, and the documentation of internal formats database file in
+    lltag_formats.5.
+  * Improve documentation about the impact of --spaces on internal parsers.
   * Hack the parameters that are passed during Perl modules installation
     to deal with MakeMaker not using PREFIX in the common way. Without
     this change, setting PREFIX=/usr/local on the make install command

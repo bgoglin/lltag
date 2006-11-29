@@ -1,7 +1,7 @@
 .\" Process this file with
 .\" groff -man -Tascii foo.1
 .\"
-.TH LLTAG 1 "SEPTEMBER 2006"
+.TH LLTAG 1 "NOVEMBER 2006"
 
 
 
@@ -412,6 +412,9 @@ Allow multiple or no space instead of only one when matching.
 Also allow spaces limiting path elements.
 The corresponding configuration file option is
 .IR spaces .
+See also
+.B INTERNAL FORMATS
+to get the detailled impact of this option.
 
 .TP
 .BI "-t, --title" " <title>"
@@ -768,31 +771,11 @@ The user may override this file by defining a
 .IR $HOME/.lltag/formats .
 If this file exists, the system-wide one is ignored.
 
-These files contain entries composed of :
-
-.RE
-.I [%n - %a - %t]
-.RS
-A title between bracket
-.RE
-.I type = basename
-.RS
-The type is either
-.I basename
+See the manpage of
+.I lltag_formats
 or
-.I path
-.RE
-.I regexp = %L%N%S-%S%A%S-%S%A%L
-.RS
-A format composed of %L for limiting space, %N for numbers, %S for a space,
-%A for anything (except /), %P for any path and %% for %.
-.RE
-.I indices = n,a,t
-.RS
-A list of format letters corresponding to %N or %A field in the previous format
-(See
-.B FORMAT
-for a list of these letters).
+.I /etc/lltag/formats
+for details.
 
 
 
@@ -856,7 +839,7 @@ User configuration file.
 
 .SH SEE ALSO
 .PP
-.BR lltag_config (5)
+.BR lltag_config "(5), " lltag_formats (5)
 
 
 

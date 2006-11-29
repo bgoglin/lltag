@@ -5,8 +5,8 @@
 #   type = basename or path
 #	does this format apply to the wall path or only the basename ?
 #   regexp =
-#	internal regexp with	%L for limiting space
-#				%S for a space
+#	internal regexp with	%L for a delimiter (empty by default, multiple spaces if --spaces was passed)
+#				%S for a space (or multiple spaces if --spaces was passed)
 #				%N for a numeric string
 #				%A for an alphanumeric string without /
 #				%P for any path (alphanumeric string with /)
