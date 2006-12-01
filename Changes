@@ -1,8 +1,41 @@
+lltag (0.13.1)
+
+  * Multiple fixes regarding parsing:
+    + Try to apply internal parsers immediately after reading the formats
+      file and catch error gracefully instead of dying later horribly.
+    + Catch errors gracefully when actually parsing filenames too.
+    + Report the beginning line (instead of a later one) in the formats
+      file when meeting an invalid parser.
+    + Check that the formats given either with -F or in the formats file
+      have correct number of fields to match, and that we actually get the
+      same number of fields after matching.
+    + Escape []() correctly in internal parsers (reported by David Mohr).
+    + Print the regexp when listing internal parsers in verbose mode
+      (requested by David Mohr).
+    + Improve documentation about the impact of --spaces on internal parsers.
+    + Add 2 new internal formats ("%a/%A [%d]" and "%a/%A (%d)") by David
+      Mohr.
+  * Multiple cleanup in the documentation:
+    + Install the config file in the doc/ directory instead of /etc/lltag/
+      since it only contains documentation, no actual configuration.
+    + Move configuration option documentation into the new lltag_config.5
+      manpage, and the documentation of internal formats database file in
+      lltag_formats.5.
+    + Add install-man, uninstall-man, install-doc and uninstall-doc targets
+      in the Makefile to install manpages and documentation on demand.
+    + Some fixes in the manpage.
+  * Hack the parameters that are passed during Perl modules installation
+    to deal with MakeMaker not using PREFIX in the common way. Without
+    this change, setting PREFIX=/usr/local on the make install command
+    line was installing in /usr/local/local/perl (reported by David Mohr).
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 01 Dec 2006 18:22:00 +0100
+
 lltag (0.13)
 
   * Fix CDDB, was broken since the HTTP search interface of freedb.org is
     unavailable for now (closes Hamish Moffatt's Debian bug #397626).
-    + CDDB now uses TrackType.org instead of freedb.org. 
+    + CDDB now uses TrackType.org instead of freedb.org.
       - Reorganize the CDDB code to make it easy to use other online CDDB
         site, using kind of a backend interface.
     + Rewrite HTTP requests using libwww-perl.
@@ -33,7 +66,7 @@ lltag (0.13)
     - Conversion from hash to external programs (command line and output
       stream) is moved to new helper functions for backends that need them.
 
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Thu, 16 Nov 2006 22:53:00 +0200
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Thu, 16 Nov 2006 22:53:00 +0100
 
 lltag (0.12.2)
 

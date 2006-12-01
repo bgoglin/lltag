@@ -15,6 +15,7 @@ BINDIR	=	$(EXEC_PREFIX)/bin
 DATADIR	=	$(PREFIX)/share
 SYSCONFDIR	=	$(PREFIX)/etc
 MANDIR	=	$(PREFIX)/man
+DOCDIR	=	$(DATADIR)/doc
 PERL_INSTALLDIRS	=	
 
 TARBALL	=	$(NAME)-$(VERSION)
@@ -31,25 +32,20 @@ clean:: clean-lib
 	rm -f lltag
 
 install:: install-lib
-	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/ $(DESTDIR)$(MANDIR)/man1/
+	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
 	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag/
-	install -m 0644 config $(DESTDIR)$(SYSCONFDIR)/lltag/
-	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
 
 uninstall:: uninstall-lib
 	rm $(DESTDIR)$(BINDIR)/lltag
 	rm $(DESTDIR)$(SYSCONFDIR)/lltag/formats
-	rm $(DESTDIR)$(SYSCONFDIR)/lltag/config
 	rmdir $(DESTDIR)$(SYSCONFDIR)/lltag/
-	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
 
 tarball::
 	mkdir /tmp/$(TARBALL)
 	cp lltag.in /tmp/$(TARBALL)
 	cp formats /tmp/$(TARBALL)
-	cp config /tmp/$(TARBALL)
-	cp lltag.1 /tmp/$(TARBALL)
+	cp lltag.1 lltag_config.5 lltag_formats.5 /tmp/$(TARBALL)
 	cp Makefile /tmp/$(TARBALL)
 	cp COPYING README VERSION /tmp/$(TARBALL)
 	cp Changes /tmp/$(TARBALL)
@@ -76,7 +72,7 @@ build-lib: prepare-lib
 	$(MAKE) -C $(LIB_SUBDIR)
 
 install-lib: prepare-lib
-	$(MAKE) -C $(LIB_SUBDIR) install
+	$(MAKE) -C $(LIB_SUBDIR) install PREFIX= SITEPREFIX=$(PREFIX) PERLPREFIX=$(PREFIX) VENDORPREFIX=$(PREFIX)
 
 clean-lib: prepare-lib
 	$(MAKE) -C $(LIB_SUBDIR) distclean
@@ -84,3 +80,26 @@ clean-lib: prepare-lib
 
 uninstall-lib: prepare-lib
 	$(MAKE) -C $(LIB_SUBDIR) uninstall
+
+# Install the doc, only called on-demand by distrib-specific Makefile
+.PHONY: install-doc uninstall-doc
+
+install-doc:
+	$(MAKE) -C $(DOC_SUBDIR) install DOCDIR=$(DESTDIR)$(DOCDIR)
+
+uninstall-doc:
+	$(MAKE) -C $(DOC_SUBDIR) uninstall DOCDIR=$(DESTDIR)$(DOCDIR)
+
+# Install the manpages, only called on-demand by distrib-specific Makefile
+.PHONY: install-man uninstall-man
+
+install-man::
+	install -d -m 0755 $(DESTDIR)$(MANDIR)/man1/ $(DESTDIR)$(MANDIR)/man5/
+	install -m 0644 lltag.1 $(DESTDIR)$(MANDIR)/man1/
+	install -m 0644 lltag_config.5 $(DESTDIR)$(MANDIR)/man5/
+	install -m 0644 lltag_formats.5 $(DESTDIR)$(MANDIR)/man5/
+
+uninstall-man::
+	rm $(DESTDIR)$(MANDIR)/man1/lltag.1
+	rm $(DESTDIR)$(MANDIR)/man5/lltag_config.5
+	rm $(DESTDIR)$(MANDIR)/man5/lltag_formats.5

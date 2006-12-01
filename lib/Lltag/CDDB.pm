@@ -33,8 +33,8 @@ sub init_cddb {
 
     if (not eval { require LWP ; } ) {
 	print "LWP (libwww-perl module) does not seem to be available, disabling CDDB.\n"
-            if $self->{verbose_opt} ;
-        $cddb_supported = 0 ;
+	    if $self->{verbose_opt} ;
+	$cddb_supported = 0 ;
 	return ;
     }
 
@@ -61,10 +61,10 @@ sub freedborg_cddb_response {
     print "        '$path'\n" if $self->{verbose_opt} ;
     my $response = $browser->get(
 	"http://"
-        . $self->{cddb_server_name}
-        . ($self->{cddb_server_port} != 80 ? $self->{cddb_server_port} : "")
-        . $path
-        . "\n"
+	. $self->{cddb_server_name}
+	. ($self->{cddb_server_port} != 80 ? $self->{cddb_server_port} : "")
+	. $path
+	. "\n"
 	) ;
 
     if (!$response->is_success) {
@@ -627,7 +627,7 @@ sub get_cddb_tags {
 	    print "  Using command-line given keywords '$self->{requested_cddb_query}'...\n" ;
 	    undef $self->{requested_cddb_query} ;
 	    # FIXME: either put it in the history, or preput it next time
-        } else {
+	} else {
 	    $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
 	    chomp $keywords ;
 	}

@@ -71,11 +71,11 @@ sub new {
 	if test_vorbiscomment $self ;
 
     return {
-       name => "OGG (using vorbiscomment)",
-       type => "ogg",
-       extension => "ogg",
-       read_tags => \&read_tags,
-       set_tags => \&set_tags,
+	name => "OGG (using vorbiscomment)",
+	type => "ogg",
+	extension => "ogg",
+	read_tags => \&read_tags,
+	set_tags => \&set_tags,
     } ;
 }
 

@@ -158,41 +158,59 @@ sub apply_parser {
     my $confirm = shift ;
     my $behaviors = shift ;
 
-    if ($parsename =~ m/^$parser->{regexp}$/) {
-	print "    '$parser->{title}' matches this file...\n" ;
+    my @matches ;
 
-	my @field_table = @{$parser->{field_table}} ;
-	my $values = {} ;
-	my $i = 1 ;
+    # protect against bad regexp, just in case (we should have found problems during initialization)
+    eval {
+	@matches = ($parsename =~ m/^$parser->{regexp}$/) ;
+	1 ; # be sure to return success when the regexp does not match
+    } or
+	Lltag::Misc::die_error ("Failed to apply parser '$parser->{title}', regexp '$parser->{regexp}' is invalid?") ;
 
-	# traverse matched values (stored in ${$i}
-	while ( $i <= @field_table ) {
-	    my $field = $field_table[$i-1] ;
-	    if ($field ne IGNORE_NAME) {
-		my $val = ${$i} ;
-		$val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
-		$val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
-		map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
-		if (defined $values->{$field}) {
-		    Lltag::Misc::print_warning ("      ", ucfirst($field)." already set to '".$values->{$field}
-		    ."', skipping new value '$val'")
-			if defined $values->{$field} and $values->{$field} ne $val ;
-		    goto NEXT_FIELD ;
-		}
-		$values->{$field} = $val ;
-		if ($self->{verbose_opt} or $confirm or $current_parse_ask_opt) {
-		    print "      ". ucfirst($field)
-			.$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
-		}
+    # we ensure earlier that there is at least one field to match, so an error will return ()
+    return (PARSE_SKIP_PARSER, undef) unless @matches ;
+
+    print "    '$parser->{title}' matches this file...\n" ;
+
+    my @field_table = @{$parser->{field_table}} ;
+
+    # check the number of matches
+    Lltag::Misc::die_error ("Matched ".(scalar @matches)." fields instead of ".(scalar @field_table).", parser invalid?")
+	unless @matches == @field_table ;
+
+    my $values = {} ;
+
+    # traverse matches
+    for(my $i=0; $i<@field_table; $i++) {
+
+	my $field = $field_table[$i] ;
+	if ($field ne IGNORE_NAME) {
+	    my $val = $matches[$i] ;
+
+	    # apply maj, sep and regexp to the value
+	    $val =~ s/\b(.)/uc $1/eg if $self->{maj_opt} ;
+	    $val =~ s/($self->{sep_opt})/ /g if defined $self->{sep_opt} ;
+	    map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{regexp_opts}} ;
+
+	    # check whether it's already defined.
+	    # TODO: append ?
+	    if (defined $values->{$field}) {
+		Lltag::Misc::print_warning ("      ", ucfirst($field)." already set to '".$values->{$field}
+					    ."', skipping new value '$val'")
+		    if $values->{$field} ne $val ;
+	        next ;
 	    }
-	  NEXT_FIELD:
-	    $i++ ;
-	}
 
-	return confirm_parser ($self, $file, $confirm, $behaviors, $values) ;
-    } else {
-	return (PARSE_SKIP_PARSER, undef) ;
+	    # ok
+	    $values->{$field} = $val ;
+	    if ($self->{verbose_opt} or $confirm or $current_parse_ask_opt) {
+		print "      ". ucfirst($field)
+		    .$self->{field_name_trailing_spaces}{$field}  .": ". $val ."\n" ;
+	    }
+	}
     }
+
+    return confirm_parser ($self, $file, $confirm, $behaviors, $values) ;
 }
 
 #######################################################
@@ -200,6 +218,49 @@ sub apply_parser {
 
 my @internal_basename_parsers = () ;
 my @internal_path_parsers = () ;
+
+sub add_internal_parser {
+    my $self = shift ;
+    my $file = shift ;
+    my $startline  = shift ;
+    my $type = shift ;
+    my $title = shift ;
+    my $regexp = shift ;
+    my $regexp_size = shift ;
+    my $field_table = shift ;
+
+    if ($type and $title and $regexp and @{$field_table}) {
+	my $parser ;
+	$parser->{title} = $title ;
+	$parser->{regexp} = $regexp ;
+	@{$parser->{field_table}} = @{$field_table} ;
+
+	# check whether there are the same number of fields in the regexp and in the field_table
+	Lltag::Misc::die_error ("  Parser '$title' at line $startline in file '$file' needs same number of matching fields in regexp ($regexp_size) and indices (".(scalar@{$field_table} ).").")
+	    unless $regexp_size == scalar @{$field_table} ;
+
+	# check whether the regexp is applicable
+	eval {
+	    my $dummy = ("dummy" =~ m@^$regexp/[^/]+$@) ;
+	    # be sure to return success even if not matched
+	    1 ;
+	} or
+	    # print the parser and its formats file (not the line since we may be way later already
+	    Lltag::Misc::die_error ("  Parser '$title' regexp '$regexp' looks invalid at line $startline in file '$file'.") ;
+
+	# add the parser
+	if ($type eq "basename" or $type eq "filename") {
+	    # TODO: drop filename support on september 20 2006
+	    print "  Got basename format '$title' (regexp '$regexp')\n" if $self->{verbose_opt} ;
+	    push (@internal_basename_parsers, $parser) ;
+	} elsif ($type eq "path") {
+	    print "  Got path format '$title' (regexp '$regexp')\n" if $self->{verbose_opt} ;
+	    push (@internal_path_parsers, $parser) ;
+	}
+    } elsif ($type or $title or $regexp or @{$field_table}) {
+	Lltag::Misc::die_error ("Incomplete format at line $startline in file '$file'.") ;
+    }
+}
 
 sub read_internal_parsers {
     my $self = shift ;
@@ -216,45 +277,46 @@ sub read_internal_parsers {
     }
     print "Reading format file '$file'...\n" if $self->{verbose_opt} ;
 
+    my $startline = undef ;
     my $type = undef ;
     my $title = undef ;
     my $regexp = undef ;
+    my $regexp_size = undef ;
     my @field_table = () ;
 
     while (<FORMAT>) {
 	chomp $_ ;
 	next if /^#/ ;
 	next if /^$/ ;
+
 	if (/^\[(.*)\]$/) {
-	    if ($type and $title and $regexp and @field_table) {
-		my $parser ;
-		$parser->{title} = $title ;
-		$parser->{regexp} = $regexp ;
-		@{$parser->{field_table}} = @field_table ;
-		if ($type eq "basename" or $type eq "filename") {
-		    # TODO: drop filename support on september 20 2006
-		    print "  Got basename format '$title'\n" if $self->{verbose_opt} ;
-		    push (@internal_basename_parsers, $parser) ;
-		} elsif ($type eq "path") {
-		    print "  Got path format '$title'\n" if $self->{verbose_opt} ;
-		    push (@internal_path_parsers, $parser) ;
-		}
-	    } elsif ($type or $title or $regexp or @field_table) {
-		Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
-	    }
-	    $type = undef ; $regexp = undef ; @field_table = () ;
+	    add_internal_parser $self, $file, $startline, $type, $title, $regexp, $regexp_size, \@field_table ;
+	    $startline = $. ;
+	    $type = undef ;
+	    $regexp = undef ;
+	    $regexp_size = undef ;
+	    @field_table = () ;
 	    $title = $1 ;
 	    # stocker la ligne ?
+
 	} elsif (/^type = (.*)$/) {
 	    Lltag::Misc::die_error ("Unsupported format type '$1' at line $. in file '$file'.")
 		if $1 ne "basename" and $1 ne "filename" and $1 ne "path" ;
 	    # TODO: drop filename support on september 20 2006
 	    $type = $1 ;
+
 	} elsif (/^regexp = (.*)$/) {
 	    $regexp = $1 ;
+	    # escape special characters
+	    # FIXME: add *+$^ ?
 	    $regexp =~ s/\./\\./g ;
+	    $regexp =~ s/\(/\\\(/g ;
 	    $regexp =~ s/\)/\\\)/g ;
+	    $regexp =~ s/\[/\\\[/g ;
+	    $regexp =~ s/\]/\\\]/g ;
 	    $regexp =~ s@/@\\/@g ;
+	    $regexp_size = 0 ;
+
 	    # do the replacement progressively so that %% and %x and not mixed
 	    while ($regexp =~ m/(%(?:P|L|S|N|A|%))/) {
 		if ($1 eq '%P') {
@@ -265,13 +327,22 @@ sub read_internal_parsers {
 		    $regexp =~ s/%S/$match_space/ ;
 		} elsif ($1 eq '%N') {
 		    $regexp =~ s/%N/$match_num/ ;
+		    $regexp_size++;
 		} elsif ($1 eq '%A') {
 		    $regexp =~ s/%A/$match_any/ ;
+		    $regexp_size++;
 		} elsif ($1 eq '%%') {
 		    $regexp =~ s/%%/%/ ;
 		}
 	    }
+
+	    Lltag::Misc::die_error ("Parser '$title' at line $startline in file '$file' needs at least one matching %A or %N in its regexp.")
+		unless $regexp_size ;
+
 	} elsif (/^indices = (.*)$/) {
+	    my @name_table = split (/,/, $1) ;
+	    Lltag::Misc::die_error ("Parser '$title' at line $startline in file '$file' needs at least one indice.")
+		unless @name_table ;
 	    @field_table = map {
 		my $field ;
 		if (defined $self->{field_name_letter}{$_} or $_ eq IGNORE_NAME) {
@@ -286,7 +357,8 @@ sub read_internal_parsers {
 		} else {
 		    Lltag::Misc::die_error ("Unrecognized field '$_' on line $. in file '$file'.") ;
 		}
-		$field } split (/,/, $1) ;
+		$field } @name_table ;
+
 	} else {
 	    Lltag::Misc::die_error ("Unrecognized line $. in file '$file': '$_'.") ;
 	}
@@ -294,22 +366,8 @@ sub read_internal_parsers {
     close FORMAT ;
 
     # save the last format
-    if ($type and $title and $regexp and @field_table) {
-	my $parser ;
-	$parser->{title} = $title ;
-	$parser->{regexp} = $regexp ;
-	@{$parser->{field_table}} = @field_table ;
-	if ($type eq "basename" or $type eq "filename") {
-		    # TODO: drop filename support on september 20 2006
-	    print "  Got basename format '$title'\n" if $self->{verbose_opt} ;
-	    push (@internal_basename_parsers, $parser) ;
-	} elsif ($type eq "path") {
-	    print "  Got path format '$title'\n" if $self->{verbose_opt} ;
-	    push (@internal_path_parsers, $parser) ;
-	}
-    } elsif ($type or $title or $regexp or @field_table) {
-	Lltag::Misc::die_error ("Incomplete format at line $. in file '$file'.") ;
-    }
+    add_internal_parser $self, $file, $startline, $type, $title, $regexp, $regexp_size, \@field_table ;
+
   NO_FORMATS_FILE_FOUND:
 }
 
@@ -360,7 +418,18 @@ sub apply_internal_path_basename_parsers {
 
     # try each path parser and each basename parser
     foreach my $path_parser (@internal_path_parsers) {
-	if ($parsename =~ m@^$path_parser->{regexp}/[^/]+$@) {
+	# match the path only first, to reduce number of (path,basename) parsers to try,
+	# and to check that there are no '/' afterwards
+
+	# protect against bad regexp, just in case (we should have found problems during initialization)
+	my $res ;
+	eval {
+	    $res = ($parsename =~ m@^$path_parser->{regexp}/[^/]+$@) ;
+	    1 ; # be sure to return success when the regexp does not match
+	} or
+	    Lltag::Misc::die_error ("Failed to apply parser '$path_parser->{title}', regexp '$path_parser->{regexp}' is invalid?") ;
+
+	if ($res) {
 	    foreach my $basename_parser (@internal_basename_parsers) {
 		my $whole_parser = merge_internal_parsers ($path_parser, $basename_parser) ;
 		# try to tag, with confirmation
@@ -454,6 +523,9 @@ sub generate_user_parser {
 	}
     }
     @{$parser->{field_table}} = @field_table ;
+
+    Lltag::Misc::die_error ("Format '$format_string' does not contain any matching field.")
+	unless @field_table ;
 
     # done
     if ($self->{spaces_opt}) {

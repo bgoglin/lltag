@@ -77,18 +77,18 @@ sub dummy_readline {
 
 # true readline wrapper
 sub real_readline {
-  my $indent = shift ;
-  my $prompt = shift ;
-  my $preput = shift ;
-  my $clear_allowed = shift ;
-  $preput = "" if not defined $preput ;
+    my $indent = shift ;
+    my $prompt = shift ;
+    my $preput = shift ;
+    my $clear_allowed = shift ;
+    $preput = "" if not defined $preput ;
  ASK:
-  my $val = $term->readline ("$indent$prompt ? ", $preput) ;
-  if (!$val and !$clear_allowed) {
-      print "$indent  Clearing is not allowed here.\n" ;
-      goto ASK ;
-  }
-  return $val ;
+    my $val = $term->readline ("$indent$prompt ? ", $preput) ;
+    if (!$val and !$clear_allowed) {
+	print "$indent  Clearing is not allowed here.\n" ;
+	goto ASK ;
+    }
+    return $val ;
 }
 
 # the actual wrapper
