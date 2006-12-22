@@ -1,3 +1,10 @@
+lltag (xxx) unstable; urgency=low
+
+  * Add preinst to remove /etc/lltag/config unless modified since
+    this file has been moved to /usr/share/doc.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Fri, 22 Dec 2006 17:07:59 +0100
+
 lltag (0.13.1-1) unstable; urgency=low
 
   * New upstream release.

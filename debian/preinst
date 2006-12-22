@@ -1,0 +1,24 @@
+#!/bin/sh
+set -e
+#DEBHELPER#
+
+# Remove the conffile unless modified
+rm_unchanged_conffile() {
+    CONFFILE="$1"
+
+    if [ -e "$CONFFILE" ]; then
+	md5sum="`md5sum \"$CONFFILE\" | sed -e \"s/ .*//\"`"
+	old_md5sum="`sed -n -e \"/^Conffiles:/,/^[^ ]/{\\\\' $CONFFILE'{s/.* \([^ ]+\).*/\1/;p}}\" /var/lib/dpkg/status | cut -d' ' -f 3`"
+	if [ "$md5sum" = "$old_md5sum" ]; then
+	    rm -f "$CONFFILE"
+	fi
+    fi
+}
+
+case "$1" in
+upgrade)
+    # /etc/lltag/config is installed in /usr/share/doc starting at 0.13.1-1
+    if dpkg --compare-versions "$2" le "0.13.1-1"; then
+	rm_unchanged_conffile "/etc/lltag/config"
+    fi
+esac
