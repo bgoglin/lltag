@@ -38,17 +38,20 @@ sub rename_format_usage {
 #######################################################
 # init
 
+my $rename_confirm_usage_forced ;
+
 sub init_renaming {
     my $self = shift ;
 
     # default confirmation behavior
     $current_rename_yes_opt = $self->{yes_opt} ;
+
+    # need to show menu usage once ?
+    $rename_confirm_usage_forced = $self->{menu_usage_once_opt} ;
 }
 
 #######################################################
 # rename confirmation
-
-my $rename_confirm_usage_forced = 1 ;
 
 sub rename_confirm_usage {
     Lltag::Misc::print_usage_header ("   ", "Renaming files") ;

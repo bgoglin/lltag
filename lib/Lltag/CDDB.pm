@@ -28,6 +28,10 @@ my $browser ;
 
 my $cddb_supported = 1 ;
 
+my $cddb_track_usage_forced ;
+my $cddb_cd_usage_forced ;
+my $cddb_keywords_usage_forced ;
+
 sub init_cddb {
     my $self = shift ;
 
@@ -45,6 +49,11 @@ sub init_cddb {
     $browser = LWP::UserAgent->new;
     # use HTTP_PROXY environment variable
     $browser->env_proxy ;
+
+    # need to show menu usage once ?
+    $cddb_track_usage_forced = $self->{menu_usage_once_opt} ;
+    $cddb_cd_usage_forced = $self->{menu_usage_once_opt} ;
+    $cddb_keywords_usage_forced = $self->{menu_usage_once_opt} ;
 }
 
 #########################################
@@ -369,8 +378,6 @@ my $cddb_backend = $tracktypeorg_cddb_backend ;
 ######################################################
 # interactive menu to browse CDDB, tracks in a CD
 
-my $cddb_track_usage_forced = 1 ;
-
 sub cddb_track_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose Track in CDDB CD") ;
     print "      <index> => Choose a track of the current CD (current default is Track $previous_track)\n" ;
@@ -501,8 +508,6 @@ sub get_cddb_tags_from_tracks {
 ##########################################################
 # interactive menu to browse CDDB, CDs in a query results
 
-my $cddb_cd_usage_forced = 1 ;
-
 sub cddb_cd_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose CD in CDDB Query Results") ;
     print "      <index> => Choose a CD in the current keywords query results list\n" ;
@@ -583,8 +588,6 @@ sub get_cddb_tags_from_cdids {
 
 ##########################################################
 # interactive menu to browse CDDB, keywords query
-
-my $cddb_keywords_usage_forced = 1 ;
 
 sub cddb_keywords_usage {
     Lltag::Misc::print_usage_header ("    ", "CDDB Query by Keywords") ;

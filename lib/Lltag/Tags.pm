@@ -3,6 +3,21 @@ package Lltag::Tags ;
 use strict ;
 no strict "refs" ;
 
+#######################################################
+# init
+
+my $edit_values_usage_forced ;
+
+sub init_tagging {
+    my $self = shift ;
+
+    # need to show menu usage once ?
+    $edit_values_usage_forced = $self->{menu_usage_once_opt} ;
+}
+
+#######################################################
+# various tag management routines
+
 # add a value to a field, creating an array if required
 sub append_tag_value {
     my $self = shift ;
@@ -162,8 +177,6 @@ sub set_tags_with_external_prog {
 
 #######################################################
 # edit current tags
-
-my $edit_values_usage_forced = 1 ;
 
 sub edit_values_usage {
     my $self = shift ;

@@ -1,3 +1,13 @@
+
+  * Add -q/--quiet to reduce verbosity, useful to disable displaying
+    of menu usage when a menu appears for the first time
+    (requested by Alexandre Buisse).
+    + The verbose option in the config file is now a verbose level,
+      with its default being 1.
+    + Also show the main menu usage when main menu appears for the
+      first time.
+
+
 lltag (0.13.1)
 
   * Multiple fixes regarding parsing:

@@ -89,5 +89,5 @@
 # Recursively traverse all given subdirectories.
 # recursive = 0
 
-# Verbose messages.
-# verbose = 0
+# Messages verbosity level
+# verbose = 1

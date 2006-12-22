@@ -48,6 +48,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .RB [ "--cddb-server <server[:port]>" ]
 .RB [ -R ]
 .RB [ -v ]
+.RB [ -q ]
 .RB [ "--config <file>" ]
 .RB [ "--gencfg <file>" ]
 .RB [ -S ]
@@ -312,6 +313,16 @@ The corresponding configuration file option is
 .IR no_path .
 
 .TP
+.B "-q, --quiet"
+Decrease message verbosity.
+The corresponding configuration file option is
+.I verbose
+which indicates the verbose level.
+Default is 1 to show usage when a menu is displayed for the first time.
+See also
+.BR -v .
+
+.TP
 .B "-R, --recursive"
 Recursively search for files in subdirectories that are given on
 the command line.
@@ -441,9 +452,13 @@ The corresponding configuration file option is
 
 .TP
 .B "-v, --verbose"
-Show verbose messages.
+Increase message verbosity.
 The corresponding configuration file option is
-.IR verbose .
+.I verbose
+which indicates the verbose level.
+Default is 1 to show usage when a menu is displayed for the first time.
+See also
+.BR -q .
 
 .TP
 .B "-V, --version"

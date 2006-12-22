@@ -39,6 +39,8 @@ use constant PARSE_MAY_PREFER => 4 ;
 #######################################################
 # initialization
 
+my $confirm_parser_usage_forced ;
+
 sub init_parsing {
     my $self = shift ;
 
@@ -48,6 +50,9 @@ sub init_parsing {
 
     # spaces_opt changes matching regexps
     $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
+
+    # need to show menu usage once ?
+    $confirm_parser_usage_forced = $self->{menu_usage_once_opt} ;
 }
 
 #######################################################
@@ -72,8 +77,6 @@ sub confirm_parser_letters {
     $string .= "q]" ;
     return $string ;
 }
-
-my $confirm_parser_usage_forced = 1 ;
 
 sub confirm_parser_usage {
     my $behaviors = shift ;

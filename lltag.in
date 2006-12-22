@@ -112,7 +112,8 @@ sub usage {
     print "                         Rename without asking for confirmation\n" ;
     print "  --ask                  Always ask for confirmation before tagging\n" ;
     print "  -R, --recursive        Recursively search all files in subdirectories\n" ;
-    print "  -v, --verbose          Verbose messages\n" ;
+    print "  -v, --verbose          More verbose messages\n" ;
+    print "  -q, --quiet            Less verbose messages\n" ;
     print "  --config <file>        Read additional configuration file\n" ;
     print "  --gencfg <file>        Generate additional configuration file\n" ;
     print " CDDB options:\n" ;
@@ -138,8 +139,9 @@ sub usage {
 #######################################################
 # options
 
+my $verbose_level = 1 ; # only display usage when menu appear for the first time
+
 $self->{dry_run_opt} = 0 ;
-$self->{verbose_opt} = 0 ;
 $self->{recursive_opt} = 0 ;
 $self->{list_formats_opt} = 0 ;
 $self->{show_tags_opt} = "" ;
@@ -252,7 +254,7 @@ sub process_option {
     } elsif (/^recursive\s*=\s*(.+)$/) {
 	$self->{recursive_opt} = $1 ;
     } elsif (/^verbose\s*=\s*(.+)$/) {
-	$self->{verbose_opt} = $1 ;
+	$verbose_level = $1 ;
     } elsif (/^cddb\s*=\s*(.+)$/) {
 	$self->{cddb_opt} = $1 ;
     } elsif (/^cddb_server_name\s*=\s*"(.+)"$/) {
@@ -333,7 +335,8 @@ GetOptions(
 					 }
 				       },
 	   'cddb-query=s'	=> \$self->{requested_cddb_query},
-	   'v|verbose'		=> \$self->{verbose_opt},
+	   'v|verbose'		=> sub { shift ; $verbose_level++ ; },
+	   'q|quiet'		=> sub { shift ; $verbose_level-- ; },
 	   'gencfg=s'		=> \$self->{gencfg_file},
 	   'h|help'		=> sub { usage () ; },
 	   'V|version'		=> sub { version () ; },
@@ -346,6 +349,10 @@ GetOptions(
 		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; $self->{field_default}{$field} = shift },
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
+
+# set verbosity options depending of the level
+$self->{verbose_opt} = ($verbose_level > 1) ;
+$self->{menu_usage_once_opt} = ($verbose_level > 0) ;
 
 # if no user parsers, no defaults, no guess and no cddb, force guess
 $self->{try_internals_opt} = 1
@@ -362,6 +369,7 @@ $self->{cddb_opt} = 1
 my $current_main_yes_opt = $self->{yes_opt} ;
 Lltag::CDDB::init_cddb ($self) ;
 Lltag::Parse::init_parsing ($self) ;
+Lltag::Tags::init_tagging ($self) ;
 Lltag::Rename::init_renaming ($self) ;
 
 #######################################################
@@ -554,6 +562,25 @@ if ($self->{show_tags_opt}) {
 # generate user parsers
 Lltag::Parse::generate_user_parsers ($self) ;
 
+# main menu usage
+my $main_menu_usage_forced = $self->{menu_usage_once_opt} ;
+
+sub main_menu_usage {
+    Lltag::Misc::print_usage_header ("  ", "Main menu") ;
+
+    print "    y => Yes, use these tags (default)\n" ;
+    print "    a => Always yes, stop asking for a confirmation\n" ;
+    print "    P => Try to parse the file\n" ;
+    print "    C => Query CDDB\n" ;
+    print "    E => Edit values\n" ;
+    print "    D => Only use default values\n" ;
+    print "    s/q => Skip this file\n" ;
+    print "    Q => Quit without tagging anything anymore\n" ;
+    print "    h => Show this help\n" ;
+
+    $main_menu_usage_forced = 0 ;
+}
+
 # main reading/parsing/tagging/renaming loop
 while ( @files ) {
     my $file = shift @files ;
@@ -629,6 +656,8 @@ while ( @files ) {
 	    if $current_main_yes_opt ;
 
 	while (1) {
+	    main_menu_usage
+		if $main_menu_usage_forced ;
 	    Lltag::Misc::print_question ("  Use these tag values [yaPCEDqQ] (default is yes, h for help) ? ") ;
 	    my $confirm_reply = <> ;
 	    chomp $confirm_reply ;
@@ -662,15 +691,7 @@ while ( @files ) {
 		goto ADD_DEFAULTS ;
 
 	    } else {
-		print "    y => Yes, use these tags (default)\n" ;
-		print "    a => Always yes, stop asking for a confirmation\n" ;
-		print "    P => Try to parse the file\n" ;
-		print "    C => Query CDDB\n" ;
-		print "    E => Edit values\n" ;
-		print "    D => Only use default values\n" ;
-		print "    s/q => Skip this file\n" ;
-		print "    Q => Quit without tagging anything anymore\n" ;
-		print "    h => Show this help\n" ;
+		main_menu_usage ;
 	    }
 	}
 
@@ -754,7 +775,7 @@ sub generate_config {
     print NEWCFG "yes = $self->{yes_opt}\n" ;
     print NEWCFG "ask = $self->{ask_opt}\n" ;
     print NEWCFG "recursive = $self->{recursive_opt}\n" ;
-    print NEWCFG "verbose = $self->{verbose_opt}\n" ;
+    print NEWCFG "verbose = $verbose_level\n" ;
 
     close NEWCFG ;
 }
