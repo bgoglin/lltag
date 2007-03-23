@@ -6,6 +6,7 @@
       with its default being 1.
     + Also show the main menu usage when main menu appears for the
       first time.
+  * Minor fixes in lltag_config.5 manpage.
 
 
 lltag (0.13.1)
