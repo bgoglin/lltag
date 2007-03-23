@@ -6,6 +6,8 @@
       with its default being 1.
     + Also show the main menu usage when main menu appears for the
       first time.
+  * Have the lltag_config.5 manpage also point to the config template
+    file provided in the documentation directory.
   * Minor fixes in lltag_config.5 manpage.
 
 
