@@ -8,6 +8,9 @@
       first time.
   * Have the lltag_config.5 manpage also point to the config template
     file provided in the documentation directory.
+  * Add an EXAMPLES section at the end of the lltag.1 manpage
+    (requested by Stefano Sabatini in Debian bug #406213) and also
+    insert more basic command lines in the howto.html documentation.
   * Minor fixes in lltag_config.5 manpage.
 
 
