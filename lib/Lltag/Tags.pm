@@ -239,7 +239,7 @@ sub edit_values_usage {
 	." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
 	." (".$val.")\n" ;
     }
-    # TODO: show other fields ? not possible until we edit existing tags
+    print "      tag FOO => Edit tag FOO\n" ;
     print "      V => View current fields\n" ;
     print "      y/E => End edition\n" ;
     print "      q/C => Cancel edition\n" ;
@@ -301,7 +301,10 @@ sub edit_values {
 	my $edit_reply = <> ;
 	chomp $edit_reply ;
 
-	if ($edit_reply =~ m/^($letters_union)/) {
+	if ($edit_reply =~ m/^tag (.+)/) {
+	    edit_one_value $self, $values, $1 ;
+
+	} elsif ($edit_reply =~ m/^($letters_union)/) {
 	    edit_one_value $self, $values, $self->{field_letter_name}{$1} ;
 
 	} elsif ($edit_reply =~ m/^y/ or $edit_reply =~ m/^E/) {
