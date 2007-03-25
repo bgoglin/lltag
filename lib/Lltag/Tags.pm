@@ -24,8 +24,15 @@ sub display_tag_values {
     my $prefix = shift ;
 
    foreach my $field (@{$self->{field_names}}) {
-	print $prefix.ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
-	    if defined $values->{$field} ;
+	next unless defined $values->{$field} ;
+	if (ref($values->{$field}) ne 'ARRAY') {
+	    print $prefix.ucfirst($field).": ".$values->{$field}."\n"
+	} else {
+	    my @vals = @{$values->{$field}} ;
+	    for(my $i = 0; $i < @vals; $i++) {
+		print $prefix.ucfirst($field)." #".($i+1).": ".$vals[$i]."\n"
+	    }
+	}
    }
 }
 
