@@ -644,10 +644,7 @@ while ( @files ) {
       CONFIRM:
 	if (keys %{$values}) {
 	    print "    Current tag values are:\n" ;
-	    foreach my $field (@{$self->{field_names}}) {
-		print "      ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
-		    if defined $values->{$field} ;
-	    }
+	    Lltag::Tags::display_tag_values ($self, $values, "      ") ;
 	} else {
 	    print "    There are no current tag values.\n" ;
 	}

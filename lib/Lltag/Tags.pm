@@ -16,6 +16,20 @@ sub init_tagging {
 }
 
 #######################################################
+# display tag values
+
+sub display_tag_values {
+    my $self = shift ;
+    my $values = shift ;
+    my $prefix = shift ;
+
+   foreach my $field (@{$self->{field_names}}) {
+	print $prefix.ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
+	    if defined $values->{$field} ;
+   }
+}
+
+#######################################################
 # various tag management routines
 
 # add a value to a field, creating an array if required
