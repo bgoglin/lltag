@@ -26,7 +26,8 @@ sub display_tag_values {
    foreach my $field (@{$self->{field_names}}) {
 	next unless defined $values->{$field} ;
 	if (ref($values->{$field}) ne 'ARRAY') {
-	    print $prefix.ucfirst($field).": ".$values->{$field}."\n"
+	    print $prefix.ucfirst($field).": "
+		. ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
 	} else {
 	    my @vals = @{$values->{$field}} ;
 	    for(my $i = 0; $i < @vals; $i++) {
@@ -213,6 +214,8 @@ sub edit_values_usage {
 	my $val = $values->{$field} ;
 	if (not defined $val) {
 	    $val = "<not defined>" ;
+	} elsif (ref($val) eq 'ARRAY') {
+	    $val = join(" ; ", @{$val}) ;
 	} elsif ($val eq "") {
 	    $val = "<CLEAR>" ;
 	}
@@ -267,11 +270,7 @@ sub edit_values {
 
 	} elsif ($edit_reply =~ m/^V/) {
 	    print "      Current tag values are:\n" ;
-	    foreach my $field (@field_names) {
-		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": "
-		    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
-		    if defined $values->{$field} ;
-	    }
+	    display_tag_values $self, $values, "        " ;
 
 	} else {
 	    edit_values_usage $self, $values, $field_names_ref ;
