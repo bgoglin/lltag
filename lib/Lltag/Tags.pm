@@ -232,6 +232,19 @@ sub edit_values_usage {
     $edit_values_usage_forced = 0 ;
 }
 
+sub edit_one_value {
+    my $self = shift ;
+    my $values = shift ;
+    my $field = shift ;
+
+    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+    if ($value eq "DELETE" or $value eq "<DELETE>") {
+	delete $values->{$field} ;
+    } else {
+	$values->{$field} = $value ;
+    }
+}
+
 sub edit_values {
     my $self = shift ;
     my $values = shift ;
@@ -254,13 +267,7 @@ sub edit_values {
 	chomp $edit_reply ;
 
 	if ($edit_reply =~ m/^($letters_union)/) {
-	    my $field = $self->{field_letter_name}{$1} ;
-	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
-	    if ($value eq "DELETE" or $value eq "<DELETE>") {
-		delete $values->{$field} ;
-	    } else {
-		$values->{$field} = $value ;
-	    }
+	    edit_one_value $self, $values, $self->{field_letter_name}{$1} ;
 
 	} elsif ($edit_reply =~ m/^y/ or $edit_reply =~ m/^E/) {
 	    return $values ;
