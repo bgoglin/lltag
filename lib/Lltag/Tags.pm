@@ -237,11 +237,30 @@ sub edit_one_value {
     my $values = shift ;
     my $field = shift ;
 
-    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
-    if ($value eq "DELETE" or $value eq "<DELETE>") {
+    if (ref($values->{$field}) eq 'ARRAY') {
+	my @oldvals = @{$values->{$field}} ;
+	my @newvals = () ;
+	for(my $i=0; $i<@oldvals; $i++) {
+	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field #".($i+1), $oldvals[$i], 1) ;
+	    push @newvals, $value
+		unless $value eq "" ;
+	}
 	delete $values->{$field} ;
+	if (@newvals == 1) {
+	    $values->{$field} = $newvals[0] ;
+	} elsif (@newvals) {
+	    @{$values->{$field}} = @newvals ;
+	} else {
+	    $values->{$field} = "" ;
+	}
+
     } else {
-	$values->{$field} = $value ;
+	my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+	if ($value eq "DELETE" or $value eq "<DELETE>") {
+	    delete $values->{$field} ;
+	} else {
+	    $values->{$field} = $value ;
+	}
     }
 }
 

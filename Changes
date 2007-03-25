@@ -6,6 +6,7 @@
       with its default being 1.
     + Also show the main menu usage when main menu appears for the
       first time.
+  * Allow edition of tags with multiple values.
   * Have the lltag_config.5 manpage also point to the config template
     file provided in the documentation directory.
   * Add an EXAMPLES section at the end of the lltag.1 manpage
