@@ -117,6 +117,7 @@ sub init_readline {
 
     if ($term->Features->{preput}) {
 	$myreadline = \&real_readline ;
+	$term->MinLine(3) ;
     } else {
 	$myreadline = \&dummy_readline ;
     }
@@ -139,15 +140,6 @@ sub exit_readline {
 	$term->WriteHistory ($history_dir."/".$history_file)
 	    or warn "Failed to write history file $history_dir/$history_file: $!.\n" ;
     } unless $term->Features->{WriteHistory} ;
-}
-
-###################################################################
-# print a question in bold
-
-sub print_question {
-    print color 'bold' ;
-    print shift ;
-    print color 'reset' ;
 }
 
 ###################################################################

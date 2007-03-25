@@ -112,8 +112,7 @@ sub confirm_parser {
 	    if $confirm_parser_usage_forced ;
 
 	while (1) {
-	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help) ? ") ;
-	    my $reply = <> ;
+	    my $reply = Lltag::Misc::readline ("  ", "Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help)", "", -1) ;
 	    chomp $reply ;
 
 	    if ($reply eq "" or $reply =~ m/^y/) {

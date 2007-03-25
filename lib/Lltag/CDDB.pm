@@ -443,9 +443,8 @@ sub get_cddb_tags_from_tracks {
 	if $cddb_track_usage_forced ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter track index [<index>aEvckq]".
-	    " (default is Track $previous_track, h for help) ? " ;
-	my $reply = <> ;
+	my $reply = Lltag::Misc::readline ("  ", "Enter track index [<index>aEvckq]".
+			" (default is Track $previous_track, h for help)", "", -1) ;
 	chomp $reply ;
 
 	$reply = $previous_track
@@ -560,8 +559,7 @@ sub get_cddb_tags_from_cdids {
 	if $cddb_cd_usage_forced ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter CD index [<index>vkq] (no default, h for help) ? " ;
-	my $reply = <> ;
+	my $reply = Lltag::Misc::readline ("  ", "Enter CD index [<index>vkq] (no default, h for help)", "", -1) ;
 	chomp $reply ;
 
 	next if $reply eq '' ;

@@ -297,8 +297,7 @@ sub edit_values {
 	if $edit_values_usage_forced ;
 
     while (1) {
-	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."Vyq] (no default, h for help) ? ") ;
-	my $edit_reply = <> ;
+	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". (join '', @letters) ."Vyq] (no default, h for help)", "", -1) ;
 	chomp $edit_reply ;
 
 	if ($edit_reply =~ m/^tag (.+)/) {

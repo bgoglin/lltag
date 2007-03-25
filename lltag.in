@@ -655,8 +655,7 @@ while ( @files ) {
 	while (1) {
 	    main_menu_usage
 		if $main_menu_usage_forced ;
-	    Lltag::Misc::print_question ("  Use these tag values [yaPCEDqQ] (default is yes, h for help) ? ") ;
-	    my $confirm_reply = <> ;
+	    my $confirm_reply = Lltag::Misc::readline ("  ", "Use these tag values [yaPCEDqQ] (default is yes, h for help)", "", -1) ;
 	    chomp $confirm_reply ;
 
 	    # FIXME: option to display old values
