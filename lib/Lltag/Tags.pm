@@ -18,23 +18,39 @@ sub init_tagging {
 #######################################################
 # display tag values
 
+sub display_one_tag_value {
+    my $self = shift ;
+    my $values = shift ;
+    my $field = shift ;
+    my $prefix = shift ;
+
+    if (ref($values->{$field}) ne 'ARRAY') {
+	print $prefix.ucfirst($field).": "
+	    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
+    } else {
+	my @vals = @{$values->{$field}} ;
+	for(my $i = 0; $i < @vals; $i++) {
+	    print $prefix.ucfirst($field)." #".($i+1).": ".$vals[$i]."\n"
+	}
+    }
+}
+
 sub display_tag_values {
     my $self = shift ;
     my $values = shift ;
     my $prefix = shift ;
 
-   foreach my $field (@{$self->{field_names}}) {
+    # display regular tags first
+    foreach my $field (@{$self->{field_names}}) {
 	next unless defined $values->{$field} ;
-	if (ref($values->{$field}) ne 'ARRAY') {
-	    print $prefix.ucfirst($field).": "
-		. ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
-	} else {
-	    my @vals = @{$values->{$field}} ;
-	    for(my $i = 0; $i < @vals; $i++) {
-		print $prefix.ucfirst($field)." #".($i+1).": ".$vals[$i]."\n"
-	    }
-	}
-   }
+	display_one_tag_value $self, $values, $field, $prefix ;
+    }
+
+    # display misc tags later
+    foreach my $field (keys %{$values}) {
+	next if grep { $field eq $_ } @{$self->{field_names}} ;
+	display_one_tag_value $self, $values, $field, $prefix ;
+    }
 }
 
 #######################################################
