@@ -65,7 +65,7 @@ sub dummy_readline {
 	$readline_firsttime = 0 ;
     }
   ASK:
-    my $val = $term->readline ("$indent$prompt ($preput) ? ") ;
+    my $val = $term->readline ("$indent$prompt".($preput ? " ($preput)" : "")." ? ") ;
     return $preput if !$val ;
     $val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
     if (!$val and !$clear_allowed) {
