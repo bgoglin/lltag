@@ -166,7 +166,6 @@ sub rename_with_values {
 
       ASK_CONFIRM:
 	my $reply = Lltag::Misc::readline ("    ", "Really rename the file [yaeq] (default is yes, h for help)", "", -1) ;
-	chomp $reply ;
 
         if ($reply eq "" or $reply =~ m/^y/i) {
             goto RENAME_IT ;
