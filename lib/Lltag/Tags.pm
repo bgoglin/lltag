@@ -298,7 +298,6 @@ sub edit_values {
 
     while (1) {
 	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". (join '', @letters) ."Vyq] (no default, h for help)", "", -1) ;
-	chomp $edit_reply ;
 
 	if ($edit_reply =~ m/^tag (.+)/) {
 	    edit_one_value $self, $values, $1 ;
