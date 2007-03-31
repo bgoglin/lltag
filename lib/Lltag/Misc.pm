@@ -72,6 +72,7 @@ sub dummy_readline {
 	print "$indent  Clearing is not allowed here.\n" ;
 	goto ASK ;
     }
+    print "\n" unless defined $val ;
     return $val ;
 }
 
@@ -88,6 +89,7 @@ sub real_readline {
 	print "$indent  Clearing is not allowed here.\n" ;
 	goto ASK ;
     }
+    print "\n" unless defined $val ;
     return $val ;
 }
 

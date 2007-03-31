@@ -258,8 +258,14 @@ sub edit_one_value {
 	my @newvals = () ;
 	for(my $i=0; $i<@oldvals; $i++) {
 	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field #".($i+1), $oldvals[$i], 1) ;
-	    push @newvals, $value
-		unless $value eq "" ;
+
+	    if (defined $value) {
+		push @newvals, $value
+		    unless $value eq "" ;
+	    } else {
+		# if ctrl-d, reset to same value, without removing it if empty
+		push @newvals, $oldvals[$i] ;
+	    }
 	}
 	delete $values->{$field} ;
 	if (@newvals == 1) {
@@ -272,10 +278,14 @@ sub edit_one_value {
 
     } else {
 	my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
-	if ($value eq "DELETE" or $value eq "<DELETE>") {
-	    delete $values->{$field} ;
-	} else {
-	    $values->{$field} = $value ;
+
+	# if ctrl-d, change nothing
+	if (defined $value) {
+	    if ($value eq "DELETE" or $value eq "<DELETE>") {
+		delete $values->{$field} ;
+	    } else {
+		$values->{$field} = $value ;
+	    }
 	}
     }
 }
@@ -298,6 +308,9 @@ sub edit_values {
 
     while (1) {
 	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". (join '', @letters) ."Vyq] (no default, h for help)", "", -1) ;
+
+	# if ctrl-d, cancel editing
+	$edit_reply = 'q' unless defined $edit_reply ;
 
 	if ($edit_reply =~ m/^tag (.+)/) {
 	    edit_one_value $self, $values, $1 ;

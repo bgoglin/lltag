@@ -7,6 +7,9 @@
     + Also show the main menu usage when main menu appears for the
       first time.
   * Allow edition of tags with multiple values.
+  * Handle Ctrl-d in interactive menu and make it cancel the current
+    operation without quitting, as opposed to Ctrl-c
+    (requested by Alexandre Buisse).
   * Have the lltag_config.5 manpage also point to the config template
     file provided in the documentation directory.
   * Add an EXAMPLES section at the end of the lltag.1 manpage

@@ -167,6 +167,9 @@ sub rename_with_values {
       ASK_CONFIRM:
 	my $reply = Lltag::Misc::readline ("    ", "Really rename the file [yaeq] (default is yes, h for help)", "", -1) ;
 
+	# if ctrl-d, do not rename
+	$reply = 'q' unless defined $reply ;
+
         if ($reply eq "" or $reply =~ m/^y/i) {
             goto RENAME_IT ;
 
@@ -178,7 +181,11 @@ sub rename_with_values {
 	    return ;
 
 	} elsif ($reply =~ m/^e/) {
-	    $new_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
+	    my $newnew_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
+
+	    # if ctrl-d, keep same filename
+	    $new_name = $newnew_name if defined $newnew_name ;
+
 	    goto ASK_CONFIRM ;
 
 	} else {

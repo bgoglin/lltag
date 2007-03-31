@@ -510,7 +510,15 @@ Then, if
 .B --rename
 was passed, the file is renamed.
 
-We now describe all interactive menus.
+When hitting
+.B Ctrl-d
+at the beginning of an empty line
+.RB ( EOF ),
+the general behavior is to cancel the current operation
+without leaving.
+
+We now describe all interactive menus in detail.
+
 
 
 
@@ -540,7 +548,7 @@ Edit values, see
 .B D
 Only use default values, forget about CDDB or parsed tags
 .TP
-.B q
+.BR q " (or " EOF )
 Skip this file
 .TP
 .B Q
@@ -572,7 +580,7 @@ Search in all CD categories within fields artist OR album.
 .\"CDDB query for CD matching category and id
 
 .TP
-.B q
+.BR q " (or " EOF )
 Quit CDDB query, see
 .B MAIN MENU
 
@@ -589,7 +597,7 @@ View the list of CD matching the keywords
 .B k
 Start again CDDB query with different keywords
 .TP
-.B q
+.BR q " (or " EOF )
 Quit CDDB query, see
 .B MAIN MENU
 
@@ -618,7 +626,7 @@ Change the CD chosen in keywords query results list
 .B k
 Start again CDDB query with different keywords
 .TP
-.B q
+.BR q " (or " EOF )
 Quit CDDB query, see
 .B MAIN MENU
 
@@ -658,8 +666,8 @@ When matching is done through combination of a path parser
 and a basename parser, keep the basename parser and try the
 next path parser on the current file.
 .TP
-.B q
-Skip the current file, don't tag it at all.
+.BR q " (or " EOF )
+Stop trying to parse this file.
 
 
 
@@ -679,6 +687,8 @@ If not, pressing
 will keep the current value while
 .I CLEAR
 will empty it.
+.I EOF
+while cancel the editing of this single value.
 
 Each field may be selected for edition by pressing its corresponding
 letter in the format (see \fBFORMAT\fR).
@@ -696,7 +706,7 @@ View the current values of tags
 .B y
 End edition, save changes, and return to previous menu
 .TP
-.B q
+.BR q " (or " EOF )
 Cancel edition, forget about changes, and return to previous menu
 
 
@@ -726,7 +736,7 @@ The behavior depends on the installed readline library.
 If it is smart, the current value may be edited inline
 and an history is available.
 .TP
-.B q
+.BR q " (or " EOF )
 Don't rename current file.
 .TP
 .B h

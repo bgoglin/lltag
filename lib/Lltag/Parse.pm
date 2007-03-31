@@ -114,6 +114,9 @@ sub confirm_parser {
 	while (1) {
 	    my $reply = Lltag::Misc::readline ("  ", "Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help)", "", -1) ;
 
+	    # if ctrl-d, stop trying to parse
+	    $reply = 'q' unless defined $reply ;
+
 	    if ($reply eq "" or $reply =~ m/^y/) {
 		last ;
 

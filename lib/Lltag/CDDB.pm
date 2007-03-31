@@ -446,6 +446,9 @@ sub get_cddb_tags_from_tracks {
 	my $reply = Lltag::Misc::readline ("  ", "Enter track index [<index>aEvckq]".
 			" (default is Track $previous_track, h for help)", "", -1) ;
 
+	# if ctrl-d, abort cddb
+	$reply = 'q' unless defined $reply ;
+
 	$reply = $previous_track
 	    if $reply eq '' ;
 
@@ -560,6 +563,9 @@ sub get_cddb_tags_from_cdids {
     while (1) {
 	my $reply = Lltag::Misc::readline ("  ", "Enter CD index [<index>vkq] (no default, h for help)", "", -1) ;
 
+	# if ctrl-d, abort cddb
+	$reply = 'q' unless defined $reply ;
+
 	next if $reply eq '' ;
 
 	return (CDDB_ABORT, undef)
@@ -628,6 +634,8 @@ sub get_cddb_tags {
 	    # FIXME: either put it in the history, or preput it next time
 	} else {
 	    $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
+	    # if ctrl-d, abort cddb
+	    $keywords = 'q' unless defined $keywords ;
 	}
 
 	next if $keywords eq '' ;

@@ -657,6 +657,9 @@ while ( @files ) {
 		if $main_menu_usage_forced ;
 	    my $confirm_reply = Lltag::Misc::readline ("  ", "Use these tag values [yaPCEDqQ] (default is yes, h for help)", "", -1) ;
 
+	    # if ctrl-d, skip this file
+	    $confirm_reply = 'q' unless defined $confirm_reply ;
+
 	    # FIXME: option to display old values
 
 	    # FIXME: option to display additonial values
