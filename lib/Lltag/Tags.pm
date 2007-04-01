@@ -56,6 +56,22 @@ sub display_tag_values {
 #######################################################
 # various tag management routines
 
+# duplicate tag values
+sub duplicate_tag_values {
+    my $old_values = shift ;
+    my $new_values = {} ;
+
+    for my $field (keys %{$old_values}) {
+	if (ref($old_values->{$field}) ne 'ARRAY') {
+	    $new_values->{$field} = $old_values->{$field} ;
+	} else {
+	    @{$new_values->{$field}} = @{$old_values->{$field}} ;
+	}
+    }
+
+    return $new_values ;
+}
+
 # add a value to a field, creating an array if required
 sub append_tag_value {
     my $self = shift ;
@@ -112,17 +128,21 @@ sub merge_new_tag_values {
     my $old_values = shift ;
     my $new_values = shift ;
 
+    my $merged_values ;
     if ($self->{clear_opt}) {
-	$old_values = {} ;
+	$merged_values = {} ;
+    } else {
+	# duplicate old into merged
+	$merged_values = duplicate_tag_values $old_values ;
     }
 
     foreach my $field (keys %{$new_values}) {
-	$old_values->{$field} = undef
-	    if defined $old_values->{$field} and !$self->{append_opt} ;
-	append_tag_multiple_value $self, $old_values, $field, $new_values->{$field} ;
+	delete $merged_values->{$field}
+	    if defined $merged_values->{$field} and !$self->{append_opt} ;
+	append_tag_multiple_value $self, $merged_values, $field, $new_values->{$field} ;
     }
 
-    return $old_values ;
+    return $merged_values ;
 }
 
 # return values for a field as an array
