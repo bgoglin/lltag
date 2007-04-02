@@ -2,6 +2,11 @@
   * Large rework of the core loop.
     + Display existing tags with the new ones to be set.
     + Support edition of existing tags and tags with multiple values.
+    + Also try internal parsers when parsing from the main menu even
+      if -G was not given on the command line.
+      - Make sure internal parsers are loaded when parsing from the
+        main menu even if -G did not get passed.
+      - Only load parsers when used for the first time.
   * Add -q/--quiet to reduce verbosity, useful to disable displaying
     of menu usage when a menu appears for the first time
     (requested by Alexandre Buisse).

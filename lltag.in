@@ -535,9 +535,10 @@ sub try_to_parse {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
+    my $try_internals = shift ;
     my $old_values = shift ;
 
-    my ($res, $new_values) = Lltag::Parse::try_to_parse ($self, $file, $parsename) ;
+    my ($res, $new_values) = Lltag::Parse::try_to_parse ($self, $file, $parsename, $try_internals) ;
     if ($res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED) {
 	return Lltag::Tags::merge_new_tag_values ($self, $old_values,
 						  (add_defaults $self, $new_values));
@@ -635,7 +636,7 @@ sub main_confirm_menu {
 	    return (CONFIRM_EXIT, undef) ;
 
 	} elsif ($confirm_reply =~ m/^P/) {
-	    my $new_values = try_to_parse ($self, $file, $parsename, $old_values) ;
+	    my $new_values = try_to_parse ($self, $file, $parsename, 1, $old_values) ;
 	    $current_values = $new_values
 		if defined $new_values ;
 
@@ -664,12 +665,11 @@ sub main_confirm_menu {
 #######################################################
 # main process
 
-# read internal parsers
-Lltag::Parse::read_internal_parsers ($self)
-    if $self->{try_internals_opt} or $self->{list_formats_opt} ;
-
 # if -L was passed, show formats and exit
 if ($self->{list_formats_opt}) {
+    # read internal parsers
+    Lltag::Parse::read_internal_parsers ($self) ;
+    # list them
     print "Listing internal parsers:\n" ;
     Lltag::Parse::list_internal_parsers () ;
     exit 0 ;
@@ -731,9 +731,6 @@ if ($self->{show_tags_opt}) {
     exit 0 ;
 }
 
-# generate user parsers
-Lltag::Parse::generate_user_parsers ($self) ;
-
 # main reading/parsing/tagging/renaming loop
 while ( @files ) {
     my $file = shift @files ;
@@ -778,7 +775,7 @@ while ( @files ) {
 
     # try to parse with all parsers, either user-provided or internals
     if (1) { # FIXME: if guess or nothing else
-	my $new_values = try_to_parse $self, $file, $parsename, $old_values ;
+	my $new_values = try_to_parse $self, $file, $parsename, $self->{try_internals_opt}, $old_values ;
 	if (defined $new_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM ;

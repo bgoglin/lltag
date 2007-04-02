@@ -619,13 +619,23 @@ sub try_to_parse_with_preferred {
     }
 }
 
+my $user_parsers_initialized = 0 ;
+my $internal_parsers_initialized = 0 ;
+
 sub try_to_parse {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
+    my $try_internals = shift ;
 
     my $values = undef ;
     my $res ;
+
+    # initialize user parsers once
+    if (!$user_parsers_initialized) {
+	generate_user_parsers ($self) ;
+	$user_parsers_initialized = 1 ;
+    }
 
     # try user provided parsers first
     if (@user_parsers) {
@@ -636,8 +646,14 @@ sub try_to_parse {
     }
 
     # try to guess my internal format database then
-    if ($self->{try_internals_opt}) {
+    if ($try_internals) {
 	print "  Trying to parse filename with internal formats...\n" ;
+
+	# initialize internal parsers once
+	if (!$internal_parsers_initialized) {
+	    read_internal_parsers ($self) ;
+	    $internal_parsers_initialized = 1 ;
+	}
 
 	if ($self->{no_path_opt} or $parsename !~ m@/@) {
 	    ($res, $values) = apply_internal_basename_parsers $self, $file, $parsename ;
@@ -648,7 +664,7 @@ sub try_to_parse {
 	    if $res == PARSE_SUCCESS or $res == PARSE_SUCCESS_PREFERRED or $res == PARSE_ABORT ;
     }
 
-    if ($self->{try_internals_opt} or @user_parsers) {
+    if ($try_internals or @user_parsers) {
 	print "  Didn't find any parser!\n" ;
     }
 
