@@ -792,11 +792,15 @@ while ( @files ) {
 	($res, $current_values) = main_confirm_menu $self, $file, $parsename, $current_values, $old_values ;
     }
 
-    last if $res == CONFIRM_EXIT ;
+    if ($res == CONFIRM_EXIT) {
+	print "  Exiting...\n" ;
+	last ;
 
-    next if $res == CONFIRM_SKIP_FILE ;
+    } elsif ($res == CONFIRM_SKIP_FILE) {
+	print "  Skipping this file...\n" ;
+	next ;
 
-    if ($res == CONFIRM_TAG) {
+    } elsif ($res == CONFIRM_TAG) {
 	# actually tagging
 	tag_with_values $file, $backend, $current_values
 	    unless $self->{no_tagging_opt} ;
