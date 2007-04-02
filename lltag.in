@@ -491,7 +491,7 @@ sub add_defaults {
 
     # add new values to the old ones, depending on clear/append options
     my $new_values = Lltag::Tags::duplicate_tag_values ($values) ;
-    Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
+    Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # then add defaults to not defined tags
     foreach my $field (@{$self->{field_names}}) {
