@@ -1,4 +1,7 @@
 
+  * Large rework of the core loop.
+    + Display existing tags with the new ones to be set.
+    + Support edition of existing tags and tags with multiple values.
   * Add -q/--quiet to reduce verbosity, useful to disable displaying
     of menu usage when a menu appears for the first time
     (requested by Alexandre Buisse).
@@ -6,7 +9,6 @@
       with its default being 1.
     + Also show the main menu usage when main menu appears for the
       first time.
-  * Allow edition of tags with multiple values.
   * Handle Ctrl-d in interactive menu and make it cancel the current
     operation without quitting, as opposed to Ctrl-c
     (requested by Alexandre Buisse).
