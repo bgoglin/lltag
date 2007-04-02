@@ -354,13 +354,6 @@ GetOptions(
 $self->{verbose_opt} = ($verbose_level > 1) ;
 $self->{menu_usage_once_opt} = ($verbose_level > 0) ;
 
-# if no user parsers, no defaults, no guess and no cddb, force guess
-$self->{try_internals_opt} = 1
-    if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
-			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
-			       and !(keys %{$self->{additional_values}})
-			       and !$self->{list_formats_opt} ) ;
-
 # if --cddb-query is passed, enable cddb too
 $self->{cddb_opt} = 1
     if defined $self->{requested_cddb_query} ;
@@ -775,7 +768,15 @@ while ( @files ) {
 
     # try to parse with all parsers, either user-provided or internals
     if (1) { # FIXME: if guess or nothing else
-	my $new_values = try_to_parse $self, $file, $parsename, $self->{try_internals_opt}, $old_values ;
+	# if no user parsers, no defaults, no guess and no cddb, force guess
+	my $try_internals = ($self->{guess_opt}
+			     or ( !@{$self->{user_format_strings}}
+				  and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
+				  and !(keys %{$self->{additional_values}})
+				  and !$self->{list_formats_opt} )
+			     ) ;
+
+	my $new_values = try_to_parse $self, $file, $parsename, $try_internals, $old_values ;
 	if (defined $new_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM ;
