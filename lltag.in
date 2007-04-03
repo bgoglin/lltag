@@ -575,6 +575,9 @@ sub main_confirm_menu_usage {
     print "    C => Query CDDB\n" ;
     print "    E => Edit values\n" ;
     print "    D => Only use default values\n" ;
+    print "    Z => Reset to no values\n" ;
+    print "    R => Revert to old values\n" ;
+    print "    O => Display old values\n" ;
     print "    s/q => Skip this file\n" ;
     print "    Q => Quit without tagging anything anymore\n" ;
     print "    h => Show this help\n" ;
@@ -608,7 +611,7 @@ sub main_confirm_menu {
 	main_confirm_menu_usage
 	    if $main_confirm_menu_usage_forced ;
 	# ask the user for confirmation
-	my $confirm_reply = Lltag::Misc::readline ("  ", "Use these tag values [yaPCEDqQ] (default is yes, h for help)", "", -1) ;
+	my $confirm_reply = Lltag::Misc::readline ("  ", "Use these tag values [yaPCEDZROqQ] (default is yes, h for help)", "", -1) ;
 
 	# if ctrl-d, skip this file
 	$confirm_reply = 'q' unless defined $confirm_reply ;
@@ -644,10 +647,20 @@ sub main_confirm_menu {
 	} elsif ($confirm_reply =~ m/^D/) {
 	    $current_values = add_defaults $self, $old_values ;
 
-	# FIXME: option to add defaults to current values ?
-	# FIXME: option to reset to no values (with 'Z' ?)
-	# FIXME: option to revert to old values (with 'R' ?)
-	# FIXME: option to display old values without using them (with 'O' ?)
+	} elsif ($confirm_reply =~ m/^Z/) {
+	    $current_values = {} ;
+
+	} elsif ($confirm_reply =~ m/^R/) {
+	    $current_values = Lltag::Tags::duplicate_tag_values ($old_values) ;
+
+	} elsif ($confirm_reply =~ m/^O/) {
+	    # display old values
+	    if (keys %{$old_values}) {
+		print "      Existing tag values were:\n" ;
+		Lltag::Tags::display_tag_values ($self, $old_values, "        ") ;
+	    } else {
+		print "    There were no tag values.\n" ;
+	    }
 
 	} else {
 	    main_confirm_menu_usage ;

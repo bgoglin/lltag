@@ -1,6 +1,8 @@
 
   * Large rework of the core loop.
     + Display existing tags with the new ones to be set.
+    + Add O to display existing tags, R to revert to them and Z to
+      reset to no tags at all.
     + Support edition of existing tags and tags with multiple values.
     + Also try internal parsers when parsing from the main menu even
       if -G was not given on the command line.
