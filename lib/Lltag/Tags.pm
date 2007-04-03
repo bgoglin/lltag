@@ -56,20 +56,20 @@ sub display_tag_values {
 #######################################################
 # various tag management routines
 
-# duplicate tag values
-sub duplicate_tag_values {
+# clone tag values (to be able to modify without changing the original)
+sub clone_tag_values {
     my $old_values = shift ;
-    my $new_values = {} ;
+    # clone the hash
+    my %new_values = %{$old_values} ;
 
-    for my $field (keys %{$old_values}) {
-	if (ref($old_values->{$field}) ne 'ARRAY') {
-	    $new_values->{$field} = $old_values->{$field} ;
-	} else {
-	    @{$new_values->{$field}} = @{$old_values->{$field}} ;
+    for my $field (keys %new_values) {
+	if (ref($new_values{$field}) eq 'ARRAY') {
+	    # clone the array pointed by the ref in the hash
+	    @{$new_values{$field}} = @{$new_values{$field}} ;
 	}
     }
 
-    return $new_values ;
+    return \%new_values ;
 }
 
 # add a value to a field, creating an array if required
@@ -132,8 +132,8 @@ sub merge_new_tag_values {
     if ($self->{clear_opt}) {
 	$merged_values = {} ;
     } else {
-	# duplicate old into merged
-	$merged_values = duplicate_tag_values $old_values ;
+	# clone old as merged
+	$merged_values = clone_tag_values $old_values ;
     }
 
     foreach my $field (keys %{$new_values}) {

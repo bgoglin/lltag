@@ -484,7 +484,7 @@ sub add_defaults {
     my $values = shift ;
 
     # add new values to the old ones, depending on clear/append options
-    my $new_values = Lltag::Tags::duplicate_tag_values ($values) ;
+    my $new_values = Lltag::Tags::clone_tag_values ($values) ;
     Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # then add defaults to not defined tags
@@ -645,7 +645,7 @@ sub main_confirm_menu {
 	    $current_values = {} ;
 
 	} elsif ($confirm_reply =~ m/^R/) {
-	    $current_values = Lltag::Tags::duplicate_tag_values ($old_values) ;
+	    $current_values = Lltag::Tags::clone_tag_values ($old_values) ;
 
 	} elsif ($confirm_reply =~ m/^O/) {
 	    # display old values
