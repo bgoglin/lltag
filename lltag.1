@@ -16,6 +16,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .SH SYNOPSIS
 .B lltag
 .RB [ -C ]
+.RB [ -E ]
 .RB [ "-F <format>" ]
 .RB [ -G ]
 .RB [ -p ]
@@ -227,6 +228,10 @@ Note that the ID3 date tag may only store 4 characters (for a year).
 Do not really tag files, just show what would have been done.
 The corresponding configuration file option is
 .IR dry_run .
+
+.TP
+.B -E, --edit
+Edit tags immediately.
 
 .TP
 .BI "-F, --format" " <format>"

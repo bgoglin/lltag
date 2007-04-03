@@ -9,6 +9,8 @@
       - Make sure internal parsers are loaded when parsing from the
         main menu even if -G did not get passed.
       - Only load parsers when used for the first time.
+  * Add -E/--edit (and edit option in the configuration file) to
+    edit tags directly.
   * Add -q/--quiet to reduce verbosity, useful to disable displaying
     of menu usage when a menu appears for the first time
     (requested by Alexandre Buisse).

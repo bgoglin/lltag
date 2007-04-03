@@ -92,6 +92,7 @@ sub usage {
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -C, --cddb             Query tags in CDDB\n" ;
+    print "  -E, --edit             Edit tags\n" ;
     print "  -p, --no-path          Remove the path from filenames when matching\n" ;
     print map { "  -". $self->{field_name_letter}{$_} .", --". $_.$self->{field_name_trailing_spaces}{$_}
 		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
@@ -152,6 +153,7 @@ $self->{no_tagging_opt} = 0 ;
 $self->{ask_opt} = 0 ;
 $self->{guess_opt} = 0 ;
 $self->{cddb_opt} = 0 ;
+$self->{edit_opt} = 0 ;
 $self->{no_path_opt} = 0 ;
 $self->{maj_opt} = 0 ;
 $self->{sep_opt} = undef ;
@@ -261,6 +263,8 @@ sub process_option {
 	$self->{cddb_server_name} = $1 ;
     } elsif (/^cddb_server_port\s*=\s*(\d+)$/) {
 	$self->{cddb_server_port} = $1 ;
+    } elsif (/^edit = \s*(.+)$/) {
+	$self->{edit_opt} = $1 ;
 # Error
     } elsif (/^[^#]/ && !/^(\s*)$/) {
 	die "Unrecognized option line #$.: \"$_\"\n" ;
@@ -302,6 +306,7 @@ GetOptions(
 	   'F|format=s'		=> \@{$self->{user_format_strings}},
 	   'G|guess'		=> \$self->{guess_opt},
 	   'C|cddb'		=> \$self->{cddb_opt},
+	   'E|edit'		=> \$self->{edit_opt},
 	   'p|no-path'		=> \$self->{no_path_opt},
 	   'spaces'		=> \$self->{spaces_opt},
 	   'maj'		=> \$self->{maj_opt},
@@ -762,7 +767,14 @@ while ( @files ) {
 	}
     }
 
-    # FIXME: add -E/--edit
+    # edit, if enabled
+    if ($self->{edit_opt}) {
+	my $new_values = Lltag::Tags::edit_values ($self, $old_values, $self->{field_names}) ;
+	if ($new_values != $old_values) {
+	    $current_values = $new_values ;
+	    goto CONFIRM
+	}
+    }
 
     # try CDDB, if enabled
     if ($self->{cddb_opt}) {
@@ -842,6 +854,7 @@ sub generate_config {
     map { print NEWCFG "format = \"$_\"\n" ; } @{$self->{user_format_strings}} ;
 
     print NEWCFG "guess = $self->{guess_opt}\n" ;
+    print NEWCFG "edit = $self->{edit_opt}\n" ;
     print NEWCFG "no_path = $self->{no_path_opt}\n" ;
 
     map { print NEWCFG "default_$_ = \"$self->{field_default}{$_}\"\n" ; } (keys %{$self->{field_default}}) ;
