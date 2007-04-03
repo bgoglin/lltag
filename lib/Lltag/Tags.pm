@@ -312,7 +312,7 @@ sub edit_one_value {
 
 sub edit_values {
     my $self = shift ;
-    my $values = shift ;
+    my $old_values = shift ;
     my $field_names_ref = shift ;
 
     my @field_names = @{$field_names_ref} ;
@@ -320,8 +320,7 @@ sub edit_values {
     my $letters_union = join '|', @letters ;
 
     # save values
-    my $old_values = () ;
-    map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
+    my $values = clone_tag_values $old_values ;
 
     edit_values_usage $self, $values, $field_names_ref
 	if $edit_values_usage_forced ;
