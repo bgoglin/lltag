@@ -471,12 +471,6 @@ sub tag_with_values {
     my $backend = shift ;
     my $values = shift ;
 
-    # is there actually something to do ?
-    if ( !(keys %{$values}) ) {
-	print "  Nothing to do.\n" ;
-	return ;
-    }
-
     # tagging command line
     my $set_tags_func = $backend->{set_tags} ;
     &{$set_tags_func}($self, $file, $values) ;

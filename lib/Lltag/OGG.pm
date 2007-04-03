@@ -40,25 +40,33 @@ sub set_tags {
     my @ogg_tagging_cmd = ( 'vorbiscomment', '-q' ) ;
     my @ogg_tagging_clear_option = ( '-w' ) ;
 
-    my @system_args
-	= ( @ogg_tagging_cmd ,
-	    # clear all tags
-	    @ogg_tagging_clear_option ,
-	    # apply new tags
+    # apply regular tags
+    my @regular_tags_args =
 	    ( map {
 		my $oggname = $_ ;
 		$oggname = $field_name_ogg_translations{$_} if defined $field_name_ogg_translations{$_} ;
 		my @tags = (Lltag::Tags::get_tag_value_array $self, $values, $_) ;
 		map { ( "-t" , $oggname."=".$_ ) } @tags
 		} @{$self->{field_names}}
-	      ),
-	    # apply non-regular tags
+	      ) ;
+    # apply non-regular tags
+    my @non_regular_tags_args =
 	    ( map {
 		my $oggname = $_ ;
 		my @tags = (Lltag::Tags::get_tag_value_array $self, $values, $_) ;
 		map { ( "-t" , $oggname."=".$_ ) } @tags
 		} Lltag::Tags::get_values_non_regular_keys ($self, $values)
-	      ),
+	      ) ;
+    # work-around vorbiscomment which does not like when tags is passed
+    my @workaround_args = (scalar @regular_tags_args + @non_regular_tags_args) ? () : ("-c", "/dev/null") ;
+
+    my @system_args
+	= ( @ogg_tagging_cmd ,
+	    # clear all tags
+	    @ogg_tagging_clear_option ,
+	    @regular_tags_args ,
+	    @non_regular_tags_args ,
+	    @workaround_args ,	    
 	    $file ) ;
 
     Lltag::Tags::set_tags_with_external_prog ($self, @system_args) ;
