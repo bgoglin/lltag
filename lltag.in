@@ -579,6 +579,7 @@ sub main_confirm_menu_usage {
     print "    Z => Reset to no values\n" ;
     print "    R => Revert to old values\n" ;
     print "    O => Display old values\n" ;
+    print "    n => Skip tagging and jump to rename\n" ;
     print "    s/q => Skip this file\n" ;
     print "    Q => Quit without tagging anything anymore\n" ;
     print "    h => Show this help\n" ;
@@ -612,7 +613,7 @@ sub main_confirm_menu {
 	main_confirm_menu_usage
 	    if $main_confirm_menu_usage_forced ;
 	# ask the user for confirmation
-	my $confirm_reply = Lltag::Misc::readline ("  ", "Use these tag values [yaPCEDZROqQ] (default is yes, h for help)", "", -1) ;
+	my $confirm_reply = Lltag::Misc::readline ("  ", "Use these tag values [yaPCEDZROnqQ] (default is yes, h for help)", "", -1) ;
 
 	# if ctrl-d, skip this file
 	$confirm_reply = 'q' unless defined $confirm_reply ;
@@ -624,7 +625,9 @@ sub main_confirm_menu {
 	    $current_main_yes_opt = 1 ;
 	    return (CONFIRM_TAG, $current_values)
 
-	# FIXME: option to tag nothing and go to rename
+	} elsif ($confirm_reply =~ m/^n/) {
+	    print "    Skipping tagging for this file...\n" ;
+	    return (CONFIRM_DONT_TAG, $current_values)
 
 	} elsif ($confirm_reply =~ m/^s/ or $confirm_reply =~ m/^q/) {
 	    return (CONFIRM_SKIP_FILE, undef) ;
