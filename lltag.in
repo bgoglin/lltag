@@ -71,8 +71,10 @@ Lltag::Misc::init_readline ($self) ;
      'c' => 'COMMENT',
      ) ;
 
-# change format names into a parsing string
+# change format letters into a parsing string
 $self->{field_letters_union} = (join '|', @{$self->{field_letters}}) ;
+# cache the list of letters for later
+$self->{field_letters_string} = (join '', @{$self->{field_letters}}) ;
 
 #######################################################
 # version

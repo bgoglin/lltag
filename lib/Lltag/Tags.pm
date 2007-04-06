@@ -318,7 +318,7 @@ sub edit_values {
 	if $edit_values_usage_forced ;
 
     while (1) {
-	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". (join '', values %{$self->{field_name_letter}}) ."Vyq] (no default, h for help)", "", -1) ;
+	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". $self->{field_letters_string} ."Vyq] (no default, h for help)", "", -1) ;
 
 	# if ctrl-d, cancel editing
 	$edit_reply = 'q' unless defined $edit_reply ;
