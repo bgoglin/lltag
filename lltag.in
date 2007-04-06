@@ -791,14 +791,24 @@ while ( @files ) {
     }
 
     # try to parse with all parsers, either user-provided or internals
-    if (1) { # FIXME: if guess or nothing else
-	# if no user parsers, no defaults, no guess and no cddb, force guess
+    # if guess or any user-parser or NOTHING else enabled
+    if ($self->{guess_opt}
+	or @{$self->{user_format_strings}}
+	or ( !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
+	     and !(keys %{$self->{additional_values}})
+	     and !$self->{cddb_opt}
+	     and !$self->{edit_opt}
+	     and !$self->{rename_opt}
+	) ) {
+	# force guess if NOTHING enabled
 	my $try_internals = ($self->{guess_opt}
 			     or ( !@{$self->{user_format_strings}}
 				  and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
 				  and !(keys %{$self->{additional_values}})
-				  and !$self->{list_formats_opt} )
-			     ) ;
+				  and !$self->{cddb_opt}
+				  and !$self->{edit_opt}
+				  and !$self->{rename_opt}
+				  ) ) ;
 
 	my $new_values = try_to_parse $self, $file, $parsename, $try_internals, $old_values ;
 	if (defined $new_values) {
