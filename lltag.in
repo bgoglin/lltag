@@ -641,7 +641,7 @@ sub main_confirm_menu {
 		if defined $new_values ;
 
 	} elsif ($confirm_reply =~ m/^E/) {
-	    $current_values = Lltag::Tags::edit_values ($self, $current_values, $self->{field_names}) ;
+	    $current_values = Lltag::Tags::edit_values ($self, $current_values) ;
 
 	} elsif ($confirm_reply =~ m/^D/) {
 	    $current_values = add_defaults $self, $old_values ;

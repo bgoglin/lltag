@@ -239,14 +239,11 @@ sub set_tags_with_external_prog {
 sub edit_values_usage {
     my $self = shift ;
     my $values = shift ;
-    my $field_names_ref = shift ;
-
-    my @field_names = @{$field_names_ref} ;
 
     Lltag::Misc::print_usage_header ("    ", "Editing") ;
 
     # print all fields, including the undefined ones
-    foreach my $field (@field_names) {
+    foreach my $field (@{$self->{field_names}}) {
 	my $val = $values->{$field} ;
 	if (not defined $val) {
 	    $val = "<not defined>" ;
@@ -313,20 +310,15 @@ sub edit_one_value {
 sub edit_values {
     my $self = shift ;
     my $old_values = shift ;
-    my $field_names_ref = shift ;
-
-    my @field_names = @{$field_names_ref} ;
-    my @letters = map { $self->{field_name_letter}{$_} } @field_names ;
-    my $letters_union = join '|', @letters ;
 
     # save values
     my $values = clone_tag_values $old_values ;
 
-    edit_values_usage $self, $values, $field_names_ref
+    edit_values_usage $self, $values
 	if $edit_values_usage_forced ;
 
     while (1) {
-	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". (join '', @letters) ."Vyq] (no default, h for help)", "", -1) ;
+	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". (join '', values %{$self->{field_name_letter}}) ."Vyq] (no default, h for help)", "", -1) ;
 
 	# if ctrl-d, cancel editing
 	$edit_reply = 'q' unless defined $edit_reply ;
@@ -334,7 +326,7 @@ sub edit_values {
 	if ($edit_reply =~ m/^tag (.+)/) {
 	    edit_one_value $self, $values, $1 ;
 
-	} elsif ($edit_reply =~ m/^($letters_union)/) {
+	} elsif ($edit_reply =~ m/^($self->{field_letters_union})/) {
 	    edit_one_value $self, $values, $self->{field_letter_name}{$1} ;
 
 	} elsif ($edit_reply =~ m/^y/ or $edit_reply =~ m/^E/) {
@@ -348,7 +340,7 @@ sub edit_values {
 	    display_tag_values $self, $values, "        " ;
 
 	} else {
-	    edit_values_usage $self, $values, $field_names_ref ;
+	    edit_values_usage $self, $values ;
 	}
     }
 }

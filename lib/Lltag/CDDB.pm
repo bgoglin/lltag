@@ -462,8 +462,19 @@ sub get_cddb_tags_from_tracks {
 	    if $reply =~ m/^c/ ;
 
 	if ($reply =~ m/^E/) {
-	    my @field_names = grep { $_ ne 'TITLE' and $_ ne 'NUMBER' } @{$self->{field_names}} ;
-	    $cd = Lltag::Tags::edit_values ($self, $cd, \@field_names) ;
+	    # move editable values into a temporary hash
+	    my $values_to_edit = {} ;
+	    foreach my $key (keys %{$cd}) {
+		next if $key eq 'TRACKS' or $key =~ /^\d+$/ ;
+		$values_to_edit->{$key} = $cd->{$key} ;
+		delete $cd->{$key} ;
+	    }
+	    # edit them
+	    $values_to_edit = Lltag::Tags::edit_values ($self, $values_to_edit) ;
+	    # move them back
+	    foreach my $key (keys %{$values_to_edit}) {
+		$cd->{$key} = $values_to_edit->{$key} ;
+	    }
 	    next ;
 	}
 
@@ -493,12 +504,12 @@ sub get_cddb_tags_from_tracks {
     my $track = $cd->{$tracknumber} ;
     # get the track tags
     my %values ;
-    $values{ARTIST} = $cd->{ARTIST} ;
-    $values{TITLE} = $track->{TITLE} ;
-    $values{ALBUM} = $cd->{ALBUM} ;
+    foreach my $key (keys %{$cd}) {
+	next if $key eq 'TRACKS' or $key =~ /^\d+$/ ;
+	$values{$key} = $cd->{$key} ;
+    }
+    $values{TITLE} = $track->{TITLE} if exists $track->{TITLE} ;
     $values{NUMBER} = $tracknumber ;
-    $values{GENRE} = $cd->{GENRE} if defined $cd->{GENRE} ;
-    $values{DATE} = $cd->{DATE} if defined $cd->{DATE} ;
 
     # save the previous track number
     $previous_track = $tracknumber ;
