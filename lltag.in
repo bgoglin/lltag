@@ -95,10 +95,10 @@ sub usage {
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -C, --cddb             Query tags in CDDB\n" ;
     print "  -E, --edit             Edit tags\n" ;
-    print "  -p, --no-path          Remove the path from filenames when matching\n" ;
     print map { "  -". $self->{field_name_letter}{$_} .", --". $_.$self->{field_name_trailing_spaces}{$_}
 		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
     print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
+    print "  -p, --no-path          Remove the path from filenames when matching\n" ;
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
