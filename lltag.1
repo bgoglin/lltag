@@ -66,7 +66,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .SH DESCRIPTION
 .B lltag
 is a command-line tool to automagically set tags of MP3, OGG or FLAC
-files. There are 3 main ways to obtains the tags that will be set:
+files. There are several ways to obtains the tags that will be set:
 
 .TP
 .B Parsing the filename
@@ -90,19 +90,66 @@ is passed).
 .B lltag
 provides a set of command-line option to manually set various tags.
 
-.P
-The user may choose one or several of these modes through the command-line.
-If none is set, parsing will internal formats will be used.
-It is also possible to explicitly request another way of obtaining tags
-by using the interactive menu (unless
---yes
-is passed, or automatic mode is enabled in the menu).
+.TP
+.B Manually editing values
+.B lltag
+provides an interactive interface to edit existing values
+or any value provided by the above strategies.
 
-These tags may either replace (default), clear and replace (if
-.B --clear
-is passed) or append (if
-.B --append
-) to the existing ones in the target file.
+.P
+Each time, a new audio file is processed,
+.B lltag
+starts by trying to obtain new tags depending on the behavior options
+given by the user.
+
+First, if a preferred parser has been selected before, it is used to try
+to parse the new filename.
+Then, if editing is enabled
+.RB ( -E ),
+the user will be able to modify existing tag values.
+Then, if CDDB is enabled
+.RB ( -C ),
+the user will be asked to request tags from the
+online CDDB database.
+Then, if the user provided any parsing format
+.RB ( -F ),
+or if guessing is enabled
+.RB ( -G ),
+.B lltag
+will attempt to parse the filename.
+
+Note that if no behavior is chosen at all on command-line, including no
+renaming option, then parsing with the internal format database will be
+used by default (as if
+.B -G
+had been passed).
+
+As soon as one of the above strategies succeeds,
+.B lltag
+jumps to the main menu
+where the user may either accept new tags or select another behavior (see
+.B MAIN MENU
+in
+.B INTERACTIVE MENUS
+below for details).
+If
+.B --yes
+has been passed, or if automatic mode has been previously enabled in the menu,
+it will proceed with tagging (and renaming if requested) and go on with the
+next file.
+
+The new tags may either replace (default), clear and replace
+.RB ( --clear )
+or append
+.RB ( --append )
+to the existing ones in the target file.
+.B lltag
+will then add the additional values given with
+.BR --tag .
+And finally, each tag that will not be defined (and which the user will
+have provided a default value for, with
+.BR -a ", " -t ", " -A ", " -g ", " -n ", " -d " or " -c )
+will get a default value.
 
 Once the tags are known, a backend program or library is used to apply
 them to the audio file (unless
@@ -167,7 +214,7 @@ in
 below for details.
 
 .TP
-.BI "-C, --cddb"
+.B "-C, --cddb"
 Try to find tags in the CDDB online database before trying to parse filenames.
 The queries are sent using the HTTP interface, which means a HTTP proxy might
 be used when required.

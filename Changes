@@ -31,6 +31,8 @@
     (requested by Stefano Sabatini in Debian bug #406213) and also
     insert more basic command lines in the howto.html documentation.
   * Support removing of all tags.
+  * Improvement about how the strategies are used, how new tags are
+    generated and applied, in the DESCRIPTION section of lltag.1.
   * Minor fixes in lltag_config.5 manpage.
 
 
