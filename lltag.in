@@ -6,6 +6,7 @@ no strict "refs" ; # for $backend{$file_type}
 require Lltag::Tags ;
 require Lltag::Misc ;
 require Lltag::MP3 ;
+require Lltag::MP3v2 ;
 require Lltag::OGG ;
 require Lltag::FLAC ;
 require Lltag::CDDB ;
@@ -105,6 +106,7 @@ sub usage {
     print "  --regexp <regexp>      Apply a replace regexp to tags before tagging\n" ;
     print "  --mp3/--ogg/--flac     Force mp3, ogg or flac instead of by-extension detection\n" ;
     print "  --type <type>          Force <tyle> instead of by-extension detection\n" ;
+    print "  --mp3v2                Enable experimental ID3v2 backend for MP3 files\n" ;
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
     print "  --no-tagging           Do not actually tag files\n" ;
@@ -161,6 +163,7 @@ $self->{maj_opt} = 0 ;
 $self->{sep_opt} = undef ;
 $self->{spaces_opt} = 0 ;
 $self->{type_opt} = undef ;
+$self->{mp3v2_opt} = 0 ;
 $self->{yes_opt} = 0 ;
 $self->{clear_opt} = 0 ;
 $self->{append_opt} = 0 ;
@@ -320,6 +323,7 @@ GetOptions(
 	   'ogg'		=> sub { $self->{type_opt} = "ogg" ; },
 	   'flac'		=> sub { $self->{type_opt} = "flac" ; },
 	   'type=s'		=> sub { shift ; $self->{type_opt} = shift ; },
+	   'mp3v2'              => \$self->{mp3v2_opt},
 	   'clear'		=> \$self->{clear_opt},
 	   'append'		=> \$self->{append_opt},
 	   'no-tagging'		=> \$self->{no_tagging_opt},
@@ -411,8 +415,11 @@ sub register_backend {
     return 0 ;
 }
 
-# register MP3 backend
-register_backend (Lltag::MP3::new ($self)) ;
+# register MP3v2 backend if enabled, and fallback to MP3 if failed
+if (!$self->{mp3v2_opt}
+    or register_backend (Lltag::MP3v2::new ($self)) < 0) {
+    register_backend (Lltag::MP3::new ($self)) ;
+}
 
 # register OGG backend
 register_backend (Lltag::OGG::new ($self)) ;
