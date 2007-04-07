@@ -1,6 +1,8 @@
 
   * Add an optional ID3v2 tag support for MP3 files using MP3::Tag,
     enabled with --mp3v2 for now.
+    + Add --mp3read option to specify whether ID3v1 and v2 should be
+      read, and in which order (default is 21).
   * Large rework of the core loop.
     + Display existing tags with the new ones to be set.
     + Add O to display existing tags, R to revert to them, Z to reset

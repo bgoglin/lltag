@@ -5,6 +5,11 @@ use strict ;
 require Lltag::Tags ;
 require Lltag::Misc ;
 
+use constant MP3V2_READ_V1 => 1 ;
+use constant MP3V2_READ_V2 => 2 ;
+use constant MP3V2_READ_V1_V2 => 12 ;
+use constant MP3V2_READ_V2_V1 => 21 ;
+
 sub test_MP3Tag {
     my $self = shift ;
     if (not eval { require MP3::Tag ; } ) {
@@ -85,24 +90,27 @@ sub read_v2_tag {
 #################################################
 # Merge v1 and v2 tags, and deal with conflicts
 
-sub merge_v1_into_v2_tags {
+sub merge_v1_v2_tags {
     my $self = shift ;
-    my $v2_values = shift ;
     my $v1_values = shift ;
+    my $v2_values = shift ;
 
-    $v2_values = {}	unless defined $v2_values ;
+    if ($self->{mp3v2_read_opt} eq MP3V2_READ_V1_V2) {
+	print "    Merging MP3 v1 and v2 tags...\n"
+	    if $self->{verbose_opt} ;
+	# we should append v2 to v1 below
+	# switch v1 and v2, so that we can append v1 to v2 below
+	my $tmp = $v1_values ;
+	$v1_values = $v2_values ;
+	$v2_values  = $tmp ;
+    } else {
+	print "    Merging MP3 v2 and v1 tags...\n"
+	    if $self->{verbose_opt} ;
+    }
 
-    # FIXME: need an option to configure all this
-    if (defined $v1_values) {
-	if (defined $v2_values) {
-	    print "  Merging MP3 v1 and v2 tags...\n"
-		if $self->{verbose_opt} ;
-	} else {
-	    $v2_values = {} ;
-	}
-	foreach my $field (keys %{$v1_values}) {
-	    Lltag::Tags::append_tag_value ($self, $v2_values, $field, $v1_values->{$field}) ;
-	}
+    # append v1 to v2
+    foreach my $field (keys %{$v1_values}) {
+	Lltag::Tags::append_tag_multiple_value ($self, $v2_values, $field, $v1_values->{$field}) ;
     }
 
     return $v2_values ;
@@ -120,9 +128,10 @@ sub read_tags {
 
     # Extract ID3v2 first, if it exists
     my $v2_values = undef ;
-    if (exists $mp3->{ID3v2}) {
+    if ($self->{mp3v2_read_opt} ne MP3V2_READ_V1
+	and exists $mp3->{ID3v2}) {
 	$v2_values = {} ;
-	print "  Found a MP3 v2 tag, reading it...\n"
+	print "    Found a MP3 v2 tag, reading it...\n"
 	    if $self->{verbose_opt} ;
 	my $id3v2 = $mp3->{ID3v2} ;
 	my $frameIDs_hash = $id3v2->get_frame_ids('truename');
@@ -143,15 +152,18 @@ sub read_tags {
 
     # Extract ID3v1 last, if it exists, since v2 is generally preferred
     my $v1_values = undef ;
-    if (exists $mp3->{ID3v1}) {
+    if ($self->{mp3v2_read_opt} ne MP3V2_READ_V2
+	and exists $mp3->{ID3v1}) {
 	$v1_values = {} ;
-	print "  Found a MP3 v1 tag, reading it...\n"
+	print "    Found a MP3 v1 tag, reading it...\n"
 	    if $self->{verbose_opt} ;
 	my $id3v1 = $mp3->{ID3v1} ;
 	map { read_v1_tag $self, $v1_values, $_, $id3v1->{$_} } (keys %{$id3v1}) ;
     }
 
-    return merge_v1_into_v2_tags $self, $v2_values, $v1_values ;
+    return $v2_values unless defined $v1_values ;
+    return $v1_values unless defined $v2_values ;
+    return merge_v1_v2_tags $self, $v1_values, $v2_values ;
 }
 
 #################################################
