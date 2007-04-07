@@ -12,6 +12,8 @@
     + Support renaming from existing tags without any need to parse
       and/or reapply tags when --rename and --no-tagging are passed
       with nothing else (requested by Alexandre Buisse).
+    + Make sure guessing is enabled as default only when there's
+      really nothing else to do.
   * Add -E/--edit (and edit option in the configuration file) to
     edit tags directly.
   * Support edition of all CD tags returned by CDDB.
