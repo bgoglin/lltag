@@ -79,7 +79,7 @@ sub read_v2_tag {
 	$field = uc($v2_field) ;
     }
 
-    Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
+    Lltag::Tags::append_tag_multiple_value ($self, $values, $field, $value) ;
 }
 
 #################################################
