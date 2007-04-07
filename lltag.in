@@ -364,6 +364,13 @@ GetOptions(
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
 
+# check that MP3v2 ID3v1 and v2 read order is corect
+die "Invalid MP3 ID3v1 and v2 order given to --mp3read: $self->{mp3v2_read_opt}\n"
+    if $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V1
+    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V2
+    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V1_V2
+    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V2_V1 ;
+
 # set verbosity options depending of the level
 $self->{verbose_opt} = ($verbose_level > 1) ;
 $self->{menu_usage_once_opt} = ($verbose_level > 0) ;
@@ -431,17 +438,9 @@ register_backend (Lltag::OGG::new ($self)) ;
 register_backend (Lltag::FLAC::new ($self)) ;
 
 #######################################################
-
 # check that the file type is correct
 die "Unrecognized file type '$self->{type_opt}'.\n"
     if defined $self->{type_opt} and not defined $backends{$self->{type_opt}} ;
-
-# check that MP3v2 ID3v1 and v2 read order is corect
-die "Invalid MP3 ID3v1 and v2 order given to --mp3read: $self->{mp3v2_read_opt}\n"
-    if $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V1
-    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V2
-    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V1_V2
-    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V2_V1 ;
 
 #######################################################
 # extract backend and parsename
