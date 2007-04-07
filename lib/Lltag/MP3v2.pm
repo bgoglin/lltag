@@ -157,6 +157,20 @@ sub read_tags {
 #################################################
 # Set tags
 
+sub set_one_v2_tag {
+    my $id3v2 = shift ;
+    my $value = shift ;
+    my @frame_args = @_ ;
+
+    if (ref($value) eq 'ARRAY') {
+	foreach my $val (@{$value}) {
+	    $id3v2->add_frame(@_, $val) ;
+	}
+    } else {
+	$id3v2->add_frame(@_, $value) ;
+    }
+}
+
 sub set_tags {
     my $self = shift ;
     my $file = shift ;
@@ -210,13 +224,18 @@ sub set_tags {
 	 "DATE" => "TYER",
 	 ) ;
     map {
+	my $field = $_ ;
 	my $frame ;
-	if (exists $v2_frame_name_translations{$_}) {
-	    $id3v2->add_frame($v2_frame_name_translations{$_}, $values->{$_}) ;
-	} elsif ($_ eq "COMMENT") {
-	    $id3v2->add_frame("COMM", "", "", $values->{$_}) ;
+
+	if (exists $v2_frame_name_translations{$field}) {
+	    set_one_v2_tag $id3v2, $values->{$field}, $v2_frame_name_translations{$field} ;
+
+	} elsif ($field eq "COMMENT") {
+	    set_one_v2_tag $id3v2, $values->{$field}, "COMM", "", "" ;
+
 	} else {
-	    print "Don't know what to do with $_\n" ;
+	    # FIXME: set other fields as comments ?
+	    print "Cannot set $field in MP3 ID3v2 tags\n" ;
 	}
     } (keys %{$values}) ;
     # commit changes
