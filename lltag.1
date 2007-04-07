@@ -155,7 +155,7 @@ Once the tags are known, a backend program or library is used to apply
 them to the audio file (unless
 .B --no-tagging
 is passed).
-.B mp3info
+.RB "The " MP3::Tag " Perl module or " mp3info
 is used to tag
 .B MP3
 files while
@@ -292,7 +292,7 @@ below for details.
 
 .TP
 .B --flac
-Tag all files as FLAC files, using \fBmetaflac\fR.
+Tag all files as FLAC files, using the FLAC backend (based on \fBmetaflac\fR).
 The corresponding configuration file option is
 .IR type .
 
@@ -335,9 +335,24 @@ The corresponding configuration file option is
 
 .TP
 .B --mp3
-Tag all files as MP3 files, using \fBmp3info\fR.
+Tag all files as MP3 files, using the MP3 backend
+(based on either \fBmp3info\fR or \fBMP3::Tag\fR).
 The corresponding configuration file option is
 .IR type .
+
+.TP
+.B --mp3v2
+Enable the experimental MP3 ID3v2-aware backend (based on \fRMP3::Tag\fR)
+instead of the old ID3v1-only backend.
+
+.TP
+.B --mp3read=[1][2]
+Configure how the MP3v2 backend reads and merges ID3v1 and v2 tags.
+By default, v1 are appended to v2 (\fB21\fR).
+If set to \fB1\fR, only v1 are read.
+If set to \fB2\fR, only v2 are read.
+If set to \fB12\fR, v2 are appended to v1.
+Note that merging/appending takes care of removing duplicates.
 
 .TP
 .BI "-n, --number" " <number>"
@@ -354,7 +369,7 @@ The corresponding configuration file option is
 
 .TP
 .B --ogg
-Tag all files as OGG files, using \fBvorbiscomment\fR.
+Tag all files as OGG files, using the OGG backend (based on \fBvorbiscomment\fR).
 The corresponding configuration file option is
 .IR type .
 

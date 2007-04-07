@@ -18,8 +18,9 @@ lltag requirements
 ==================
 
 lltag theoretically only requires Perl base to work. However, depending
-on what type of files you want to work on, you'll need to install either
-mp3info (for MP3 files), vorbiscomment (for OGG) or metaflac (for FLAC).
+on what type of files you want to work on, you'll need to install
+either the Perl MP3::Tag module (for MP3 files) or mp3info (for MP3 files,
+without ID3v2 support), vorbiscomment (for OGG) or metaflac (for FLAC).
 Additionaly, when using CDDB features, LWP (the libwww-perl module) is
 required.
 These dependencies are automatically installed when installing
