@@ -41,7 +41,7 @@ sub set_tags {
     my @mp3_tagging_clear_option = map { ( "-$_" , "" ) } (values %field_name_mp3info_option) ;
 
     map {
-	Lltag::Misc::print_warning ("    ", "Cannot set $_ in mp3 tags") ;
+	Lltag::Misc::print_warning ("    ", "Cannot set $_ in MP3 ID3v1 tags") ;
     } (Lltag::Tags::get_values_non_regular_keys ($self, $values)) ;
 
     my @system_args
