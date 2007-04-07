@@ -136,6 +136,9 @@ sub read_tags {
 	my $id3v2 = $mp3->{ID3v2} ;
 	my $frameIDs_hash = $id3v2->get_frame_ids('truename');
 	foreach my $frame (keys %$frameIDs_hash) {
+	    # drop private frames
+	    next if $frame eq "PRIV" ;
+
 	    my ($info, $name, @infos) = $id3v2->get_frame($frame);
 	    unshift @infos, $info ;
 	    foreach $info (@infos) {
