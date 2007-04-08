@@ -70,34 +70,34 @@ sub fix_values_for_mp3info {
     }
 
     # remove unsupported genres and keep a single value
-    my @genres = Lltag::Tags::get_tag_value_array ($self, $values, 'GENRE') ;
-    delete $values->{GENRE} ;
-    my @supported_genres = map {
-	my $genre = $_ ;
+    my @supported_genres = () ;
+    foreach my $genre (Lltag::Tags::get_tag_value_array ($self, $values, 'GENRE')) {
 	if (check_mp3info_genre $genre) {
-	    $genre ;
+	    push @supported_genres, $genre ;
 	} else {
 	    Lltag::Misc::print_warning ("    ", "Genre $genre is not supported in ID3v1 MP3 tags") ;
-	    () ;
 	}
-    } (@genres) ;
-    if (@supported_genres) {
+    }
+    delete $values->{GENRE} ;
+    if (@supported_genres > 1) {
+	@{$values->{GENRE}}= @supported_genres ;
+    } elsif (@supported_genres == 1) {
 	$values->{GENRE} = $supported_genres[0] ;
     }
 
     # remove unsupported tracknumbers and keep a single value
-    my @numbers = Lltag::Tags::get_tag_value_array ($self, $values, 'NUMBER') ;
-    delete $values->{NUMBER} ;
-    my @supported_numbers = map {
-	my $number = $_ ;
+    my @supported_numbers = () ;
+    foreach my $number (Lltag::Tags::get_tag_value_array ($self, $values, 'NUMBER')) {
 	if (check_id3v1_tracknumber $number) {
-	    $number ;
+	    push @supported_numbers, $number ;
 	} else {
 	    Lltag::Misc::print_warning ("    ", "Track number $number is not supported in ID3v1 MP3 tags") ;
-	    () ;
 	}
-    } (@numbers) ;
-    if (@supported_numbers) {
+    }
+    delete $values->{NUMBER} ;
+    if (@supported_numbers > 1) {
+	@{$values->{NUMBER}} = @supported_numbers ;
+    } elsif (@supported_numbers == 1) {
 	$values->{NUMBER} = $supported_numbers[0] ;
     }
 
