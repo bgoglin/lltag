@@ -522,7 +522,7 @@ sub add_defaults {
 #######################################################
 # wrappers for all tag-obtention routines
 
-sub try_to_parse_with_preferred {
+sub try_parse_with_preferred {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
@@ -541,7 +541,7 @@ sub try_to_parse_with_preferred {
     return undef ;
 }
 
-sub try_to_parse {
+sub try_parse {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
@@ -669,7 +669,7 @@ sub main_confirm_menu {
 	    return (CONFIRM_EXIT, undef) ;
 
 	} elsif ($confirm_reply =~ m/^P/) {
-	    my $new_values = try_to_parse ($self, $file, $parsename, 1, $old_values) ;
+	    my $new_values = try_parse ($self, $file, $parsename, 1, $old_values) ;
 	    $current_values = $new_values
 		if defined $new_values ;
 
@@ -800,7 +800,7 @@ while ( @files ) {
 
     # try preferred parser first
     {
-	my $new_values = try_to_parse_with_preferred $self, $file, $parsename, $old_values ;
+	my $new_values = try_parse_with_preferred $self, $file, $parsename, $old_values ;
 	if (defined $new_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM ;
@@ -845,7 +845,7 @@ while ( @files ) {
 				  and !$self->{rename_opt}
 				  ) ) ;
 
-	my $new_values = try_to_parse $self, $file, $parsename, $try_internals, $old_values ;
+	my $new_values = try_parse $self, $file, $parsename, $try_internals, $old_values ;
 	if (defined $new_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM ;
