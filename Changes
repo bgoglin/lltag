@@ -21,6 +21,8 @@
   * Add -E/--edit (and edit option in the configuration file) to
     edit tags directly.
   * Support edition of all CD tags returned by CDDB.
+  * Check genre and tracknumbers before passing them to mp3info and
+    ignore invalid values to avoid failure.
   * Add -q/--quiet to reduce verbosity, useful to disable displaying
     of menu usage when a menu appears for the first time
     (requested by Alexandre Buisse).
