@@ -236,6 +236,9 @@ sub set_tags_with_external_prog {
 #######################################################
 # edit current tags
 
+use constant EDIT_SUCCESS => 0 ;
+use constant EDIT_CANCEL => -1;
+
 sub edit_values_usage {
     my $self = shift ;
     my $values = shift ;
@@ -330,10 +333,10 @@ sub edit_values {
 	    edit_one_value $self, $values, $self->{field_letter_name}{$1} ;
 
 	} elsif ($edit_reply =~ m/^y/ or $edit_reply =~ m/^E/) {
-	    return $values ;
+	    return (EDIT_SUCCESS, $values) ;
 
 	} elsif ($edit_reply =~ m/^q/ or $edit_reply =~ m/^C/) {
-	    return $old_values ;
+	    return (EDIT_CANCEL, undef) ;
 
 	} elsif ($edit_reply =~ m/^V/) {
 	    print "      Current tag values are:\n" ;

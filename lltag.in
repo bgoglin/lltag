@@ -561,6 +561,23 @@ sub try_to_parse {
     return undef ;
 }
 
+sub try_edit {
+    my $self = shift ;
+    my $old_values = shift ;
+
+    # do not add defaults here since it might be called on current values without need to add them
+    my ($res, $new_values) = Lltag::Tags::edit_values ($self, $old_values) ;
+    if ($res == Lltag::Tags->EDIT_SUCCESS) {
+	return $new_values ;
+    }
+
+    # sanity check
+    die "Unknown edit return value: $res.\n"
+	unless $res == Lltag::Tags->EDIT_CANCEL ;
+
+    return undef ;
+}
+
 sub try_cddb {
     my $self = shift ;
     my $old_values = shift ;
@@ -662,7 +679,9 @@ sub main_confirm_menu {
 		if defined $new_values ;
 
 	} elsif ($confirm_reply =~ m/^E/) {
-	    $current_values = Lltag::Tags::edit_values ($self, $current_values) ;
+	    my $new_values = try_edit ($self, $current_values) ;
+	    $current_values = $new_values
+		if defined $new_values ;
 
 	} elsif ($confirm_reply =~ m/^D/) {
 	    $current_values = add_defaults $self, $old_values ;
@@ -790,10 +809,10 @@ while ( @files ) {
 
     # edit, if enabled
     if ($self->{edit_opt}) {
-	my $new_values = Lltag::Tags::edit_values ($self, (add_defaults $self, $old_values)) ;
-	if ($new_values != $old_values) {
+	my $new_values = try_edit ($self, (add_defaults $self, $old_values)) ;
+	if (defined $new_values) {
 	    $current_values = $new_values ;
-	    goto CONFIRM
+	    goto CONFIRM ;
 	}
     }
 

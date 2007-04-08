@@ -470,10 +470,11 @@ sub get_cddb_tags_from_tracks {
 		delete $cd->{$key} ;
 	    }
 	    # edit them
-	    $values_to_edit = Lltag::Tags::edit_values ($self, $values_to_edit) ;
+	    my ($res, $values_edited) = Lltag::Tags::edit_values ($self, $values_to_edit) ;
+	    $values_edited = $values_to_edit if $res = Lltag::Tags->EDIT_CANCEL ;
 	    # move them back
-	    foreach my $key (keys %{$values_to_edit}) {
-		$cd->{$key} = $values_to_edit->{$key} ;
+	    foreach my $key (keys %{$values_edited}) {
+		$cd->{$key} = $values_edited->{$key} ;
 	    }
 	    next ;
 	}
