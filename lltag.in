@@ -790,7 +790,7 @@ while ( @files ) {
 
     # edit, if enabled
     if ($self->{edit_opt}) {
-	my $new_values = Lltag::Tags::edit_values ($self, $old_values, $self->{field_names}) ;
+	my $new_values = Lltag::Tags::edit_values ($self, $old_values) ;
 	if ($new_values != $old_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM
