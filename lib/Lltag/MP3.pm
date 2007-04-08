@@ -77,7 +77,7 @@ sub fix_values_for_mp3info {
 	if (check_mp3info_genre $genre) {
 	    $genre ;
 	} else {
-	    Lltag::Misc::print_warning ("    ", "Genre $genre is not supported") ;
+	    Lltag::Misc::print_warning ("    ", "Genre $genre is not supported in ID3v1 MP3 tags") ;
 	    () ;
 	}
     } (@genres) ;
@@ -93,7 +93,7 @@ sub fix_values_for_mp3info {
 	if (check_id3v1_tracknumber $number) {
 	    $number ;
 	} else {
-	    Lltag::Misc::print_warning ("    ", "Track number $number is not supported") ;
+	    Lltag::Misc::print_warning ("    ", "Track number $number is not supported in ID3v1 MP3 tags") ;
 	    () ;
 	}
     } (@numbers) ;
@@ -103,9 +103,12 @@ sub fix_values_for_mp3info {
 
     # keep a single value
     foreach my $field (keys %{$values}) {
-	my $val = Lltag::Tags::get_tag_unique_value ($self, $values, $field) ;
-	delete $values->{$field} ;
-	$values->{$field} = $val ;
+	if (ref($values->{$field}) eq 'ARRAY') {
+	    my $val = Lltag::Tags::get_tag_unique_value ($self, $values, $field) ;
+	    delete $values->{$field} ;
+	    $values->{$field} = $val ;
+	    Lltag::Misc::print_warning ("    ", "Multiple $field values not supported in ID3v1 MP3 tags, keeping only $val.") ;
+	}
     }
 }
 

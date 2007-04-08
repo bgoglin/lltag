@@ -23,6 +23,8 @@
   * Support edition of all CD tags returned by CDDB.
   * Check genre and tracknumbers before passing them to mp3info and
     ignore invalid values to avoid failure.
+  * Add warning in the MP3 backend about multiple values and special
+    tags not being supported.
   * Add -q/--quiet to reduce verbosity, useful to disable displaying
     of menu usage when a menu appears for the first time
     (requested by Alexandre Buisse).
