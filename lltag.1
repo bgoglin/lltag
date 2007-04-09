@@ -138,14 +138,14 @@ has been passed, or if automatic mode has been previously enabled in the menu,
 it will proceed with tagging (and renaming if requested) and go on with the
 next file.
 
-The new tags may either replace (default), clear and replace
-.RB ( --clear )
-or append
-.RB ( --append )
-to the existing ones in the target file.
-.B lltag
-will then add the additional values given with
+The new tags that the selected strategy returns will be appended with
+the additional values given with
 .BR --tag .
+They will then either replace (default), clear and replace
+.RB ( --clear )
+or append to
+.RB ( --append )
+the existing tags in the target file.
 And finally, each tag that will not be defined (and which the user will
 have provided a default value for, with
 .BR -a ", " -t ", " -A ", " -g ", " -n ", " -d " or " -c )
@@ -613,7 +613,7 @@ Edit values, see
 .B EDITING MENU
 .TP
 .B D
-Only use default values, forget about CDDB or parsed tags
+Only use default and additional values, forget about CDDB or parsed tags
 .TP
 .B Z
 Reset to no tag values at all

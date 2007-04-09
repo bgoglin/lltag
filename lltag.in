@@ -506,15 +506,25 @@ sub add_defaults {
     my $self = shift ;
     my $values = shift ;
 
-    # add new values to the old ones, depending on clear/append options
     my $new_values = Lltag::Tags::clone_tag_values ($values) ;
-    Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     # then add defaults to not defined tags
     foreach my $field (@{$self->{field_names}}) {
 	$new_values->{$field} = $self->{field_default}{$field}
 	    if not defined $new_values->{$field} and defined $self->{field_default}{$field} ;
     }
+
+    return $new_values ;
+}
+
+sub add_additional_values {
+    my $self = shift ;
+    my $values = shift ;
+
+    my $new_values = Lltag::Tags::clone_tag_values ($values) ;
+
+    # add new values to the old ones, depending on clear/append options
+    Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
 
     return $new_values ;
 }
@@ -530,8 +540,11 @@ sub try_parse_with_preferred {
 
     my ($res, $new_values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename) ;
     if ($res == Lltag::Parse->PARSE_SUCCESS) {
-	return Lltag::Tags::merge_new_tag_values ($self, $old_values,
-						  (add_defaults $self, $new_values));
+	return add_defaults ($self,
+			     (Lltag::Tags::merge_new_tag_values ($self,
+								 $old_values,
+								 (add_additional_values ($self,
+											 $new_values))))) ;
     }
 
     # sanity check
@@ -550,8 +563,11 @@ sub try_parse {
 
     my ($res, $new_values) = Lltag::Parse::try_to_parse ($self, $file, $parsename, $try_internals) ;
     if ($res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED) {
-	return Lltag::Tags::merge_new_tag_values ($self, $old_values,
-						  (add_defaults $self, $new_values));
+	return add_defaults ($self,
+			     (Lltag::Tags::merge_new_tag_values ($self,
+								 $old_values,
+								 (add_additional_values ($self,
+											 $new_values))))) ;
     }
 
     # sanity check
@@ -565,7 +581,8 @@ sub try_edit {
     my $self = shift ;
     my $current_values = shift ;
 
-    # do not add defaults here since it might be called on current values without need to add them
+    # do not add defaults/additionals here since this function might
+    # be called on current values without need to add them
     my ($res, $new_values) = Lltag::Tags::edit_values ($self, $current_values) ;
     if ($res == Lltag::Tags->EDIT_SUCCESS) {
 	return $new_values ;
@@ -584,8 +601,11 @@ sub try_cddb {
 
     my ($res, $new_values) = Lltag::CDDB::get_cddb_tags ($self) ;
     if ($res == Lltag::CDDB->CDDB_SUCCESS) {
-	return Lltag::Tags::merge_new_tag_values ($self, $old_values,
-						  (add_defaults $self, $new_values));
+	return add_defaults ($self,
+			     (Lltag::Tags::merge_new_tag_values ($self,
+								 $old_values,
+								 (add_additional_values ($self,
+											 $new_values))))) ;
     }
 
     # sanity check
@@ -599,7 +619,11 @@ sub try_defaults {
     my $self = shift ;
     my $old_values = shift ;
 
-    return add_defaults $self, $old_values ;
+    return add_defaults ($self,
+			 (Lltag::Tags::merge_new_tag_values ($self,
+							     $old_values,
+							     (add_additional_values ($self,
+										     ()))))) ;
 }
 
 #######################################################
@@ -615,7 +639,7 @@ sub main_confirm_menu_usage {
     print "    P => Try to parse the file\n" ;
     print "    C => Query CDDB\n" ;
     print "    E => Edit values\n" ;
-    print "    D => Only use default values\n" ;
+    print "    D => Only use default and additional values\n" ;
     print "    Z => Reset to no values\n" ;
     print "    R => Revert to old values\n" ;
     print "    O => Display old values\n" ;
@@ -691,7 +715,7 @@ sub main_confirm_menu {
 		if defined $new_values ;
 
 	} elsif ($confirm_reply =~ m/^D/) {
-	    $current_values = try_defaults $self, $old_values ;
+	    $current_values = try_defaults ($self, $old_values) ;
 
 	} elsif ($confirm_reply =~ m/^Z/) {
 	    $current_values = {} ;
@@ -816,7 +840,10 @@ while ( @files ) {
 
     # edit, if enabled
     if ($self->{edit_opt}) {
-	my $new_values = try_edit ($self, (add_defaults $self, $old_values)) ;
+	my $new_values = try_edit ($self,
+				   (add_defaults $self,
+				    (add_additional_values ($self,
+							    $old_values)))) ;
 	if (defined $new_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM ;
@@ -859,7 +886,7 @@ while ( @files ) {
 	}
     }
 
-    $current_values = try_defaults $self, $old_values ;
+    $current_values = try_defaults ($self, $old_values) ;
 
   CONFIRM:
     if ($current_main_yes_opt) {
