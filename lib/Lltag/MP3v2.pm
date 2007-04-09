@@ -13,7 +13,7 @@ use constant MP3V2_READ_V2_V1 => 21 ;
 sub test_MP3Tag {
     my $self = shift ;
     if (not eval { require MP3::Tag ; } ) {
-	print "MP3::Tag::ID3v1 does not seem to be available, disabling 'MP3v2' backend.\n"
+	print "MP3::Tag does not seem to be available, disabling 'MP3v2' backend.\n"
 	    if $self->{verbose_opt} ;
 	return -1 ;
     }
