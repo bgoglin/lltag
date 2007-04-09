@@ -28,6 +28,10 @@ my $browser ;
 
 my $cddb_supported = 1 ;
 
+my $cddb_track_usage_forced ;
+my $cddb_cd_usage_forced ;
+my $cddb_keywords_usage_forced ;
+
 sub init_cddb {
     my $self = shift ;
 
@@ -45,6 +49,11 @@ sub init_cddb {
     $browser = LWP::UserAgent->new;
     # use HTTP_PROXY environment variable
     $browser->env_proxy ;
+
+    # need to show menu usage once ?
+    $cddb_track_usage_forced = $self->{menu_usage_once_opt} ;
+    $cddb_cd_usage_forced = $self->{menu_usage_once_opt} ;
+    $cddb_keywords_usage_forced = $self->{menu_usage_once_opt} ;
 }
 
 #########################################
@@ -369,15 +378,13 @@ my $cddb_backend = $tracktypeorg_cddb_backend ;
 ######################################################
 # interactive menu to browse CDDB, tracks in a CD
 
-my $cddb_track_usage_forced = 1 ;
-
 sub cddb_track_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose Track in CDDB CD") ;
     print "      <index> => Choose a track of the current CD (current default is Track $previous_track)\n" ;
     print "      <index> a => Choose a track and do not ask for confirmation anymore\n" ;
     print "      a => Use default track and do not ask for confirmation anymore\n" ;
     print "      E => Edit current CD common tags\n" ;
-    print "      v => View the list of CD matching the keywords\n" ;
+    print "      V => View the list of CD matching the keywords\n" ;
     print "      c => Change the CD chosen in keywords query results list\n" ;
     print "      k => Start again CDDB query with different keywords\n" ;
     print "      q => Quit CDDB query\n" ;
@@ -436,10 +443,11 @@ sub get_cddb_tags_from_tracks {
 	if $cddb_track_usage_forced ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter track index [<index>aEvckq]".
-	    " (default is Track $previous_track, h for help) ? " ;
-	my $reply = <> ;
-	chomp $reply ;
+	my $reply = Lltag::Misc::readline ("  ", "Enter track index [<index>aEVckq]".
+			" (default is Track $previous_track, h for help)", "", -1) ;
+
+	# if ctrl-d, abort cddb
+	$reply = 'q' unless defined $reply ;
 
 	$reply = $previous_track
 	    if $reply eq '' ;
@@ -454,12 +462,27 @@ sub get_cddb_tags_from_tracks {
 	    if $reply =~ m/^c/ ;
 
 	if ($reply =~ m/^E/) {
-	    my @field_names = grep { $_ ne 'TITLE' and $_ ne 'NUMBER' } @{$self->{field_names}} ;
-	    $cd = Lltag::Tags::edit_values ($self, $cd, \@field_names) ;
+	    # move editable values into a temporary hash
+	    my $values_to_edit = {} ;
+	    foreach my $key (keys %{$cd}) {
+		next if $key eq 'TRACKS' or $key =~ /^\d+$/ ;
+		$values_to_edit->{$key} = $cd->{$key} ;
+		delete $cd->{$key} ;
+	    }
+	    # clone them so that we can restore them if canceled
+	    my $values_edited = Lltag::Tags::clone_tag_values ($values_to_edit) ;
+	    # edit them
+	    my $res = Lltag::Tags::edit_values ($self, $values_edited) ;
+	    # replace the edited values with the originals if canceled
+	    $values_edited = $values_to_edit if $res == Lltag::Tags->EDIT_CANCEL ;
+	    # move them back
+	    foreach my $key (keys %{$values_edited}) {
+		$cd->{$key} = $values_edited->{$key} ;
+	    }
 	    next ;
 	}
 
-	if ($reply =~ m/^v/) {
+	if ($reply =~ m/^V/) {
 	    print_cd $cd ;
 	    next ;
 	} ;
@@ -485,12 +508,12 @@ sub get_cddb_tags_from_tracks {
     my $track = $cd->{$tracknumber} ;
     # get the track tags
     my %values ;
-    $values{ARTIST} = $cd->{ARTIST} ;
-    $values{TITLE} = $track->{TITLE} ;
-    $values{ALBUM} = $cd->{ALBUM} ;
+    foreach my $key (keys %{$cd}) {
+	next if $key eq 'TRACKS' or $key =~ /^\d+$/ ;
+	$values{$key} = $cd->{$key} ;
+    }
+    $values{TITLE} = $track->{TITLE} if exists $track->{TITLE} ;
     $values{NUMBER} = $tracknumber ;
-    $values{GENRE} = $cd->{GENRE} if defined $cd->{GENRE} ;
-    $values{DATE} = $cd->{DATE} if defined $cd->{DATE} ;
 
     # save the previous track number
     $previous_track = $tracknumber ;
@@ -501,12 +524,10 @@ sub get_cddb_tags_from_tracks {
 ##########################################################
 # interactive menu to browse CDDB, CDs in a query results
 
-my $cddb_cd_usage_forced = 1 ;
-
 sub cddb_cd_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose CD in CDDB Query Results") ;
     print "      <index> => Choose a CD in the current keywords query results list\n" ;
-    print "      v => View the list of CD matching the keywords\n" ;
+    print "      V => View the list of CD matching the keywords\n" ;
     print "      k => Start again CDDB query with different keywords\n" ;
     print "      q => Quit CDDB query\n" ;
     print "      h => Show this help\n" ;
@@ -555,9 +576,10 @@ sub get_cddb_tags_from_cdids {
 	if $cddb_cd_usage_forced ;
 
     while (1) {
-	Lltag::Misc::print_question "  Enter CD index [<index>vkq] (no default, h for help) ? " ;
-	my $reply = <> ;
-	chomp $reply ;
+	my $reply = Lltag::Misc::readline ("  ", "Enter CD index [<index>Vkq] (no default, h for help)", "", -1) ;
+
+	# if ctrl-d, abort cddb
+	$reply = 'q' unless defined $reply ;
 
 	next if $reply eq '' ;
 
@@ -568,7 +590,7 @@ sub get_cddb_tags_from_cdids {
 	    if $reply =~ m/^k/ ;
 
 	goto AGAIN
-	    if $reply =~ m/^v/ ;
+	    if $reply =~ m/^V/ ;
 
 	if ($reply =~ m/^\d+$/ and $reply >= 1 and $reply <= @{$cdids}) {
 	    # do the actual query for CD contents
@@ -583,8 +605,6 @@ sub get_cddb_tags_from_cdids {
 
 ##########################################################
 # interactive menu to browse CDDB, keywords query
-
-my $cddb_keywords_usage_forced = 1 ;
 
 sub cddb_keywords_usage {
     Lltag::Misc::print_usage_header ("    ", "CDDB Query by Keywords") ;
@@ -629,7 +649,8 @@ sub get_cddb_tags {
 	    # FIXME: either put it in the history, or preput it next time
 	} else {
 	    $keywords = Lltag::Misc::readline ("  ", "Enter CDDB query [<query>q] (no default, h for help)", "", -1) ;
-	    chomp $keywords ;
+	    # if ctrl-d, abort cddb
+	    $keywords = 'q' unless defined $keywords ;
 	}
 
 	next if $keywords eq '' ;

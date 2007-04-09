@@ -39,6 +39,8 @@ use constant PARSE_MAY_PREFER => 4 ;
 #######################################################
 # initialization
 
+my $confirm_parser_usage_forced ;
+
 sub init_parsing {
     my $self = shift ;
 
@@ -48,6 +50,9 @@ sub init_parsing {
 
     # spaces_opt changes matching regexps
     $match_limit = $match_space = $match_spaces if $self->{spaces_opt} ;
+
+    # need to show menu usage once ?
+    $confirm_parser_usage_forced = $self->{menu_usage_once_opt} ;
 }
 
 #######################################################
@@ -72,8 +77,6 @@ sub confirm_parser_letters {
     $string .= "q]" ;
     return $string ;
 }
-
-my $confirm_parser_usage_forced = 1 ;
 
 sub confirm_parser_usage {
     my $behaviors = shift ;
@@ -109,9 +112,10 @@ sub confirm_parser {
 	    if $confirm_parser_usage_forced ;
 
 	while (1) {
-	    Lltag::Misc::print_question ("  Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help) ? ") ;
-	    my $reply = <> ;
-	    chomp $reply ;
+	    my $reply = Lltag::Misc::readline ("  ", "Use this matching ".(confirm_parser_letters ($behaviors))." (default is yes, h for help)", "", -1) ;
+
+	    # if ctrl-d, stop trying to parse
+	    $reply = 'q' unless defined $reply ;
 
 	    if ($reply eq "" or $reply =~ m/^y/) {
 		last ;
@@ -615,13 +619,23 @@ sub try_to_parse_with_preferred {
     }
 }
 
+my $user_parsers_initialized = 0 ;
+my $internal_parsers_initialized = 0 ;
+
 sub try_to_parse {
     my $self = shift ;
     my $file = shift ;
     my $parsename = shift ;
+    my $try_internals = shift ;
 
     my $values = undef ;
     my $res ;
+
+    # initialize user parsers once
+    if (!$user_parsers_initialized) {
+	generate_user_parsers ($self) ;
+	$user_parsers_initialized = 1 ;
+    }
 
     # try user provided parsers first
     if (@user_parsers) {
@@ -632,8 +646,14 @@ sub try_to_parse {
     }
 
     # try to guess my internal format database then
-    if ($self->{try_internals_opt}) {
+    if ($try_internals) {
 	print "  Trying to parse filename with internal formats...\n" ;
+
+	# initialize internal parsers once
+	if (!$internal_parsers_initialized) {
+	    read_internal_parsers ($self) ;
+	    $internal_parsers_initialized = 1 ;
+	}
 
 	if ($self->{no_path_opt} or $parsename !~ m@/@) {
 	    ($res, $values) = apply_internal_basename_parsers $self, $file, $parsename ;
@@ -644,7 +664,7 @@ sub try_to_parse {
 	    if $res == PARSE_SUCCESS or $res == PARSE_SUCCESS_PREFERRED or $res == PARSE_ABORT ;
     }
 
-    if ($self->{try_internals_opt} or @user_parsers) {
+    if ($try_internals or @user_parsers) {
 	print "  Didn't find any parser!\n" ;
     }
 

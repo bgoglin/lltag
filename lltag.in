@@ -6,6 +6,7 @@ no strict "refs" ; # for $backend{$file_type}
 require Lltag::Tags ;
 require Lltag::Misc ;
 require Lltag::MP3 ;
+require Lltag::MP3v2 ;
 require Lltag::OGG ;
 require Lltag::FLAC ;
 require Lltag::CDDB ;
@@ -71,8 +72,10 @@ Lltag::Misc::init_readline ($self) ;
      'c' => 'COMMENT',
      ) ;
 
-# change format names into a parsing string
+# change format letters into a parsing string
 $self->{field_letters_union} = (join '|', @{$self->{field_letters}}) ;
+# cache the list of letters for later
+$self->{field_letters_string} = (join '', @{$self->{field_letters}}) ;
 
 #######################################################
 # version
@@ -92,16 +95,19 @@ sub usage {
     print "  -F, --format <format>  Try format (multiple instances allowed)\n" ;
     print "  -G, --guess            Guess format (default)\n" ;
     print "  -C, --cddb             Query tags in CDDB\n" ;
-    print "  -p, --no-path          Remove the path from filenames when matching\n" ;
+    print "  -E, --edit             Edit tags\n" ;
     print map { "  -". $self->{field_name_letter}{$_} .", --". $_.$self->{field_name_trailing_spaces}{$_}
 		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
     print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
+    print "  -p, --no-path          Remove the path from filenames when matching\n" ;
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "  --regexp <regexp>      Apply a replace regexp to tags before tagging\n" ;
     print "  --mp3/--ogg/--flac     Force mp3, ogg or flac instead of by-extension detection\n" ;
     print "  --type <type>          Force <tyle> instead of by-extension detection\n" ;
+    print "  --mp3v2                Enable experimental ID3v2 backend for MP3 files\n" ;
+    print "  --mp3read=[12]         Read ID3v1 and v2 MP3 tags (default is 21)\n" ;
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
     print "  --no-tagging           Do not actually tag files\n" ;
@@ -112,7 +118,8 @@ sub usage {
     print "                         Rename without asking for confirmation\n" ;
     print "  --ask                  Always ask for confirmation before tagging\n" ;
     print "  -R, --recursive        Recursively search all files in subdirectories\n" ;
-    print "  -v, --verbose          Verbose messages\n" ;
+    print "  -v, --verbose          More verbose messages\n" ;
+    print "  -q, --quiet            Less verbose messages\n" ;
     print "  --config <file>        Read additional configuration file\n" ;
     print "  --gencfg <file>        Generate additional configuration file\n" ;
     print " CDDB options:\n" ;
@@ -138,8 +145,9 @@ sub usage {
 #######################################################
 # options
 
+my $verbose_level = 1 ; # only display usage when menu appear for the first time
+
 $self->{dry_run_opt} = 0 ;
-$self->{verbose_opt} = 0 ;
 $self->{recursive_opt} = 0 ;
 $self->{list_formats_opt} = 0 ;
 $self->{show_tags_opt} = "" ;
@@ -150,11 +158,14 @@ $self->{no_tagging_opt} = 0 ;
 $self->{ask_opt} = 0 ;
 $self->{guess_opt} = 0 ;
 $self->{cddb_opt} = 0 ;
+$self->{edit_opt} = 0 ;
 $self->{no_path_opt} = 0 ;
 $self->{maj_opt} = 0 ;
 $self->{sep_opt} = undef ;
 $self->{spaces_opt} = 0 ;
 $self->{type_opt} = undef ;
+$self->{mp3v2_opt} = 0 ;
+$self->{mp3v2_read_opt} = Lltag::MP3v2->MP3V2_READ_V2_V1 ;
 $self->{yes_opt} = 0 ;
 $self->{clear_opt} = 0 ;
 $self->{append_opt} = 0 ;
@@ -252,13 +263,15 @@ sub process_option {
     } elsif (/^recursive\s*=\s*(.+)$/) {
 	$self->{recursive_opt} = $1 ;
     } elsif (/^verbose\s*=\s*(.+)$/) {
-	$self->{verbose_opt} = $1 ;
+	$verbose_level = $1 ;
     } elsif (/^cddb\s*=\s*(.+)$/) {
 	$self->{cddb_opt} = $1 ;
     } elsif (/^cddb_server_name\s*=\s*"(.+)"$/) {
 	$self->{cddb_server_name} = $1 ;
     } elsif (/^cddb_server_port\s*=\s*(\d+)$/) {
 	$self->{cddb_server_port} = $1 ;
+    } elsif (/^edit = \s*(.+)$/) {
+	$self->{edit_opt} = $1 ;
 # Error
     } elsif (/^[^#]/ && !/^(\s*)$/) {
 	die "Unrecognized option line #$.: \"$_\"\n" ;
@@ -300,6 +313,7 @@ GetOptions(
 	   'F|format=s'		=> \@{$self->{user_format_strings}},
 	   'G|guess'		=> \$self->{guess_opt},
 	   'C|cddb'		=> \$self->{cddb_opt},
+	   'E|edit'		=> \$self->{edit_opt},
 	   'p|no-path'		=> \$self->{no_path_opt},
 	   'spaces'		=> \$self->{spaces_opt},
 	   'maj'		=> \$self->{maj_opt},
@@ -311,6 +325,8 @@ GetOptions(
 	   'ogg'		=> sub { $self->{type_opt} = "ogg" ; },
 	   'flac'		=> sub { $self->{type_opt} = "flac" ; },
 	   'type=s'		=> sub { shift ; $self->{type_opt} = shift ; },
+	   'mp3v2'              => \$self->{mp3v2_opt},
+	   'mp3read=s'          => \$self->{mp3v2_read_opt},
 	   'clear'		=> \$self->{clear_opt},
 	   'append'		=> \$self->{append_opt},
 	   'no-tagging'		=> \$self->{no_tagging_opt},
@@ -333,7 +349,8 @@ GetOptions(
 					 }
 				       },
 	   'cddb-query=s'	=> \$self->{requested_cddb_query},
-	   'v|verbose'		=> \$self->{verbose_opt},
+	   'v|verbose'		=> sub { shift ; $verbose_level++ ; },
+	   'q|quiet'		=> sub { shift ; $verbose_level-- ; },
 	   'gencfg=s'		=> \$self->{gencfg_file},
 	   'h|help'		=> sub { usage () ; },
 	   'V|version'		=> sub { version () ; },
@@ -347,12 +364,16 @@ GetOptions(
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
 
-# if no user parsers, no defaults, no guess and no cddb, force guess
-$self->{try_internals_opt} = 1
-    if $self->{guess_opt} or ( !@{$self->{user_format_strings}}
-			       and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
-			       and !(keys %{$self->{additional_values}})
-			       and !$self->{list_formats_opt} ) ;
+# check that MP3v2 ID3v1 and v2 read order is corect
+die "Invalid MP3 ID3v1 and v2 order given to --mp3read: $self->{mp3v2_read_opt}\n"
+    if $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V1
+    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V2
+    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V1_V2
+    and $self->{mp3v2_read_opt} ne Lltag::MP3v2->MP3V2_READ_V2_V1 ;
+
+# set verbosity options depending of the level
+$self->{verbose_opt} = ($verbose_level > 1) ;
+$self->{menu_usage_once_opt} = ($verbose_level > 0) ;
 
 # if --cddb-query is passed, enable cddb too
 $self->{cddb_opt} = 1
@@ -362,6 +383,7 @@ $self->{cddb_opt} = 1
 my $current_main_yes_opt = $self->{yes_opt} ;
 Lltag::CDDB::init_cddb ($self) ;
 Lltag::Parse::init_parsing ($self) ;
+Lltag::Tags::init_tagging ($self) ;
 Lltag::Rename::init_renaming ($self) ;
 
 #######################################################
@@ -403,8 +425,11 @@ sub register_backend {
     return 0 ;
 }
 
-# register MP3 backend
-register_backend (Lltag::MP3::new ($self)) ;
+# register MP3v2 backend if enabled, and fallback to MP3 if failed
+if (!$self->{mp3v2_opt}
+    or register_backend (Lltag::MP3v2::new ($self)) < 0) {
+    register_backend (Lltag::MP3::new ($self)) ;
+}
 
 # register OGG backend
 register_backend (Lltag::OGG::new ($self)) ;
@@ -414,7 +439,6 @@ register_backend (Lltag::FLAC::new ($self)) ;
 
 #######################################################
 # check that the file type is correct
-
 die "Unrecognized file type '$self->{type_opt}'.\n"
     if defined $self->{type_opt} and not defined $backends{$self->{type_opt}} ;
 
@@ -470,26 +494,270 @@ sub tag_with_values {
     my $backend = shift ;
     my $values = shift ;
 
-    # is there actually something to do ?
-    if ( !(keys %{$values}) ) {
-	print "  Nothing to do.\n" ;
-	return ;
-    }
-
     # tagging command line
     my $set_tags_func = $backend->{set_tags} ;
     &{$set_tags_func}($self, $file, $values) ;
 }
 
 #######################################################
-# main process
+# add defaults and additional_values
 
-# read internal parsers
-Lltag::Parse::read_internal_parsers ($self)
-    if $self->{try_internals_opt} or $self->{list_formats_opt} ;
+sub add_defaults {
+    my $self = shift ;
+    my $values = shift ;
+
+    # then add defaults to not defined tags
+    foreach my $field (@{$self->{field_names}}) {
+	$values->{$field} = $self->{field_default}{$field}
+	    if not defined $values->{$field} and defined $self->{field_default}{$field} ;
+    }
+
+    return $values ;
+}
+
+sub add_additional_values {
+    my $self = shift ;
+    my $values = shift ;
+
+    # append additional values
+    Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
+
+    return $values ;
+}
+
+#######################################################
+# wrappers for all tag-obtention routines
+
+sub try_parse_with_preferred {
+    my $self = shift ;
+    my $file = shift ;
+    my $parsename = shift ;
+    my $old_values = shift ;
+
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
+
+    my ($res, $new_values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename) ;
+    if ($res == Lltag::Parse->PARSE_SUCCESS) {
+	return add_defaults ($self,
+			     (Lltag::Tags::merge_new_tag_values ($self,
+								 $old_values,
+								 (add_additional_values ($self,
+											 $new_values))))) ;
+    }
+
+    # sanity check
+    die "Unknown tag return value: $res.\n"
+	unless $res == Lltag::Parse->PARSE_NO_MATCH ;
+
+    return undef ;
+}
+
+sub try_parse {
+    my $self = shift ;
+    my $file = shift ;
+    my $parsename = shift ;
+    my $try_internals = shift ;
+    my $old_values = shift ;
+
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
+
+    my ($res, $new_values) = Lltag::Parse::try_to_parse ($self, $file, $parsename, $try_internals) ;
+    if ($res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED) {
+	return add_defaults ($self,
+			     (Lltag::Tags::merge_new_tag_values ($self,
+								 $old_values,
+								 (add_additional_values ($self,
+											 $new_values))))) ;
+    }
+
+    # sanity check
+    die "Unknown tag return value: $res.\n"
+	unless $res == Lltag::Parse->PARSE_NO_MATCH or $res == Lltag::Parse->PARSE_ABORT ;
+
+    return undef ;
+}
+
+sub try_edit {
+    my $self = shift ;
+    my $current_values = shift ;
+
+    # save old values before editing
+    $current_values = Lltag::Tags::clone_tag_values ($current_values) ;
+
+    # do not add defaults/additionals here since this function might
+    # be called on current values without need to add them
+    my $res = Lltag::Tags::edit_values ($self, $current_values) ;
+    if ($res == Lltag::Tags->EDIT_SUCCESS) {
+	return $current_values ;
+    }
+
+    # sanity check
+    die "Unknown edit return value: $res.\n"
+	unless $res == Lltag::Tags->EDIT_CANCEL ;
+
+    return undef ;
+}
+
+sub try_cddb {
+    my $self = shift ;
+    my $old_values = shift ;
+
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
+
+    my ($res, $new_values) = Lltag::CDDB::get_cddb_tags ($self) ;
+    if ($res == Lltag::CDDB->CDDB_SUCCESS) {
+	return add_defaults ($self,
+			     (Lltag::Tags::merge_new_tag_values ($self,
+								 $old_values,
+								 (add_additional_values ($self,
+											 $new_values))))) ;
+    }
+
+    # sanity check
+    die "Unknown CDDB return value: $res.\n"
+	unless $res == Lltag::CDDB->CDDB_ABORT ;
+
+    return undef ;
+}
+
+sub try_defaults {
+    my $self = shift ;
+    my $old_values = shift ;
+    my $empty_values = {} ;
+
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
+
+    return add_defaults ($self,
+			 (Lltag::Tags::merge_new_tag_values ($self,
+							     $old_values,
+							     (add_additional_values ($self,
+										     $empty_values))))) ;
+}
+
+#######################################################
+# main confirmation loop
+
+my $main_confirm_menu_usage_forced = $self->{menu_usage_once_opt} ;
+
+sub main_confirm_menu_usage {
+    Lltag::Misc::print_usage_header ("  ", "Main menu") ;
+
+    print "    y => Yes, use these tags (default)\n" ;
+    print "    a => Always yes, stop asking for a confirmation\n" ;
+    print "    P => Try to parse the file\n" ;
+    print "    C => Query CDDB\n" ;
+    print "    E => Edit values\n" ;
+    print "    D => Only use default and additional values\n" ;
+    print "    Z => Reset to no values\n" ;
+    print "    R => Revert to old values\n" ;
+    print "    O => Display old values\n" ;
+    print "    n => Skip tagging and jump to rename\n" ;
+    print "    s/q => Skip this file\n" ;
+    print "    Q => Quit without tagging anything anymore\n" ;
+    print "    h => Show this help\n" ;
+
+    $main_confirm_menu_usage_forced = 0 ;
+# TODO update
+}
+
+use constant CONFIRM_TAG => 1 ;
+use constant CONFIRM_DONT_TAG => 2 ;
+use constant CONFIRM_SKIP_FILE => -1 ;
+use constant CONFIRM_EXIT => -2 ;
+
+sub main_confirm_menu {
+    my $self = shift ;
+    my $file = shift ;
+    my $parsename = shift ;
+    my $current_values = shift ;
+    my $old_values = shift ;
+
+    while (1) {
+	# display current values
+	if (keys %{$current_values}) {
+	    print "    Current tag values are:\n" ;
+	    Lltag::Tags::display_tag_values ($self, $current_values, "      ") ;
+	} else {
+	    print "    There are no current tag values.\n" ;
+	}
+
+	# display the menu once
+	main_confirm_menu_usage
+	    if $main_confirm_menu_usage_forced ;
+	# ask the user for confirmation
+	my $confirm_reply = Lltag::Misc::readline ("  ", "Use these tag values [yaPCEDZROnqQ] (default is yes, h for help)", "", -1) ;
+
+	# if ctrl-d, skip this file
+	$confirm_reply = 'q' unless defined $confirm_reply ;
+
+	if ($confirm_reply =~ m/^y/ or $confirm_reply eq "") {
+	    return (CONFIRM_TAG, $current_values)
+
+	} elsif ($confirm_reply =~ m/^a/) {
+	    $current_main_yes_opt = 1 ;
+	    return (CONFIRM_TAG, $current_values)
+
+	} elsif ($confirm_reply =~ m/^n/) {
+	    print "    Skipping tagging for this file...\n" ;
+	    return (CONFIRM_DONT_TAG, $current_values)
+
+	} elsif ($confirm_reply =~ m/^s/ or $confirm_reply =~ m/^q/) {
+	    return (CONFIRM_SKIP_FILE, undef) ;
+
+	} elsif ($confirm_reply =~ m/^Q/) {
+	    return (CONFIRM_EXIT, undef) ;
+
+	} elsif ($confirm_reply =~ m/^P/) {
+	    my $new_values = try_parse ($self, $file, $parsename, 1, $old_values) ;
+	    $current_values = $new_values
+		if defined $new_values ;
+
+	} elsif ($confirm_reply =~ m/^C/) {
+	    my $new_values = try_cddb ($self, $old_values) ;
+	    $current_values = $new_values
+		if defined $new_values ;
+
+	} elsif ($confirm_reply =~ m/^E/) {
+	    my $new_values = try_edit ($self, $current_values) ;
+	    $current_values = $new_values
+		if defined $new_values ;
+
+	} elsif ($confirm_reply =~ m/^D/) {
+	    $current_values = try_defaults ($self, $old_values) ;
+
+	} elsif ($confirm_reply =~ m/^Z/) {
+	    $current_values = {} ;
+
+	} elsif ($confirm_reply =~ m/^R/) {
+	    $current_values = Lltag::Tags::clone_tag_values ($old_values) ;
+
+	} elsif ($confirm_reply =~ m/^O/) {
+	    # display old values
+	    if (keys %{$old_values}) {
+		print "      Existing tag values were:\n" ;
+		Lltag::Tags::display_tag_values ($self, $old_values, "        ") ;
+	    } else {
+		print "    There were no tag values.\n" ;
+	    }
+
+	} else {
+	    main_confirm_menu_usage ;
+	}
+    }
+}
+
+#######################################################
+# main process
 
 # if -L was passed, show formats and exit
 if ($self->{list_formats_opt}) {
+    # read internal parsers
+    Lltag::Parse::read_internal_parsers ($self) ;
+    # list them
     print "Listing internal parsers:\n" ;
     Lltag::Parse::list_internal_parsers () ;
     exit 0 ;
@@ -551,13 +819,9 @@ if ($self->{show_tags_opt}) {
     exit 0 ;
 }
 
-# generate user parsers
-Lltag::Parse::generate_user_parsers ($self) ;
-
 # main reading/parsing/tagging/renaming loop
 while ( @files ) {
     my $file = shift @files ;
-    my $values = undef ;
     my $res ;
 
     print "\n" ;
@@ -572,138 +836,97 @@ while ( @files ) {
     # read old tags
     my $old_values = read_tags $file, $backend ;
 
+    # FIXME: read the tracknumber and pass it to cddb ?
     # FIXME: parse first, to get the track number?
 
-    my $first_round = 1 ;
-    while (1) {
+    my $current_values = undef ;
 
-	# try preferred parser first
-	($res, $values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename) ;
-	goto ADD_DEFAULTS
-	    if $res == Lltag::Parse->PARSE_SUCCESS ;
-	die "Unknown tag return value: $res.\n"
-	    unless $res == Lltag::Parse->PARSE_NO_MATCH ;
-
-	# try CDDB, if enabled
-	if ($self->{cddb_opt}) {
-      TRY_CDDB:
-	    ($res, $values) = Lltag::CDDB::get_cddb_tags ($self) ;
-	    goto ADD_DEFAULTS
-		if $res == Lltag::CDDB->CDDB_SUCCESS ;
-	    die "Unknown CDDB return value: $res.\n"
-		unless $res == Lltag::CDDB->CDDB_ABORT ;
-	    # during first round, try parse before going to confirmation
-	    # FIXME: option to disable parsing ?
-	    goto ADD_DEFAULTS
-		unless $first_round ;
+    # try preferred parser first
+    {
+	my $new_values = try_parse_with_preferred $self, $file, $parsename, $old_values ;
+	if (defined $new_values) {
+	    $current_values = $new_values ;
+	    goto CONFIRM ;
 	}
-
-	# try to parse this file
-      TRY_PARSE:
-	($res, $values) = Lltag::Parse::try_to_parse ($self, $file, $parsename) ;
-	goto ADD_DEFAULTS
-	    if $res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED ;
-	die "Unknown tag return value: $res.\n"
-	    unless $res == Lltag::Parse->PARSE_NO_MATCH or $res == Lltag::Parse->PARSE_ABORT ;
-
-      ADD_DEFAULTS:
-	$first_round = 0;
-
-	# add defaults
-	foreach my $field (@{$self->{field_names}}) {
-	    $values->{$field} = $self->{field_default}{$field} if not defined $values->{$field} and defined $self->{field_default}{$field} ;
-	}
-
-      CONFIRM:
-	if (keys %{$values}) {
-	    print "    Current tag values are:\n" ;
-	    foreach my $field (@{$self->{field_names}}) {
-		print "      ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": ".$values->{$field}."\n"
-		    if defined $values->{$field} ;
-	    }
-	} else {
-	    print "    There are no current tag values.\n" ;
-	}
-
-	goto TAG
-	    if $current_main_yes_opt ;
-
-	while (1) {
-	    Lltag::Misc::print_question ("  Use these tag values [yaPCEDqQ] (default is yes, h for help) ? ") ;
-	    my $confirm_reply = <> ;
-	    chomp $confirm_reply ;
-
-	    # FIXME: option to display old values
-
-	    # FIXME: option to display additonial values
-
-	    goto TAG
-		# FIXME: check confirm options and always, except if cddb
-		if $confirm_reply =~ m/^y/ or $confirm_reply eq "" ;
-	    goto TRY_PARSE
-		if $confirm_reply =~ m/^P/ ;
-	    goto TRY_CDDB
-		if $confirm_reply =~ m/^C/ ;
-	    goto NEXT_FILE
-		if $confirm_reply =~ m/^s/ or $confirm_reply =~ m/^q/ ;
-	    goto EXIT
-		if $confirm_reply =~ m/^Q/ ;
-
-	    if ($confirm_reply =~ m/^a/) {
-		$current_main_yes_opt = 1 ;
-		goto TAG ;
-
-	    } elsif ($confirm_reply =~ m/^E/) {
-		$values = Lltag::Tags::edit_values ($self, $values, $self->{field_names}) ;
-		goto CONFIRM ;
-
-	    } elsif ($confirm_reply =~ m/^D/) {
-		$values = undef ;
-		goto ADD_DEFAULTS ;
-
-	    } else {
-		print "    y => Yes, use these tags (default)\n" ;
-		print "    a => Always yes, stop asking for a confirmation\n" ;
-		print "    P => Try to parse the file\n" ;
-		print "    C => Query CDDB\n" ;
-		print "    E => Edit values\n" ;
-		print "    D => Only use default values\n" ;
-		print "    s/q => Skip this file\n" ;
-		print "    Q => Quit without tagging anything anymore\n" ;
-		print "    h => Show this help\n" ;
-	    }
-	}
-
     }
 
-  TAG:
-    # FIXME: do that before confirmation, requires to deal with:
-    # - showing additional tags and multiple values
-    # - editing them
+    # edit, if enabled
+    if ($self->{edit_opt}) {
+	my $new_values = try_edit ($self, try_defaults ($self, $old_values)) ;
+	if (defined $new_values) {
+	    $current_values = $new_values ;
+	    goto CONFIRM ;
+	}
+    }
 
-    # append additional tags to the new ones from above
-    Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
+    # try CDDB, if enabled
+    if ($self->{cddb_opt}) {
+	my $new_values = try_cddb $self, $old_values ;
+	if (defined $new_values) {
+	    $current_values = $new_values ;
+	    goto CONFIRM ;
+	}
+    }
 
-    # add new values to the old ones, depending on clear/append options
-    my $new_values = Lltag::Tags::merge_new_tag_values ($self, $old_values, $values) ;
+    # try to parse with all parsers, either user-provided or internals
+    # if guess or any user-parser or NOTHING else enabled
+    if ($self->{guess_opt}
+	or @{$self->{user_format_strings}}
+	or ( !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
+	     and !(keys %{$self->{additional_values}})
+	     and !$self->{cddb_opt}
+	     and !$self->{edit_opt}
+	     and !$self->{rename_opt}
+	) ) {
+	# force guess if NOTHING enabled
+	my $try_internals = ($self->{guess_opt}
+			     or ( !@{$self->{user_format_strings}}
+				  and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
+				  and !(keys %{$self->{additional_values}})
+				  and !$self->{cddb_opt}
+				  and !$self->{edit_opt}
+				  and !$self->{rename_opt}
+				  ) ) ;
 
-    # actually tagging
-    tag_with_values $file, $backend, $new_values
-	unless $self->{no_tagging_opt} ;
+	my $new_values = try_parse $self, $file, $parsename, $try_internals, $old_values ;
+	if (defined $new_values) {
+	    $current_values = $new_values ;
+	    goto CONFIRM ;
+	}
+    }
+
+    $current_values = try_defaults ($self, $old_values) ;
+
+  CONFIRM:
+    if ($current_main_yes_opt) {
+	$res = CONFIRM_TAG ;
+    } else {
+	($res, $current_values) = main_confirm_menu $self, $file, $parsename, $current_values, $old_values ;
+    }
+
+    if ($res == CONFIRM_EXIT) {
+	print "  Exiting...\n" ;
+	last ;
+
+    } elsif ($res == CONFIRM_SKIP_FILE) {
+	print "  Skipping this file...\n" ;
+	next ;
+
+    } elsif ($res == CONFIRM_TAG) {
+	# actually tagging
+	tag_with_values $file, $backend, $current_values
+	    unless $self->{no_tagging_opt} ;
+    }
+
+    # sanity check
+    die "Unknown confirm menu return value: $res.\n"
+	unless $res == CONFIRM_TAG or $res == CONFIRM_DONT_TAG ;
 
     # renaming
     if (defined $self->{rename_opt}) {
 	my $extension = $backend->{extension} ;
-	Lltag::Rename::rename_with_values ($self, $file, $extension, $new_values) ;
+	Lltag::Rename::rename_with_values ($self, $file, $extension, $current_values) ;
     }
-
-    # next file
-  NEXT_FILE:
-    next ;
-
-    # exit without tagging anything anymore
-  EXIT:
-    last ;
 }
 
 #############################################
@@ -724,6 +947,7 @@ sub generate_config {
     map { print NEWCFG "format = \"$_\"\n" ; } @{$self->{user_format_strings}} ;
 
     print NEWCFG "guess = $self->{guess_opt}\n" ;
+    print NEWCFG "edit = $self->{edit_opt}\n" ;
     print NEWCFG "no_path = $self->{no_path_opt}\n" ;
 
     map { print NEWCFG "default_$_ = \"$self->{field_default}{$_}\"\n" ; } (keys %{$self->{field_default}}) ;
@@ -754,7 +978,7 @@ sub generate_config {
     print NEWCFG "yes = $self->{yes_opt}\n" ;
     print NEWCFG "ask = $self->{ask_opt}\n" ;
     print NEWCFG "recursive = $self->{recursive_opt}\n" ;
-    print NEWCFG "verbose = $self->{verbose_opt}\n" ;
+    print NEWCFG "verbose = $verbose_level\n" ;
 
     close NEWCFG ;
 }

@@ -1,3 +1,59 @@
+lltag (0.14)
+
+  * Add an optional ID3v2 tag support for MP3 files using MP3::Tag
+    (requested by lots of people), enabled with --mp3v2 for now.
+    + Add --mp3read option to specify whether ID3v1 and v2 should be
+      read, and in which order (default is 21).
+  * Large rework of the core loop:
+    + Display existing tags with the new ones to be set.
+    + Add O to display existing tags, R to revert to them, Z to reset
+      to no tags at all, and n to skip tagging and jump to renaming.
+    + Also try internal parsers when parsing from the main menu even
+      if -G was not given on the command line.
+    + Support renaming from existing tags without any need to parse
+      and/or reapply tags when --rename and --no-tagging are passed
+      with nothing else (requested by Alexandre Buisse).
+    + Make sure guessing is enabled as default only when there is
+      really nothing else to do.
+    + Make sure we apply additional values to new tags before merging
+      and defaults at the very end, so that --clear and --append are
+      correctly processed.
+  * Tag edition improvements:
+    + Support edition of existing tags and tags with multiple values.
+    + Support edition of all CD tags returned by CDDB.
+    + Add -E/--edit (and edit option in the configuration file) to
+      edit tags immediately.
+  * Make the old MP3 backend more safe:
+    + Check genre and tracknumbers and ignore invalid values to avoid
+      mp3info failures.
+    + Add warnings about multiple values and special tags that are not
+      supported.
+  * Add -q/--quiet to reduce verbosity, useful to disable displaying
+    of menu usage when a menu appears for the first time
+    (requested by Alexandre Buisse).
+    + The verbose option in the config file is now a verbose level,
+      with its default being 1.
+  * Miscellaneous fixes:
+    + Support removing of all tags.
+    + Handle Ctrl-d in interactive menus and make it cancel the current
+      operation without quitting, as opposed to Ctrl-c
+      (requested by Alexandre Buisse).
+    + Uniformize the letter to enter to view current values (changed
+      'v' into 'V' in the CDDB menus).
+  * Documentation updates and fixes:
+    + Add an EXAMPLES section at the end of the lltag.1 manpage
+      (requested by Stefano Sabatini in Debian bug #406213) and also
+      insert more basic command lines in the howto.html documentation.
+    + Explain the difference between default and additional values in
+      the howto.
+    + Explain how the strategies are used, how new tags are generated
+      and applied, in the DESCRIPTION section of lltag.1.
+    + Have the lltag_config.5 manpage also point to the config template
+      file provided in the documentation directory.
+  * Lots of other minor fixes.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon, 09 Apr 2007 11:22:00 +0200
+
 lltag (0.13.1)
 
   * Multiple fixes regarding parsing:

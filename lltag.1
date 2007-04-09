@@ -16,6 +16,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .SH SYNOPSIS
 .B lltag
 .RB [ -C ]
+.RB [ -E ]
 .RB [ "-F <format>" ]
 .RB [ -G ]
 .RB [ -p ]
@@ -48,6 +49,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .RB [ "--cddb-server <server[:port]>" ]
 .RB [ -R ]
 .RB [ -v ]
+.RB [ -q ]
 .RB [ "--config <file>" ]
 .RB [ "--gencfg <file>" ]
 .RB [ -S ]
@@ -64,7 +66,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .SH DESCRIPTION
 .B lltag
 is a command-line tool to automagically set tags of MP3, OGG or FLAC
-files. There are 3 main ways to obtains the tags that will be set:
+files. There are several ways to obtains the tags that will be set:
 
 .TP
 .B Parsing the filename
@@ -88,25 +90,72 @@ is passed).
 .B lltag
 provides a set of command-line option to manually set various tags.
 
-.P
-The user may choose one or several of these modes through the command-line.
-If none is set, parsing will internal formats will be used.
-It is also possible to explicitly request another way of obtaining tags
-by using the interactive menu (unless
---yes
-is passed, or automatic mode is enabled in the menu).
+.TP
+.B Manually editing values
+.B lltag
+provides an interactive interface to edit existing values
+or any value provided by the above strategies.
 
-These tags may either replace (default), clear and replace (if
-.B --clear
-is passed) or append (if
-.B --append
-) to the existing ones in the target file.
+.P
+Each time, a new audio file is processed,
+.B lltag
+starts by trying to obtain new tags depending on the behavior options
+given by the user.
+
+First, if a preferred parser has been selected before, it is used to try
+to parse the new filename.
+Then, if editing is enabled
+.RB ( -E ),
+the user will be able to modify existing tag values.
+Then, if CDDB is enabled
+.RB ( -C ),
+the user will be asked to request tags from the
+online CDDB database.
+Then, if the user provided any parsing format
+.RB ( -F ),
+or if guessing is enabled
+.RB ( -G ),
+.B lltag
+will attempt to parse the filename.
+
+Note that if no behavior is chosen at all on command-line, including no
+renaming option, then parsing with the internal format database will be
+used by default (as if
+.B -G
+had been passed).
+
+As soon as one of the above strategies succeeds,
+.B lltag
+jumps to the main menu
+where the user may either accept new tags or select another behavior (see
+.B MAIN MENU
+in
+.B INTERACTIVE MENUS
+below for details).
+If
+.B --yes
+has been passed, or if automatic mode has been previously enabled in the menu,
+it will proceed with tagging (and renaming if requested) and go on with the
+next file.
+
+The new tags that the selected strategy returns will be appended with
+the additional values given with
+.BR --tag .
+They will then either replace (default), clear and replace
+.RB ( --clear )
+or append to
+.RB ( --append )
+the existing tags in the target file.
+And finally, each tag that will not be defined (and which the user will
+have provided a default value for, with
+.BR -a ", " -t ", " -A ", " -g ", " -n ", " -d " or " -c )
+will get a default value.
 
 Once the tags are known, a backend program or library is used to apply
 them to the audio file (unless
 .B --no-tagging
 is passed).
-.B mp3info
+.RB "The " MP3::Tag " Perl module or " mp3info
 is used to tag
 .B MP3
 files while
@@ -165,7 +214,7 @@ in
 below for details.
 
 .TP
-.BI "-C, --cddb"
+.B "-C, --cddb"
 Try to find tags in the CDDB online database before trying to parse filenames.
 The queries are sent using the HTTP interface, which means a HTTP proxy might
 be used when required.
@@ -228,6 +277,10 @@ The corresponding configuration file option is
 .IR dry_run .
 
 .TP
+.B -E, --edit
+Edit tags immediately.
+
+.TP
 .BI "-F, --format" " <format>"
 Add the specified format string to the list of user-supplied formats.
 The corresponding configuration file option is
@@ -239,7 +292,7 @@ below for details.
 
 .TP
 .B --flac
-Tag all files as FLAC files, using \fBmetaflac\fR.
+Tag all files as FLAC files, using the FLAC backend (based on \fBmetaflac\fR).
 The corresponding configuration file option is
 .IR type .
 
@@ -282,9 +335,24 @@ The corresponding configuration file option is
 
 .TP
 .B --mp3
-Tag all files as MP3 files, using \fBmp3info\fR.
+Tag all files as MP3 files, using the MP3 backend
+(based on either \fBmp3info\fR or \fBMP3::Tag\fR).
 The corresponding configuration file option is
 .IR type .
+
+.TP
+.B --mp3v2
+Enable the experimental MP3 ID3v2-aware backend (based on \fRMP3::Tag\fR)
+instead of the old ID3v1-only backend.
+
+.TP
+.B --mp3read=[1][2]
+Configure how the MP3v2 backend reads and merges ID3v1 and v2 tags.
+By default, v1 are appended to v2 (\fB21\fR).
+If set to \fB1\fR, only v1 are read.
+If set to \fB2\fR, only v2 are read.
+If set to \fB12\fR, v2 are appended to v1.
+Note that merging/appending takes care of removing duplicates.
 
 .TP
 .BI "-n, --number" " <number>"
@@ -301,7 +369,7 @@ The corresponding configuration file option is
 
 .TP
 .B --ogg
-Tag all files as OGG files, using \fBvorbiscomment\fR.
+Tag all files as OGG files, using the OGG backend (based on \fBvorbiscomment\fR).
 The corresponding configuration file option is
 .IR type .
 
@@ -310,6 +378,16 @@ The corresponding configuration file option is
 Do not consider the path of files when matching.
 The corresponding configuration file option is
 .IR no_path .
+
+.TP
+.B "-q, --quiet"
+Decrease message verbosity.
+The corresponding configuration file option is
+.I verbose
+which indicates the verbose level.
+Default is 1 to show usage when a menu is displayed for the first time.
+See also
+.BR -v .
 
 .TP
 .B "-R, --recursive"
@@ -441,9 +519,13 @@ The corresponding configuration file option is
 
 .TP
 .B "-v, --verbose"
-Show verbose messages.
+Increase message verbosity.
 The corresponding configuration file option is
-.IR verbose .
+.I verbose
+which indicates the verbose level.
+Default is 1 to show usage when a menu is displayed for the first time.
+See also
+.BR -q .
 
 .TP
 .B "-V, --version"
@@ -495,7 +577,15 @@ Then, if
 .B --rename
 was passed, the file is renamed.
 
-We now describe all interactive menus.
+When hitting
+.B Ctrl-d
+at the beginning of an empty line
+.RB ( EOF ),
+the general behavior is to cancel the current operation
+without leaving.
+
+We now describe all interactive menus in detail.
+
 
 
 
@@ -523,9 +613,21 @@ Edit values, see
 .B EDITING MENU
 .TP
 .B D
-Only use default values, forget about CDDB or parsed tags
+Only use default and additional values, forget about CDDB or parsed tags
 .TP
-.B q
+.B Z
+Reset to no tag values at all
+.TP
+.B R
+Revert to existing tag values from the current file
+.TP
+.B O
+Display existing tag values in the current file
+.TP
+.B n
+Do not tag this file, jump to renaming (or to the next file if renaming is disabled)
+.TP
+.BR q " (or " EOF )
 Skip this file
 .TP
 .B Q
@@ -557,7 +659,7 @@ Search in all CD categories within fields artist OR album.
 .\"CDDB query for CD matching category and id
 
 .TP
-.B q
+.BR q " (or " EOF )
 Quit CDDB query, see
 .B MAIN MENU
 
@@ -568,13 +670,13 @@ CD titles will be displayed. The user then needs to choose one:
 .B <index>
 Choose a CD in the current keywords query results list
 .TP
-.B v
+.B V
 View the list of CD matching the keywords
 .TP
 .B k
 Start again CDDB query with different keywords
 .TP
-.B q
+.BR q " (or " EOF )
 Quit CDDB query, see
 .B MAIN MENU
 
@@ -603,7 +705,7 @@ Change the CD chosen in keywords query results list
 .B k
 Start again CDDB query with different keywords
 .TP
-.B q
+.BR q " (or " EOF )
 Quit CDDB query, see
 .B MAIN MENU
 
@@ -643,8 +745,8 @@ When matching is done through combination of a path parser
 and a basename parser, keep the basename parser and try the
 next path parser on the current file.
 .TP
-.B q
-Skip the current file, don't tag it at all.
+.BR q " (or " EOF )
+Stop trying to parse this file.
 
 
 
@@ -664,9 +766,14 @@ If not, pressing
 will keep the current value while
 .I CLEAR
 will empty it.
+.I EOF
+while cancel the editing of this single value.
 
 Each field may be selected for edition by pressing its corresponding
 letter in the format (see \fBFORMAT\fR).
+Since there might be some non-standard tag names, it is also possible
+to enter \fItag FOO\fR to modify tag \fIFOO\fR.
+
 Editing ends by tagging (if \fIE\fR is pressed)
 or canceling and return to confirmation menu (if \fIC\fR is pressed).
 
@@ -678,7 +785,7 @@ View the current values of tags
 .B y
 End edition, save changes, and return to previous menu
 .TP
-.B q
+.BR q " (or " EOF )
 Cancel edition, forget about changes, and return to previous menu
 
 
@@ -708,7 +815,7 @@ The behavior depends on the installed readline library.
 If it is smart, the current value may be edited inline
 and an history is available.
 .TP
-.B q
+.BR q " (or " EOF )
 Don't rename current file.
 .TP
 .B h
@@ -836,10 +943,46 @@ User configuration file.
 
 
 
+.SH EXAMPLES
+.RE
+Show all tags for each OGG files in the current directory:
+.RS
+lltag -S *.ogg
+.RE
+Show only a selected list of tags for all files in all subdirectories:
+.RS
+lltag --show-tags artist,album,title,number -R .
+.RE
+Set an arbitrary tag in a file (only works with OGG vorbis or FLAC files):
+.RS
+lltag --tag foo=nil foo.ogg
+.RE
+Delete the foo tag from a file:
+.RS
+lltag --tag foo= bar.ogg
+.RE
+Set the ALBUM, ARTIST and GENRE tag values of the MP3 files in the current directory:
+.RS
+lltag --artist "Queen" --album "Innunendo" --genre "rock" --comment="very cool" *.mp3
+.RE
+Rename a file by assembling its current NUMBER, ARTIST and TITLE tag values:
+.RS
+lltag --no-tagging --rename "%n - %a - %t" foobar.ogg
+.RE
+Clear all tags in all FLAC files:
+.RS
+lltag --clear *.flac
+
+
+
 
 .SH SEE ALSO
 .PP
 .BR lltag_config "(5), " lltag_formats (5)
+
+The
+.I howto.html
+file provided within the documentation.
 
 
 

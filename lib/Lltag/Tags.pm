@@ -3,6 +3,75 @@ package Lltag::Tags ;
 use strict ;
 no strict "refs" ;
 
+#######################################################
+# init
+
+my $edit_values_usage_forced ;
+
+sub init_tagging {
+    my $self = shift ;
+
+    # need to show menu usage once ?
+    $edit_values_usage_forced = $self->{menu_usage_once_opt} ;
+}
+
+#######################################################
+# display tag values
+
+sub display_one_tag_value {
+    my $self = shift ;
+    my $values = shift ;
+    my $field = shift ;
+    my $prefix = shift ;
+
+    if (ref($values->{$field}) ne 'ARRAY') {
+	print $prefix.ucfirst($field).": "
+	    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
+    } else {
+	my @vals = @{$values->{$field}} ;
+	for(my $i = 0; $i < @vals; $i++) {
+	    print $prefix.ucfirst($field)." #".($i+1).": ".$vals[$i]."\n"
+	}
+    }
+}
+
+sub display_tag_values {
+    my $self = shift ;
+    my $values = shift ;
+    my $prefix = shift ;
+
+    # display regular tags first
+    foreach my $field (@{$self->{field_names}}) {
+	next unless defined $values->{$field} ;
+	display_one_tag_value $self, $values, $field, $prefix ;
+    }
+
+    # display misc tags later
+    foreach my $field (keys %{$values}) {
+	next if grep { $field eq $_ } @{$self->{field_names}} ;
+	display_one_tag_value $self, $values, $field, $prefix ;
+    }
+}
+
+#######################################################
+# various tag management routines
+
+# clone tag values (to be able to modify without changing the original)
+sub clone_tag_values {
+    my $old_values = shift ;
+    # clone the hash
+    my %new_values = %{$old_values} ;
+
+    for my $field (keys %new_values) {
+	if (ref($new_values{$field}) eq 'ARRAY') {
+	    # clone the array pointed by the ref in the hash
+	    @{$new_values{$field}} = @{$new_values{$field}} ;
+	}
+    }
+
+    return \%new_values ;
+}
+
 # add a value to a field, creating an array if required
 sub append_tag_value {
     my $self = shift ;
@@ -53,7 +122,7 @@ sub append_tag_values {
     }
 }
 
-# add a set of unique values into another hash, depending of clear/append options
+# add a set of new values into an old hash, depending of clear/append options
 sub merge_new_tag_values {
     my $self = shift ;
     my $old_values = shift ;
@@ -64,7 +133,7 @@ sub merge_new_tag_values {
     }
 
     foreach my $field (keys %{$new_values}) {
-	$old_values->{$field} = undef
+	delete $old_values->{$field}
 	    if defined $old_values->{$field} and !$self->{append_opt} ;
 	append_tag_multiple_value $self, $old_values, $field, $new_values->{$field} ;
     }
@@ -163,30 +232,22 @@ sub set_tags_with_external_prog {
 #######################################################
 # edit current tags
 
-my $edit_values_usage_forced = 1 ;
+use constant EDIT_SUCCESS => 0 ;
+use constant EDIT_CANCEL => -1;
 
 sub edit_values_usage {
     my $self = shift ;
     my $values = shift ;
-    my $field_names_ref = shift ;
-
-    my @field_names = @{$field_names_ref} ;
 
     Lltag::Misc::print_usage_header ("    ", "Editing") ;
 
     # print all fields, including the undefined ones
-    foreach my $field (@field_names) {
-	my $val = $values->{$field} ;
-	if (not defined $val) {
-	    $val = "<not defined>" ;
-	} elsif ($val eq "") {
-	    $val = "<CLEAR>" ;
-	}
+    foreach my $field (@{$self->{field_names}}) {
 	print "      ".$self->{field_name_letter}{$field}
 	." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
-	." (".$val.")\n" ;
+	."\n" ;
     }
-    # TODO: show other fields ? not possible until we edit existing tags
+    print "      tag FOO => Edit tag FOO\n" ;
     print "      V => View current fields\n" ;
     print "      y/E => End edition\n" ;
     print "      q/C => Cancel edition\n" ;
@@ -195,52 +256,83 @@ sub edit_values_usage {
     $edit_values_usage_forced = 0 ;
 }
 
-sub edit_values {
+sub edit_one_value {
     my $self = shift ;
     my $values = shift ;
-    my $field_names_ref = shift ;
+    my $field = shift ;
 
-    my @field_names = @{$field_names_ref} ;
-    my @letters = map { $self->{field_name_letter}{$_} } @field_names ;
-    my $letters_union = join '|', @letters ;
+    if (ref($values->{$field}) eq 'ARRAY') {
+	my @oldvals = @{$values->{$field}} ;
+	my @newvals = () ;
+	for(my $i=0; $i<@oldvals; $i++) {
+	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field #".($i+1), $oldvals[$i], 1) ;
 
-    # save values
-    my $old_values = () ;
-    map { $old_values->{$_} = $values->{$_} } (keys %{$values}) ;
+	    if (defined $value) {
+		push @newvals, $value
+		    unless $value eq "" ;
+	    } else {
+		# if ctrl-d, reset to same value, without removing it if empty
+		push @newvals, $oldvals[$i] ;
+	    }
+	}
+	delete $values->{$field} ;
+	if (@newvals == 1) {
+	    $values->{$field} = $newvals[0] ;
+	} elsif (@newvals) {
+	    @{$values->{$field}} = @newvals ;
+	} else {
+	    $values->{$field} = "" ;
+	}
 
-    edit_values_usage $self, $values, $field_names_ref
-	if $edit_values_usage_forced ;
+    } else {
+	my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
 
-    while (1) {
-	Lltag::Misc::print_question ("    Edit a field [". (join '', @letters) ."Vyq] (no default, h for help) ? ") ;
-	my $edit_reply = <> ;
-	chomp $edit_reply ;
-
-	if ($edit_reply =~ m/^($letters_union)/) {
-	    my $field = $self->{field_letter_name}{$1} ;
-	    my $value = Lltag::Misc::readline ("      ", ucfirst($field)." field", $values->{$field}, 1) ;
+	# if ctrl-d, change nothing
+	if (defined $value) {
 	    if ($value eq "DELETE" or $value eq "<DELETE>") {
 		delete $values->{$field} ;
 	    } else {
 		$values->{$field} = $value ;
 	    }
+	}
+    }
+}
+
+# edit values in place
+sub edit_values {
+    my $self = shift ;
+    my $values = shift ;
+
+    edit_values_usage $self, $values
+	if $edit_values_usage_forced ;
+
+    print "      Current tag values are:\n" ;
+    display_tag_values $self, $values, "        " ;
+
+    while (1) {
+	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". $self->{field_letters_string} ."Vyq] (no default, h for help)", "", -1) ;
+
+	# if ctrl-d, cancel editing
+	$edit_reply = 'q' unless defined $edit_reply ;
+
+	if ($edit_reply =~ m/^tag (.+)/) {
+	    edit_one_value $self, $values, $1 ;
+
+	} elsif ($edit_reply =~ m/^($self->{field_letters_union})/) {
+	    edit_one_value $self, $values, $self->{field_letter_name}{$1} ;
 
 	} elsif ($edit_reply =~ m/^y/ or $edit_reply =~ m/^E/) {
-	    return $values ;
+	    return EDIT_SUCCESS ;
 
 	} elsif ($edit_reply =~ m/^q/ or $edit_reply =~ m/^C/) {
-	    return $old_values ;
+	    return EDIT_CANCEL ;
 
 	} elsif ($edit_reply =~ m/^V/) {
 	    print "      Current tag values are:\n" ;
-	    foreach my $field (@field_names) {
-		print "        ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}.": "
-		    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
-		    if defined $values->{$field} ;
-	    }
+	    display_tag_values $self, $values, "        " ;
 
 	} else {
-	    edit_values_usage $self, $values, $field_names_ref ;
+	    edit_values_usage $self, $values ;
 	}
     }
 }

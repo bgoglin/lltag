@@ -38,17 +38,20 @@ sub rename_format_usage {
 #######################################################
 # init
 
+my $rename_confirm_usage_forced ;
+
 sub init_renaming {
     my $self = shift ;
 
     # default confirmation behavior
     $current_rename_yes_opt = $self->{yes_opt} ;
+
+    # need to show menu usage once ?
+    $rename_confirm_usage_forced = $self->{menu_usage_once_opt} ;
 }
 
 #######################################################
 # rename confirmation
-
-my $rename_confirm_usage_forced = 1 ;
 
 sub rename_confirm_usage {
     Lltag::Misc::print_usage_header ("   ", "Renaming files") ;
@@ -162,9 +165,10 @@ sub rename_with_values {
 	    if $rename_confirm_usage_forced ;
 
       ASK_CONFIRM:
-	Lltag::Misc::print_question ("    Really rename the file [yaeq] (default is yes, h for help) ? ") ;
-	my $reply = <> ;
-	chomp $reply ;
+	my $reply = Lltag::Misc::readline ("    ", "Really rename the file [yaeq] (default is yes, h for help)", "", -1) ;
+
+	# if ctrl-d, do not rename
+	$reply = 'q' unless defined $reply ;
 
         if ($reply eq "" or $reply =~ m/^y/i) {
             goto RENAME_IT ;
@@ -177,7 +181,11 @@ sub rename_with_values {
 	    return ;
 
 	} elsif ($reply =~ m/^e/) {
-	    $new_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
+	    my $newnew_name = Lltag::Misc::readline ("      ", "New filename", $new_name, 0) ;
+
+	    # if ctrl-d, keep same filename
+	    $new_name = $newnew_name if defined $newnew_name ;
+
 	    goto ASK_CONFIRM ;
 
 	} else {

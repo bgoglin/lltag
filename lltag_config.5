@@ -16,10 +16,10 @@ The following options may be stored in
 or the user's
 .IR $HOME/.lltag/config ,
 or in any file passed with
-.I --config .
+.IR --config .
 
 Such a configuration file may also be generated with
-.I --gencfg .
+.IR --gencfg .
 
 
 
@@ -85,6 +85,13 @@ Default is
 
 .SH Cleaning obtained tags
 
+.I edit = <0/1>
+.RS
+Edit tags immediately
+.RB [ --edit ].
+Default is
+.BR 0 " (" disabled ")."
+.RE
 .I maj = <0/1>
 .RS
 Upcase first letters of words in tags
@@ -212,10 +219,10 @@ Default is
 .RE
 .I verbose = <0/1>
 .RS
-Verbose messages
-.RB [ -v ].
+Message verbosity level
+.RB [ -v " and " -q ].
 Default is
-.BR 0 " (" disabled ")."
+.BR 1 " (" "show usage when a menu is displayed for the first time" ")."
 .RE
 
 
@@ -240,6 +247,9 @@ Default is
 .PP
 .BR lltag (1)
 
+The
+.I config
+template file provided within the documentation directory.
 
 
 

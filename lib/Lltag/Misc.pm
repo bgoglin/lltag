@@ -65,13 +65,14 @@ sub dummy_readline {
 	$readline_firsttime = 0 ;
     }
   ASK:
-    my $val = $term->readline ("$indent$prompt ($preput) ? ") ;
+    my $val = $term->readline ("$indent$prompt".($preput ? " ($preput)" : "")." ? ") ;
     return $preput if !$val ;
     $val = "" if $val eq "CLEAR" or $val eq "<CLEAR>" ;
     if (!$val and !$clear_allowed) {
 	print "$indent  Clearing is not allowed here.\n" ;
 	goto ASK ;
     }
+    print "\n" unless defined $val ;
     return $val ;
 }
 
@@ -88,6 +89,7 @@ sub real_readline {
 	print "$indent  Clearing is not allowed here.\n" ;
 	goto ASK ;
     }
+    print "\n" unless defined $val ;
     return $val ;
 }
 
@@ -117,6 +119,7 @@ sub init_readline {
 
     if ($term->Features->{preput}) {
 	$myreadline = \&real_readline ;
+	$term->MinLine(3) ;
     } else {
 	$myreadline = \&dummy_readline ;
     }
@@ -139,15 +142,6 @@ sub exit_readline {
 	$term->WriteHistory ($history_dir."/".$history_file)
 	    or warn "Failed to write history file $history_dir/$history_file: $!.\n" ;
     } unless $term->Features->{WriteHistory} ;
-}
-
-###################################################################
-# print a question in bold
-
-sub print_question {
-    print color 'bold' ;
-    print shift ;
-    print color 'reset' ;
 }
 
 ###################################################################
