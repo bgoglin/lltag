@@ -506,8 +506,6 @@ sub add_defaults {
     my $self = shift ;
     my $values = shift ;
 
-    my $new_values = Lltag::Tags::clone_tag_values ($values) ;
-
     # then add defaults to not defined tags
     foreach my $field (@{$self->{field_names}}) {
 	$new_values->{$field} = $self->{field_default}{$field}
@@ -520,8 +518,6 @@ sub add_defaults {
 sub add_additional_values {
     my $self = shift ;
     my $values = shift ;
-
-    my $new_values = Lltag::Tags::clone_tag_values ($values) ;
 
     # add new values to the old ones, depending on clear/append options
     Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
