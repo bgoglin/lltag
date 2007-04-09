@@ -1,6 +1,7 @@
 lltag (0.14-1) unstable; urgency=low
 
   * New upstream release.
+  * Add an EXAMPLES section in the manpage, closes: #406213.
   * Refresh debianize_dependencies_in_warnings.patch and add a hunk
     about libmp3-tag-perl.
   * Add preinst to remove /etc/lltag/config unless modified since
@@ -8,7 +9,7 @@ lltag (0.14-1) unstable; urgency=low
   * Add an empty line between paragraphs in the description, thanks
     to Christoph Berg.
 
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon, 09 Apr 2007 11:30:49 +0200
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon, 09 Apr 2007 11:58:42 +0200
 
 lltag (0.13.1-1) unstable; urgency=low
 
