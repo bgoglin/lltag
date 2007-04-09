@@ -830,7 +830,7 @@ while ( @files ) {
     my ($parsename, $backend) = extract_parsename_and_backend $file ;
     if (not defined $backend) {
 	print "  Skipping this file '$file' with unknown type.\n" ;
-	goto NEXT_FILE ;
+	next ;
     }
 
     # read old tags
