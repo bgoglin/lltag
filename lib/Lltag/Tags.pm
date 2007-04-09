@@ -59,6 +59,8 @@ sub display_tag_values {
 # clone tag values (to be able to modify without changing the original)
 sub clone_tag_values {
     my $old_values = shift ;
+    return undef unless defined $old_values ;
+
     # clone the hash
     my %new_values = %{$old_values} ;
 
