@@ -384,7 +384,7 @@ sub cddb_track_usage {
     print "      <index> a => Choose a track and do not ask for confirmation anymore\n" ;
     print "      a => Use default track and do not ask for confirmation anymore\n" ;
     print "      E => Edit current CD common tags\n" ;
-    print "      v => View the list of CD matching the keywords\n" ;
+    print "      V => View the list of CD matching the keywords\n" ;
     print "      c => Change the CD chosen in keywords query results list\n" ;
     print "      k => Start again CDDB query with different keywords\n" ;
     print "      q => Quit CDDB query\n" ;
@@ -443,7 +443,7 @@ sub get_cddb_tags_from_tracks {
 	if $cddb_track_usage_forced ;
 
     while (1) {
-	my $reply = Lltag::Misc::readline ("  ", "Enter track index [<index>aEvckq]".
+	my $reply = Lltag::Misc::readline ("  ", "Enter track index [<index>aEVckq]".
 			" (default is Track $previous_track, h for help)", "", -1) ;
 
 	# if ctrl-d, abort cddb
@@ -482,7 +482,7 @@ sub get_cddb_tags_from_tracks {
 	    next ;
 	}
 
-	if ($reply =~ m/^v/) {
+	if ($reply =~ m/^V/) {
 	    print_cd $cd ;
 	    next ;
 	} ;
@@ -527,7 +527,7 @@ sub get_cddb_tags_from_tracks {
 sub cddb_cd_usage {
     Lltag::Misc::print_usage_header ("    ", "Choose CD in CDDB Query Results") ;
     print "      <index> => Choose a CD in the current keywords query results list\n" ;
-    print "      v => View the list of CD matching the keywords\n" ;
+    print "      V => View the list of CD matching the keywords\n" ;
     print "      k => Start again CDDB query with different keywords\n" ;
     print "      q => Quit CDDB query\n" ;
     print "      h => Show this help\n" ;
@@ -576,7 +576,7 @@ sub get_cddb_tags_from_cdids {
 	if $cddb_cd_usage_forced ;
 
     while (1) {
-	my $reply = Lltag::Misc::readline ("  ", "Enter CD index [<index>vkq] (no default, h for help)", "", -1) ;
+	my $reply = Lltag::Misc::readline ("  ", "Enter CD index [<index>Vkq] (no default, h for help)", "", -1) ;
 
 	# if ctrl-d, abort cddb
 	$reply = 'q' unless defined $reply ;
@@ -590,7 +590,7 @@ sub get_cddb_tags_from_cdids {
 	    if $reply =~ m/^k/ ;
 
 	goto AGAIN
-	    if $reply =~ m/^v/ ;
+	    if $reply =~ m/^V/ ;
 
 	if ($reply =~ m/^\d+$/ and $reply >= 1 and $reply <= @{$cdids}) {
 	    # do the actual query for CD contents

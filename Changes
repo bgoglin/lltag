@@ -25,6 +25,8 @@
     edit tags directly.
   * Display current values when entering editing instead of in the
     menu usage.
+  * Uniformize letter to enter to view current values (changed 'v'
+    into 'V' in the CDDB menus).
   * Support edition of all CD tags returned by CDDB.
   * Check genre and tracknumbers before passing them to mp3info and
     ignore invalid values to avoid failure.
