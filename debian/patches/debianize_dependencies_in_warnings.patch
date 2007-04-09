@@ -1,16 +1,17 @@
 ---
- lib/Lltag/CDDB.pm |    4 +-
- lib/Lltag/FLAC.pm |    2 +-
- lib/Lltag/Misc.pm |    2 +-
- lib/Lltag/MP3.pm  |    2 +-
- lib/Lltag/OGG.pm  |    2 +-
- 5 files changed, 6 insertions(+), 6 deletions(-)
+ lib/Lltag/CDDB.pm  |    4 ++--
+ lib/Lltag/FLAC.pm  |    2 +-
+ lib/Lltag/MP3.pm   |    2 +-
+ lib/Lltag/MP3v2.pm |    2 +-
+ lib/Lltag/Misc.pm  |    3 ++-
+ lib/Lltag/OGG.pm   |    2 +-
+ 6 files changed, 8 insertions(+), 7 deletions(-)
 
-Index: lltag-0.12.1/lib/Lltag/CDDB.pm
+Index: trunk/lib/Lltag/CDDB.pm
 ===================================================================
---- lltag-0.12.1/lib/Lltag/CDDB.pm	(revision 390)
-+++ lltag-0.12.1/lib/Lltag/CDDB.pm	(working copy)
-@@ -32,7 +32,7 @@
+--- trunk.orig/lib/Lltag/CDDB.pm	2007-04-08 21:09:19.000000000 +0200
++++ trunk/lib/Lltag/CDDB.pm	2007-04-09 02:51:01.000000000 +0200
+@@ -36,7 +36,7 @@
      my $self = shift ;
  
      if (not eval { require LWP ; } ) {
@@ -19,7 +20,7 @@ Index: lltag-0.12.1/lib/Lltag/CDDB.pm
  	    if $self->{verbose_opt} ;
  	$cddb_supported = 0 ;
  	return ;
-@@ -601,7 +601,7 @@
+@@ -618,7 +618,7 @@
      my ($res, $values) ;
  
      if (!$cddb_supported) {
@@ -28,10 +29,10 @@ Index: lltag-0.12.1/lib/Lltag/CDDB.pm
  	goto ABORT ;
      }
  
-Index: lltag-0.12.1/lib/Lltag/FLAC.pm
+Index: trunk/lib/Lltag/FLAC.pm
 ===================================================================
---- lltag-0.12.1.orig/lib/Lltag/FLAC.pm	2006-10-03 20:06:25.000000000 +0200
-+++ lltag-0.12.1/lib/Lltag/FLAC.pm	2006-10-03 23:06:38.000000000 +0200
+--- trunk.orig/lib/Lltag/FLAC.pm	2006-12-22 15:40:53.000000000 +0100
++++ trunk/lib/Lltag/FLAC.pm	2007-04-09 02:51:01.000000000 +0200
 @@ -9,7 +9,7 @@
      my $self = shift ;
      # cannot test with "metaflac -h" since it returns 1
@@ -41,10 +42,10 @@ Index: lltag-0.12.1/lib/Lltag/FLAC.pm
  	if $status and $self->{verbose_opt} ;
      return $status ;
  }
-Index: lltag-0.12.1/lib/Lltag/Misc.pm
+Index: trunk/lib/Lltag/Misc.pm
 ===================================================================
---- lltag-0.12.1.orig/lib/Lltag/Misc.pm	2006-10-03 23:05:59.000000000 +0200
-+++ lltag-0.12.1/lib/Lltag/Misc.pm	2006-10-03 23:06:38.000000000 +0200
+--- trunk.orig/lib/Lltag/Misc.pm	2007-03-31 19:17:50.000000000 +0200
++++ trunk/lib/Lltag/Misc.pm	2007-04-09 02:51:01.000000000 +0200
 @@ -58,7 +58,8 @@
      # 0 = no clearing, 1 = clearing allowed and documented, -1 = clearing allowed (normal behavior)
      $preput = "" if not defined $preput ;
@@ -55,10 +56,10 @@ Index: lltag-0.12.1/lib/Lltag/Misc.pm
  	print $indent."The current value is given in parenthesis, <ENTER> to keep it"
  	    . ($clear_allowed>0 ? ", <CLEAR> to clear it" : "")
  	    . ".\n" ;
-Index: lltag-0.12.1/lib/Lltag/MP3.pm
+Index: trunk/lib/Lltag/MP3.pm
 ===================================================================
---- lltag-0.12.1.orig/lib/Lltag/MP3.pm	2006-10-03 20:06:25.000000000 +0200
-+++ lltag-0.12.1/lib/Lltag/MP3.pm	2006-10-03 23:06:38.000000000 +0200
+--- trunk.orig/lib/Lltag/MP3.pm	2007-04-08 18:20:17.000000000 +0200
++++ trunk/lib/Lltag/MP3.pm	2007-04-09 02:51:01.000000000 +0200
 @@ -8,7 +8,7 @@
  sub test_mp3info {
      my $self = shift ;
@@ -68,10 +69,10 @@ Index: lltag-0.12.1/lib/Lltag/MP3.pm
  	if $status and $self->{verbose_opt} ;
      return $status ;
  }
-Index: lltag-0.12.1/lib/Lltag/OGG.pm
+Index: trunk/lib/Lltag/OGG.pm
 ===================================================================
---- lltag-0.12.1.orig/lib/Lltag/OGG.pm	2006-10-03 20:06:25.000000000 +0200
-+++ lltag-0.12.1/lib/Lltag/OGG.pm	2006-10-03 23:06:38.000000000 +0200
+--- trunk.orig/lib/Lltag/OGG.pm	2007-04-03 22:04:15.000000000 +0200
++++ trunk/lib/Lltag/OGG.pm	2007-04-09 02:51:01.000000000 +0200
 @@ -8,7 +8,7 @@
  sub test_vorbiscomment {
      my $self = shift ;
@@ -81,3 +82,16 @@ Index: lltag-0.12.1/lib/Lltag/OGG.pm
  	if $status and $self->{verbose_opt} ;
      return $status ;
  }
+Index: trunk/lib/Lltag/MP3v2.pm
+===================================================================
+--- trunk.orig/lib/Lltag/MP3v2.pm	2007-04-09 02:51:38.000000000 +0200
++++ trunk/lib/Lltag/MP3v2.pm	2007-04-09 02:52:15.000000000 +0200
+@@ -13,7 +13,7 @@
+ sub test_MP3Tag {
+     my $self = shift ;
+     if (not eval { require MP3::Tag ; } ) {
+-	print "MP3::Tag does not seem to be available, disabling 'MP3v2' backend.\n"
++	print "MP3::Tag does not seem to be available (is the 'libmp3-tag-perl' package installed?), disabling 'MP3v2' backend.\n"
+ 	    if $self->{verbose_opt} ;
+ 	return -1 ;
+     }
