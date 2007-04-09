@@ -122,27 +122,23 @@ sub append_tag_values {
     }
 }
 
-# add a set of unique values into another hash, depending of clear/append options
+# add a set of new values into an old hash, depending of clear/append options
 sub merge_new_tag_values {
     my $self = shift ;
     my $old_values = shift ;
     my $new_values = shift ;
 
-    my $merged_values ;
     if ($self->{clear_opt}) {
-	$merged_values = {} ;
-    } else {
-	# clone old as merged
-	$merged_values = clone_tag_values $old_values ;
+	$old_values = {} ;
     }
 
     foreach my $field (keys %{$new_values}) {
-	delete $merged_values->{$field}
-	    if defined $merged_values->{$field} and !$self->{append_opt} ;
-	append_tag_multiple_value $self, $merged_values, $field, $new_values->{$field} ;
+	delete $old_values->{$field}
+	    if defined $old_values->{$field} and !$self->{append_opt} ;
+	append_tag_multiple_value $self, $old_values, $field, $new_values->{$field} ;
     }
 
-    return $merged_values ;
+    return $old_values ;
 }
 
 # return values for a field as an array
