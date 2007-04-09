@@ -245,6 +245,19 @@ when parsing the filename:
 
 
 
+<h3 class="question">What is the difference between default and additional values?</h3>
+
+Default values (given with <tt>-a</tt>, <tt>-t</tt>, <tt>-A</tt>, <tt>-n</tt>,
+<tt>-g</tt>, <tt>-d</tt>, or <tt>-c</tt>) are only set at the end if there is no
+defined value for the target tag in this file.
+
+Additional values (given with <tt>--tag FIELD=value</tt>) are always added,
+even if it means that the target tag will have multiple values. Playing with
+<tt>--clear</tt> or <tt>--append</tt> enables configuration of how they are
+actually added.
+
+
+
 <h3 class="question">How do I cleanup tags?</h3>
 
 If your filenames are dirty, it is possible to ask <tt>lltag</tt> to be flexible
