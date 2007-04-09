@@ -595,6 +595,13 @@ sub try_cddb {
     return undef ;
 }
 
+sub try_defaults {
+    my $self = shift ;
+    my $old_values = shift ;
+
+    return add_defaults $self, $old_values ;
+}
+
 #######################################################
 # main confirmation loop
 
@@ -684,7 +691,7 @@ sub main_confirm_menu {
 		if defined $new_values ;
 
 	} elsif ($confirm_reply =~ m/^D/) {
-	    $current_values = add_defaults $self, $old_values ;
+	    $current_values = try_defaults $self, $old_values ;
 
 	} elsif ($confirm_reply =~ m/^Z/) {
 	    $current_values = {} ;
@@ -852,7 +859,7 @@ while ( @files ) {
 	}
     }
 
-    $current_values = add_defaults $self, $old_values ;
+    $current_values = try_defaults $self, $old_values ;
 
   CONFIRM:
     if ($current_main_yes_opt) {
