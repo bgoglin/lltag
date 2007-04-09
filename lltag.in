@@ -538,6 +538,9 @@ sub try_parse_with_preferred {
     my $parsename = shift ;
     my $old_values = shift ;
 
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
+
     my ($res, $new_values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename) ;
     if ($res == Lltag::Parse->PARSE_SUCCESS) {
 	return add_defaults ($self,
@@ -561,6 +564,9 @@ sub try_parse {
     my $try_internals = shift ;
     my $old_values = shift ;
 
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
+
     my ($res, $new_values) = Lltag::Parse::try_to_parse ($self, $file, $parsename, $try_internals) ;
     if ($res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED) {
 	return add_defaults ($self,
@@ -581,6 +587,9 @@ sub try_edit {
     my $self = shift ;
     my $current_values = shift ;
 
+    # save old values before editing
+    $current_values = Lltag::Tags::clone_tag_values ($current_values) ;
+
     # do not add defaults/additionals here since this function might
     # be called on current values without need to add them
     my ($res, $new_values) = Lltag::Tags::edit_values ($self, $current_values) ;
@@ -598,6 +607,9 @@ sub try_edit {
 sub try_cddb {
     my $self = shift ;
     my $old_values = shift ;
+
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
 
     my ($res, $new_values) = Lltag::CDDB::get_cddb_tags ($self) ;
     if ($res == Lltag::CDDB->CDDB_SUCCESS) {
@@ -618,6 +630,9 @@ sub try_cddb {
 sub try_defaults {
     my $self = shift ;
     my $old_values = shift ;
+
+    # save old values before merging
+    $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
 
     return add_defaults ($self,
 			 (Lltag::Tags::merge_new_tag_values ($self,
