@@ -840,10 +840,7 @@ while ( @files ) {
 
     # edit, if enabled
     if ($self->{edit_opt}) {
-	my $new_values = try_edit ($self,
-				   (add_defaults $self,
-				    (add_additional_values ($self,
-							    $old_values)))) ;
+	my $new_values = try_edit ($self, try_defaults ($self, $old_values)) ;
 	if (defined $new_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM ;
