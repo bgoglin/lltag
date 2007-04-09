@@ -508,11 +508,11 @@ sub add_defaults {
 
     # then add defaults to not defined tags
     foreach my $field (@{$self->{field_names}}) {
-	$new_values->{$field} = $self->{field_default}{$field}
-	    if not defined $new_values->{$field} and defined $self->{field_default}{$field} ;
+	$values->{$field} = $self->{field_default}{$field}
+	    if not defined $values->{$field} and defined $self->{field_default}{$field} ;
     }
 
-    return $new_values ;
+    return $values ;
 }
 
 sub add_additional_values {
@@ -520,9 +520,9 @@ sub add_additional_values {
     my $values = shift ;
 
     # add new values to the old ones, depending on clear/append options
-    Lltag::Tags::append_tag_values ($self, $new_values, $self->{additional_values}) ;
+    Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
 
-    return $new_values ;
+    return $values ;
 }
 
 #######################################################
