@@ -626,6 +626,7 @@ sub try_cddb {
 sub try_defaults {
     my $self = shift ;
     my $old_values = shift ;
+    my $empty_values = {} ;
 
     # save old values before merging
     $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
@@ -634,7 +635,7 @@ sub try_defaults {
 			 (Lltag::Tags::merge_new_tag_values ($self,
 							     $old_values,
 							     (add_additional_values ($self,
-										     ()))))) ;
+										     $empty_values))))) ;
 }
 
 #######################################################
