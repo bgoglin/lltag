@@ -428,6 +428,8 @@ sub register_backend {
 # register MP3v2 backend if enabled, and fallback to MP3 if failed
 if (!$self->{mp3v2_opt}
     or register_backend (Lltag::MP3v2::new ($self)) < 0) {
+    Lltag::Misc::print_warning ("", "Failed to register MP3v2 backend, falling back to MP3.")
+	if $self->{mp3v2_opt} ;
     register_backend (Lltag::MP3::new ($self)) ;
 }
 
