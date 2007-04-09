@@ -588,9 +588,9 @@ sub try_edit {
 
     # do not add defaults/additionals here since this function might
     # be called on current values without need to add them
-    my ($res, $new_values) = Lltag::Tags::edit_values ($self, $current_values) ;
+    my $res = Lltag::Tags::edit_values ($self, $current_values) ;
     if ($res == Lltag::Tags->EDIT_SUCCESS) {
-	return $new_values ;
+	return $current_values ;
     }
 
     # sanity check

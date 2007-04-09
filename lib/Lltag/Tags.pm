@@ -302,12 +302,10 @@ sub edit_one_value {
     }
 }
 
+# edit values in place
 sub edit_values {
     my $self = shift ;
-    my $old_values = shift ;
-
-    # save values
-    my $values = clone_tag_values $old_values ;
+    my $values = shift ;
 
     edit_values_usage $self, $values
 	if $edit_values_usage_forced ;
@@ -328,10 +326,10 @@ sub edit_values {
 	    edit_one_value $self, $values, $self->{field_letter_name}{$1} ;
 
 	} elsif ($edit_reply =~ m/^y/ or $edit_reply =~ m/^E/) {
-	    return (EDIT_SUCCESS, $values) ;
+	    return EDIT_SUCCESS ;
 
 	} elsif ($edit_reply =~ m/^q/ or $edit_reply =~ m/^C/) {
-	    return (EDIT_CANCEL, undef) ;
+	    return EDIT_CANCEL ;
 
 	} elsif ($edit_reply =~ m/^V/) {
 	    print "      Current tag values are:\n" ;
