@@ -20,7 +20,7 @@ Index: trunk/lib/Lltag/CDDB.pm
  	    if $self->{verbose_opt} ;
  	$cddb_supported = 0 ;
  	return ;
-@@ -618,7 +618,7 @@
+@@ -621,7 +621,7 @@
      my ($res, $values) ;
  
      if (!$cddb_supported) {
