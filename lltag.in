@@ -519,7 +519,7 @@ sub add_additional_values {
     my $self = shift ;
     my $values = shift ;
 
-    # add new values to the old ones, depending on clear/append options
+    # append additional values
     Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
 
     return $values ;
