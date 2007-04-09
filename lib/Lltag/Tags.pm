@@ -247,17 +247,9 @@ sub edit_values_usage {
 
     # print all fields, including the undefined ones
     foreach my $field (@{$self->{field_names}}) {
-	my $val = $values->{$field} ;
-	if (not defined $val) {
-	    $val = "<not defined>" ;
-	} elsif (ref($val) eq 'ARRAY') {
-	    $val = join(" ; ", @{$val}) ;
-	} elsif ($val eq "") {
-	    $val = "<CLEAR>" ;
-	}
 	print "      ".$self->{field_name_letter}{$field}
 	." => Edit ".ucfirst($field).$self->{field_name_trailing_spaces}{$field}
-	." (".$val.")\n" ;
+	."\n" ;
     }
     print "      tag FOO => Edit tag FOO\n" ;
     print "      V => View current fields\n" ;
@@ -319,6 +311,9 @@ sub edit_values {
 
     edit_values_usage $self, $values
 	if $edit_values_usage_forced ;
+
+    print "      Current tag values are:\n" ;
+    display_tag_values $self, $values, "        " ;
 
     while (1) {
 	my $edit_reply = Lltag::Misc::readline ("    ", "Edit a field [". $self->{field_letters_string} ."Vyq] (no default, h for help)", "", -1) ;
