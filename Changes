@@ -1,3 +1,7 @@
+
+  * Fix typo in lltag_config.5 (reported by Emmanuel Jeandel).
+
+
 lltag (0.14)
 
   * Add an optional ID3v2 tag support for MP3 files using MP3::Tag
