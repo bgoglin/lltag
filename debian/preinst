@@ -8,7 +8,7 @@ rm_unchanged_conffile() {
 
     if [ -e "$CONFFILE" ]; then
 	md5sum="`md5sum \"$CONFFILE\" | sed -e \"s/ .*//\"`"
-	old_md5sum="`sed -n -e \"/^Conffiles:/,/^[^ ]/{\\\\' $CONFFILE'{s/.* \([^ ]+\).*/\1/;p}}\" /var/lib/dpkg/status | cut -d' ' -f 3`"
+	old_md5sum=`dpkg-query -W -f='${Conffiles} ' lltag | grep "$CONFFILE[[:space:]]" | cut -d' ' -f3`
 	if [ "$md5sum" = "$old_md5sum" ]; then
 	    rm -f "$CONFFILE"
 	fi
