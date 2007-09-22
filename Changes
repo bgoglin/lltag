@@ -1,4 +1,6 @@
 
+  * Make sure the last character of user-provided format is correctly
+    escaped (reported by Benjamin Saunders).
   * Fix typo in lltag.1 (reported by Georg Neis in Debian bug #438795).
   * Fix typo in lltag_config.5 (reported by Emmanuel Jeandel).
 

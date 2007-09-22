@@ -482,7 +482,7 @@ sub generate_user_parser {
     # create the regexp and store indice fields
     my @array = split(//, $format_string) ;
     my @field_table = () ;
-    for(my $i = 0; $i < @array - 1; $i++) {
+    for(my $i = 0; $i < @array; $i++) {
 
 	my $char = $array[$i] ;
 	# normal characters
@@ -503,6 +503,10 @@ sub generate_user_parser {
 	    }
 	    # keep this character
 	    next ;
+	}
+
+	if ($i == @array - 1) {
+	    Lltag::Misc::die_error ("Format '". $format_string ."' ends with '%' without operator letter.") ;
 	}
 
 	# remove % and check next char
