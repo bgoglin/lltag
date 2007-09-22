@@ -2,6 +2,7 @@ lltag (0.14-2) UNRELEASED; urgency=low
 
   * Use dpkg-query instead of parsing /var/lib/dpkg/status in preinst
     (lintian error maintainer-script-uses-dpkg-status-directly).
+  * Fix typo in lltag.1, closes: #438795.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 08 Jul 2007 23:21:50 +0200
 
