@@ -18,7 +18,9 @@
 
 
 
+<a name="basic_use">
 <h3 class="question">How do I use lltag?</h3>
+</a>
 
 <pre>
   lltag myfile1.mp3 myfile2.ogg
@@ -37,7 +39,9 @@ If the extension is wrong, it is possible to force the file processing type:
 
 
 
+<a name="see_current_tags">
 <h3 class="question">How do I see current tags in files?</h3>
+</a>
 
 All the tags currently existing in files may be displayed:
 <pre>
@@ -51,7 +55,9 @@ It is also possible to only display some tags:
 
 
 
+<a name="set_tags_by_hand">
 <h3 class="question">How do I set tags by hand?</h3>
+</a>
 
 Any tag may be changed by hand:
 <pre>
@@ -79,7 +85,9 @@ And all tags may be removed from all files:
 
 
 
+<a name="do_not_tag">
 <h3 class="question">How do I try lltag without actually tagging?</h3>
+</a>
 
 <pre>
   lltag --dry-run
@@ -87,7 +95,9 @@ And all tags may be removed from all files:
 
 
 
+<a name="change_confirm">
 <h3 class="question">How do I change what confirmation lltag wants?</h3>
+</a>
 
 It is possible to remove any need for confirmation when no problem occurs:
 <pre>
@@ -109,7 +119,9 @@ Finally, during confirmation, it is possible to use <tt>Always</tt> to enable
 
 
 
+<a name="see_parsing">
 <h3 class="question">How do I see how lltag parses filename?</h3>
+</a>
 
 <tt>lltag</tt> uses internal format that are defined in <tt>/etc/lltag/formats/</tt>.
 You might see them with:
@@ -119,7 +131,9 @@ You might see them with:
 
 
 
+<a name="force_format">
 <h3 class="question">How do I force lltag to use another format?</h3>
+</a>
 
 If internal formats do not fit the way your filename is written, you may pass
 additional formats with:
@@ -134,7 +148,9 @@ It is also possible to try user-provided formats and then try internal formats:
 
 
 
+<a name="preferred_parser">
 <h3 class="question">What is the preferred parser?</h3>
+</a>
 
 If all your filenames have the same format, i.e. they may be matched with the
 same parser, you might want to try this one first instead of seeing the other
@@ -154,7 +170,9 @@ may be marked as <em>preferred</em> later again.
 
 
 
+<a name="what_is_cddb">
 <h3 class="question">What is CDDB and why does lltag need it?</h3>
+</a>
 
 CDDB is a huge online database of CD describing their artist, album, date,
 tracks, ... everything that <tt>lltag</tt> considers as tags.
@@ -174,7 +192,9 @@ may also be configured to use it:
 
 
 
+<a name="cddb_get_tags">
 <h3 class="question">How do get tags from CDDB?</h3>
+</a>
 
 The common way to search a CD on CDDB is to pass keywords, which return a list
 of matching CDs. Then, you choose a CD in the list, and a track in the CD tracks.
@@ -197,7 +217,9 @@ is quick and easy.
 
 
 
+<a name="choose_cddb_cd">
 <h3 class="question">How do choose a precise CD in CDDB?</h3>
+</a>
 
 All CD that are registered in CDDB are identified by a category and an
 hexadecimal identifier. When searching by keywords, <tt>lltag</tt> will
@@ -209,7 +231,9 @@ of keywords to get a precise CD quickly.
 
 
 
+<a name="interactive_cddb">
 <h3 class="question">Is the interactive interface always required to access CDDB?</h3>
+</a>
 
 The CDDB interface seems to be designed for interactive usage since the user
 is supposed to choose a CD in the list of CDs returned by the keywords query,
@@ -235,7 +259,9 @@ mode so that the user may choose another CD to tag the remaining files.
 
 
 
+<a name="set_default">
 <h3 class="question">How do I set default values?</h3>
+</a>
 
 Each tag field may receive a default value even if it is not defined
 when parsing the filename:
@@ -245,7 +271,9 @@ when parsing the filename:
 
 
 
+<a name="default_and_additional">
 <h3 class="question">What is the difference between default and additional values?</h3>
+</a>
 
 Default values (given with <tt>-a</tt>, <tt>-t</tt>, <tt>-A</tt>, <tt>-n</tt>,
 <tt>-g</tt>, <tt>-d</tt>, or <tt>-c</tt>) are only set at the end if there is no
@@ -258,7 +286,9 @@ actually added.
 
 
 
+<a name="cleanup_tag">
 <h3 class="question">How do I cleanup tags?</h3>
+</a>
 
 If your filenames are dirty, it is possible to ask <tt>lltag</tt> to be flexible
 with spaces. Any space in the format might be matched with 0 or several spaces
@@ -284,7 +314,9 @@ spaces for tags:
 
 
 
+<a name="rename">
 <h3 class="question">How do I rename files after tagging?</h3>
+</a>
 
 Files might be renamed using the tags that were gotten from original filename parsing:
 <pre>
@@ -298,7 +330,9 @@ Tags might be lowcased before renaming, and spaces might be replaced with anothe
 
 
 
+<a name="rename_without_tagging">
 <h3 class="question">How do I rename files without tagging?</h3>
+</a>
 
 <tt>lltag</tt> may also be used as a renaming program without any tagging:
 
@@ -313,6 +347,7 @@ in this case.
 <pre>
   lltag --no-tagging --rename "%a - %A/%n - %t" */*.ogg
 </pre>
+
 
 
 </div>
