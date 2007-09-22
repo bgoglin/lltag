@@ -21,6 +21,13 @@ Getopt::Long::Configure('noignorecase', 'noautoabbrev', 'bundling') ;
 my $self = {} ;
 
 #######################################################
+# UTF-8 locale ?
+
+use I18N::Langinfo qw(langinfo CODESET) ;
+
+$self->{utf8} = ( langinfo (CODESET ()) eq "UTF-8" ) ;
+
+#######################################################
 # configuration file location
 $self->{common_lltag_dir} = "@SYSCONFDIR@/lltag" ;
 $self->{user_lltag_dir} = "$ENV{HOME}/.lltag" ;

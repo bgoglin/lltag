@@ -4,6 +4,8 @@ use strict ;
 
 use Lltag::Misc ;
 
+use I18N::Langinfo qw(langinfo CODESET) ;
+
 # return values that are passed to lltag
 use constant CDDB_SUCCESS => 0 ;
 use constant CDDB_ABORT => -1 ;
@@ -271,8 +273,9 @@ sub tracktypeorg_cddb_response {
     # deal with windows line-break
     $content =~ s/\r\n/\n/g ;
 
-    # convert from utf8 to current locale
-    utf8::decode($content);
+    # convert from utf8 if not using a utf8 locale
+    utf8::decode($content)
+	unless $self->{utf8} ;
 
     return $content ;
 }
