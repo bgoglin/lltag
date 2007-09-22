@@ -12,7 +12,7 @@ config \- Configuration file for lltag
 
 .SH DESCRIPTION
 The following options may be stored in
-.I .I /etc/lltag/config
+.I /etc/lltag/config
 or the user's
 .IR $HOME/.lltag/config ,
 or in any file passed with
@@ -217,12 +217,16 @@ Recursively traverse all given subdirectories
 Default is
 .BR 0 " (" disabled ")."
 .RE
-.I verbose = <0/1>
+.I verbose = <integer>
 .RS
 Message verbosity level
 .RB [ -v " and " -q ].
 Default is
-.BR 1 " (" "show usage when a menu is displayed for the first time" ")."
+.BR 0 " (" "only important messages" ")."
+Other possible values are
+.BR 1 " (" "show usage information when a menu is displayed for the first time" ")"
+and
+.BR 2 " (" "always show usage information before a menu appears" ")."
 .RE
 
 

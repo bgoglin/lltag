@@ -385,9 +385,9 @@ Decrease message verbosity.
 The corresponding configuration file option is
 .I verbose
 which indicates the verbose level.
-Default is 1 to show usage when a menu is displayed for the first time.
-See also
-.BR -v .
+See
+.BR -v
+for details about the existing verbosity levels.
 
 .TP
 .B "-R, --recursive"
@@ -481,7 +481,7 @@ The argument is a comma separated list of tag types
 .RI ( artist ", " title ", " album ", " number ", "
 .IR genre ", " date ", " comment " or " all ).
 See also
-.B -B
+.B -S
 to show all tags.
 
 .TP
@@ -523,7 +523,12 @@ Increase message verbosity.
 The corresponding configuration file option is
 .I verbose
 which indicates the verbose level.
-Default is 1 to show usage when a menu is displayed for the first time.
+
+The default verbosity level is 0 to show only important messages.
+Other possible values are 1 to show usage information when a menu
+is displayed for the first time, and 2 to always show usage
+information before a menu appears.
+
 See also
 .BR -q .
 

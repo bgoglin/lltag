@@ -1,3 +1,19 @@
+lltag (0.14.1)
+
+  * Make sure the last character of user-provided format is correctly
+    escaped (reported by Benjamin Saunders).
+  * Keep CDDB tags in UTF-8 when using a UTF-8 locale
+    (reported by Tino Keitel in Debian bug #418951).
+  * Set verbose level to 0 by default so that menu usage information
+    is not displayed unless the user explicitly request it, either
+    by passing -v on the command, or by typing 'h' in a menu
+    (requested by Alexandre Buisse).
+    + Fix documentation about verbosity levels in the manpages.
+  * Fix typo in lltag.1 (reported by Georg Neis in Debian bug #438795).
+  * Fix typo in lltag_config.5 (reported by Emmanuel Jeandel).
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sat, 22 Sep 2007 11:25:00 +0200
+
 lltag (0.14)
 
   * Add an optional ID3v2 tag support for MP3 files using MP3::Tag
