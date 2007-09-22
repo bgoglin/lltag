@@ -145,7 +145,7 @@ sub usage {
 #######################################################
 # options
 
-my $verbose_level = 1 ; # only display usage when menu appear for the first time
+my $verbose_level = 0 ; # do not display menu usage information
 
 $self->{dry_run_opt} = 0 ;
 $self->{recursive_opt} = 0 ;

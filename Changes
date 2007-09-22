@@ -1,6 +1,11 @@
 
   * Make sure the last character of user-provided format is correctly
     escaped (reported by Benjamin Saunders).
+  * Set verbose level to 0 by default so that menu usage information
+    is not displayed unless the user explicitly request it, either
+    by passing -v on the command, or by typing 'h' in a menu
+    (requested by Alexandre Buisse).
+    + Fix documentation about verbosity levels in the manpages.
   * Fix typo in lltag.1 (reported by Georg Neis in Debian bug #438795).
   * Fix typo in lltag_config.5 (reported by Emmanuel Jeandel).
 
