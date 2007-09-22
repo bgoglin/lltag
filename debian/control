@@ -1,7 +1,7 @@
 Source: lltag
 Section: sound
 Priority: extra
-Maintainer: Brice Goglin <Brice.Goglin@ens-lyon.org>
+Maintainer: Brice Goglin <bgoglin@debian.org>
 Build-Depends: debhelper (>= 4.0.2), quilt (>= 0.40)
 Standards-Version: 3.7.2.2
 
