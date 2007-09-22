@@ -1,11 +1,11 @@
-lltag (0.14.1-1) UNRELEASED; urgency=low
+lltag (0.14.1-1) unstable; urgency=low
 
   * Use dpkg-query instead of parsing /var/lib/dpkg/status in preinst
     (lintian error maintainer-script-uses-dpkg-status-directly).
   * Keep CDDB tags in UTF-8 when using a UTF-8 locale, closes: #418951.
   * Fix typo in lltag.1, closes: #438795.
 
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 08 Jul 2007 23:21:50 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 22 Sep 2007 11:28:26 +0200
 
 lltag (0.14-1) unstable; urgency=low
 
