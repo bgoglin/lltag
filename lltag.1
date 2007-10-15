@@ -41,6 +41,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .RB [ --rename-ext ]
 .RB [ --rename-min ]
 .RB [ "--rename-sep <sep>" ]
+.RB [ "--rename-slash <char>" ]
 .RB [ "--rename-regexp <regexp>" ]
 .RB [ --dry-run ]
 .RB [ --yes ]
@@ -452,6 +453,15 @@ The corresponding configuration file option is
 Replace spaces with sep when renaming.
 The corresponding configuration file option is
 .IR rename_sep .
+See
+.B --rename-regexp
+for a more general replace feature.
+
+.TP
+.BI --rename-slash " <char>"
+Replace slashes with char when renaming.
+The corresponding configuration file option is
+.IR rename_slash .
 See
 .B --rename-regexp
 for a more general replace feature.

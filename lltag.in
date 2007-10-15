@@ -183,6 +183,7 @@ $self->{rename_min_opt} = 0 ;
 $self->{rename_sep_opt} = " " ;
 $self->{rename_ext_opt} = 0 ;
 @{$self->{rename_regexp_opts}} = () ;
+$self->{rename_slash_opt} = "-" ;
 
 $self->{gencfg_file} = undef ;
 
@@ -255,10 +256,13 @@ sub process_option {
 	$self->{rename_min_opt} = $1 ;
     } elsif (/^rename_sep\s*=\s*"(.*)"$/) {
 	$self->{rename_sep_opt} = $1 ;
+    } elsif (/^rename_slash\s*=\s*"(.*)"$/) {
+	$self->{rename_slash_opt} = $1 ;
     } elsif (/^rename_regexp\s*=\s*"(.+)"$/) {
 	push (@{$self->{rename_regexp_opts}}, $1) ;
     } elsif (/^rename_ext\s*=\s*(.+)$/) {
 	$self->{rename_ext_opt} = $1 ;
+
     } elsif (/^dry_run\s*=\s*(.+)$/) {
 	$self->{dry_run_opt} = $1 ;
     } elsif (/^yes\s*=\s*(.+)$/) {
@@ -340,6 +344,7 @@ GetOptions(
 	   'rename=s'		=> \$self->{rename_opt},
 	   'rename-min'		=> \$self->{rename_min_opt},
 	   'rename-sep=s'	=> \$self->{rename_sep_opt},
+	   'rename-slash=s'	=> \$self->{rename_slash_opt},
 	   'rename-regexp=s'	=> \@{$self->{rename_regexp_opts}},
 	   'rename-ext'		=> \$self->{rename_ext_opt},
 	   'dry-run'		=> \$self->{dry_run_opt},
@@ -976,6 +981,7 @@ sub generate_config {
     print NEWCFG "rename_format = \"" .($self->{rename_opt} ? $self->{rename_opt} : ""). "\"\n" ;
     print NEWCFG "rename_min = $self->{rename_min_opt}\n" ;
     print NEWCFG "rename_sep = \"$self->{rename_sep_opt}\"\n" ;
+    print NEWCFG "rename_slash = \"$self->{rename_slash_opt}\"\n" ;
     map { print NEWCFG "rename_regexp = \"$_\"\n" ; } @{$self->{rename_regexp_opts}} ;
     print NEWCFG "rename_ext = $self->{rename_ext_opt}\n" ;
 

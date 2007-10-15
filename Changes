@@ -1,3 +1,11 @@
+lltag (xxx)
+
+  * Replace slashes with dashes before renaming
+    (reported by Mark McEver in Gna! bug #10127).
+    + Add --rename-slash to change dash into any other string.
+
+
+
 lltag (0.14.1)
 
   * Make sure the last character of user-provided format is correctly
