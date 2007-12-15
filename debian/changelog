@@ -1,3 +1,10 @@
+lltag (0.14.1-2) UNRELEASED; urgency=low
+
+  * Bump Standards-Version to 3.7.3, no changes needed.
+  * Move the homepage URL from the description to the new Homepage field.
+
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 15 Dec 2007 19:23:20 +0100
+
 lltag (0.14.1-1) unstable; urgency=low
 
   * Use dpkg-query instead of parsing /var/lib/dpkg/status in preinst

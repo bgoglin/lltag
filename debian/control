@@ -3,7 +3,8 @@ Section: sound
 Priority: extra
 Maintainer: Brice Goglin <bgoglin@debian.org>
 Build-Depends: debhelper (>= 4.0.2), quilt (>= 0.40)
-Standards-Version: 3.7.2.2
+Homepage: http://home.gna.org/lltag/
+Standards-Version: 3.7.3
 
 Package: lltag
 Architecture: all
@@ -18,5 +19,3 @@ Description: Automatic command-line mp3/ogg/flac file tagger and renamer
  lltag may also rename files according to a configurable filename format.
  The interface has been designed to be as automatic, efficient and smart
  as possible.
- .
-  Homepage: http://home.gna.org/lltag/
