@@ -1,9 +1,10 @@
-lltag (0.14.1-2) UNRELEASED; urgency=low
+lltag (0.14.2-1) UNRELEASED; urgency=low
 
+  * New upstream release.
   * Bump Standards-Version to 3.7.3, no changes needed.
   * Move the homepage URL from the description to the new Homepage field.
 
- -- Brice Goglin <bgoglin@debian.org>  Sat, 15 Dec 2007 19:23:20 +0100
+ -- Brice Goglin <bgoglin@debian.org>  Sun, 16 Dec 2007 12:28:41 +0100
 
 lltag (0.14.1-1) unstable; urgency=low
 
