@@ -778,7 +778,7 @@ while ( @ARGV ) {
 if (!@files) {
     print "No files to process.\n"
 	if $self->{verbose_opt} ;
-    exit 0 ;
+    # do not exit here, a config file might need to be generated
 }
 
 # display tags
