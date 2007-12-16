@@ -20,7 +20,8 @@ sub rename_usage {
     print " Renaming options:\n" ;
     print "  --rename <format>      Rename file according to format\n" ;
     print "  --rename-min           Lowcase tags before renaming\n" ;
-    print "  --rename-sep <s>       Replace space with s in tags before renaming\n" ;
+    print "  --rename-sep <s>       Replace spaces with s in tags before renaming\n" ;
+    print "  --rename-slash <s>     Replace slashes with s in tags before renaming\n" ;
     print "  --rename-regexp <reg>  Apply a replace regexp to tags before renaming\n" ;
     print "  --rename-ext           Assume the rename format provides an extension\n" ;
 }
@@ -84,6 +85,7 @@ sub rename_with_values {
 	    if $self->{rename_min_opt} ;
 	$val =~ s/ /$self->{rename_sep_opt}/g
 	    if $self->{rename_sep_opt} ;
+	$val =~ s/\//$self->{rename_slash_opt}/g ;
 	map { $val = Lltag::Tags::apply_regexp_to_tag ($val, $_, $field) } @{$self->{rename_regexp_opts}} ;
 	$rename_values->{$field} = $val ;
     }

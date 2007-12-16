@@ -178,14 +178,14 @@ sub get_values_non_regular_keys {
     } (keys %{$values}) ;
 }
 
-# handle additional tags
-sub process_additional_tag_value {
+# handle explicit tag values
+sub process_explicit_tag_value {
     my $self = shift ;
     my $string = shift ;
     if ($string =~ m/^([^=]+)=(.*)$/) {
-	append_tag_value $self, $self->{additional_values}, $1, $2 ;
+	append_tag_value $self, $self->{explicit_values}, $1, $2 ;
     } else {
-	die "Additional tags must be given as 'TAG=value'.\n" ;
+	die "Explicit tags must be given as 'TAG=value'.\n" ;
     }
 }
 
@@ -201,6 +201,16 @@ sub convert_tag_stream_to_values {
 	chomp $line ;
 	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
 	next if !$value ;
+
+	# remove the track total from the track number to avoid renaming problems with slashes or so
+	if ($field eq "NUMBER") {
+	    if ($value =~ /^(\d+)/) {
+		$value = $1 ;
+	    } else {
+		return ;
+	    }
+	}
+
 	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
     }
 

@@ -37,29 +37,11 @@ Default is to guess if no user-defined formats and no default field values are g
 Try to guess if user-defined formats do not match
 .RB [ -G ].
 Default is
-.BR 0 " (" disabled ") when no user-defined formats and no default field values are given."
-.RE
-.I default_ARTIST = \fI"string"
-.RE
-.I default_TITLE = \fI"string"
-.RE
-.I default_ALBUM = \fI"string"
-.RE
-.I default_NUMBER = \fI"string"
-.RE
-.I default_GENRE = \fI"string"
-.RE
-.I default_DATE = \fI"string"
-.RE
-.I default_COMMENT = \fI"string"
-.RS
-Default field value
-.RB [ -a ", " -t ", " -A ", " -n ", " -g ", " -d " and " -c ].
-Default is to not set any default value.
+.BR 0 " (" disabled ") when no user-defined formats and no explicit values are given."
 .RE
 .I tag = <TAG=value>
 .RS
-Add an additional tag
+Add an explicit tag
 .RB [ --tag ].
 Might be used multiple times.
 .RE
@@ -173,9 +155,15 @@ Default is to not apply any regexp.
 .RE
 .I rename_sep = \fI"string"
 .RS
-Replace space with s in tags before renaming
+Replace spaces with a string in tags before renaming
 .RB [ --rename-sep ].
 Default is to not replace any separator.
+.RE
+.I rename_slash = \fI"string"
+.RS
+Replace slashes with a string in tags before renaming
+.RB [ --rename-slash ].
+Default is to replace with a dash.
 .RE
 .I rename_ext = <0/1>
 .RS

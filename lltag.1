@@ -41,6 +41,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .RB [ --rename-ext ]
 .RB [ --rename-min ]
 .RB [ "--rename-sep <sep>" ]
+.RB [ "--rename-slash <char>" ]
 .RB [ "--rename-regexp <regexp>" ]
 .RB [ --dry-run ]
 .RB [ --yes ]
@@ -139,17 +140,13 @@ it will proceed with tagging (and renaming if requested) and go on with the
 next file.
 
 The new tags that the selected strategy returns will be appended with
-the additional values given with
-.BR --tag .
+the explicit values given with
+.BR " -a ", " -t ", " -A ", " -g ", " -n ", " -d ", " -c " or " --tag .
 They will then either replace (default), clear and replace
 .RB ( --clear )
 or append to
 .RB ( --append )
 the existing tags in the target file.
-And finally, each tag that will not be defined (and which the user will
-have provided a default value for, with
-.BR -a ", " -t ", " -A ", " -g ", " -n ", " -d " or " -c )
-will get a default value.
 
 Once the tags are known, a backend program or library is used to apply
 them to the audio file (unless
@@ -180,15 +177,11 @@ filled with the tag values.
 
 .TP
 .BI "-A, --album" " <album>"
-Set the default value of the \fIALBUM\fR tag.
-The corresponding configuration file option is
-.IR default_ALBUM .
+Add a value for the \fIALBUM\fR tag.
 
 .TP
 .BI "-a, --artist" " <artist>"
-Set the default value of the \fIARTIST\fR tag.
-The corresponding configuration file option is
-.IR default_ARTIST .
+Add a value for the \fIARTIST\fR tag.
 
 .TP
 .BI "--append"
@@ -245,9 +238,7 @@ may be used (set to something like "http://my.proxy.com").
 
 .TP
 .BI "-c, --comment" " <comment>"
-Set the default value of the \fICOMMENT\fR tag.
-The corresponding configuration file option is
-.IR default_COMMENT .
+Add a value for the \fICOMMENT\fR tag.
 
 .TP
 .B --clear
@@ -265,9 +256,7 @@ below for details.
 
 .TP
 .BI "-d, --date" " <date>"
-Set the default value of the \fIDATE\fR tag.
-The corresponding configuration file option is
-.IR default_DATE .
+Add a value for the \fIDATE\fR tag.
 Note that the ID3 date tag may only store 4 characters (for a year).
 
 .TP
@@ -305,9 +294,7 @@ The corresponding configuration file option is
 
 .TP
 .BI "-g, --genre" " <genre>"
-Set the default value of the \fIGENRE\fR tag.
-The corresponding configuration file option is
-.IR default_GENRE .
+Add a value for the \fIGENRE\fR tag.
 While some file types accept any string as a genre, some others
 (especially ID3v1 tags in MP3 files) require the string to match
 within a list of specified genres.
@@ -356,9 +343,7 @@ Note that merging/appending takes care of removing duplicates.
 
 .TP
 .BI "-n, --number" " <number>"
-Set the default value of the \fINUMBER\fR tag.
-The corresponding configuration file option is
-.IR default_NUMBER .
+Add a value for the \fINUMBER\fR tag.
 
 .TP
 .B --no-tagging
@@ -457,6 +442,15 @@ See
 for a more general replace feature.
 
 .TP
+.BI --rename-slash " <char>"
+Replace slashes with char when renaming.
+The corresponding configuration file option is
+.IR rename_slash .
+See
+.B --rename-regexp
+for a more general replace feature.
+
+.TP
 .B -S
 Instead of tagging, lltag shows the tags that are currently set in
 files.
@@ -496,16 +490,16 @@ to get the detailled impact of this option.
 
 .TP
 .BI "-t, --title" " <title>"
-Set the default value of the \fITITLE\fR tag.
-The corresponding configuration file option is
-.IR default_TITLE .
+Add a value for the \fITITLE\fR tag.
 
 .TP
 .BI "--tag" " <TAG=value>"
-Add an additional tag.
+Add an explicit tag value.
 The corresponding configuration file option is
 .IR tag .
-Might be used several times.
+Might be used several times, even for the same tag.
+When setting a common tag, it is similar to using
+.BR -a ", " -A ", " -t ", " -n ", " -g ", " -d " or " -c .
 Note that mp3 tags do not support whatever
 .IR TAG .
 
@@ -595,8 +589,8 @@ We now describe all interactive menus in detail.
 
 
 .SS MAIN MENU
-Once some tags have been obtained by either CDDB, parsing or the default
-values on the command line, the main menu opens to either change the tags
+Once some tags have been obtained by either CDDB, parsing or the explicit
+values given on the command line, the main menu opens to either change the tags
 or apply them:
 .TP
 .B y
@@ -618,7 +612,7 @@ Edit values, see
 .B EDITING MENU
 .TP
 .B D
-Only use default and additional values, forget about CDDB or parsed tags
+Only use explicit values, forget about CDDB or parsed tags
 .TP
 .B Z
 Reset to no tag values at all

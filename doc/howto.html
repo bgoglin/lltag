@@ -259,30 +259,25 @@ mode so that the user may choose another CD to tag the remaining files.
 
 
 
-<a name="set_default">
-<h3 class="question">How do I set default values?</h3>
+<a name="set_explicit">
+<h3 class="question">How do I set a specific value? What are explicit tag values?</h3>
 </a>
 
-Each tag field may receive a default value even if it is not defined
-when parsing the filename:
+Each tag field may receive a specific value even if it is not obtained through
+parsing the filename or so:
 <pre>
   lltag -a MyArtist -y 1990 myfile.mp3
 </pre>
 
+All regular fields may be defined like the above with <tt>-a</tt>, <tt>-t</tt>,
+<tt>-A</tt>, <tt>-n</tt>, <tt>-g</tt>, <tt>-d</tt> or <tt>-c</tt>.
+These (and any random tag) may also be set through <tt>--tag FIELD=value</tt>.
 
-
-<a name="default_and_additional">
-<h3 class="question">What is the difference between default and additional values?</h3>
-</a>
-
-Default values (given with <tt>-a</tt>, <tt>-t</tt>, <tt>-A</tt>, <tt>-n</tt>,
-<tt>-g</tt>, <tt>-d</tt>, or <tt>-c</tt>) are only set at the end if there is no
-defined value for the target tag in this file.
-
-Additional values (given with <tt>--tag FIELD=value</tt>) are always added,
-even if it means that the target tag will have multiple values. Playing with
-<tt>--clear</tt> or <tt>--append</tt> enables configuration of how they are
-actually added.
+These values are called explicit values. They are always added to the ones
+obtained through parsing or so, even if it means that the target tag will
+have multiple values.
+Playing with <tt>--clear</tt> or <tt>--append</tt> enables configuration
+of how they are actually added.
 
 
 
