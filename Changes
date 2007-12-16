@@ -1,4 +1,4 @@
-lltag (xxx)
+lltag (0.14.2)
 
   * Merge the whole concept of default and additional values into
     "explicit tag values" which may be set with either -a, -A, -t,
@@ -11,7 +11,7 @@ lltag (xxx)
     + Add --rename-slash to change dash into any other string.
   * Fix track numbers into actual numbers (without track total).
 
-
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 16 Dec 2007 12:27:00 +0200
 
 lltag (0.14.1)
 
