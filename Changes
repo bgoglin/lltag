@@ -1,5 +1,11 @@
 lltag (xxx)
 
+  * Merge the whole concept of default and additional values into
+    "explicit tag values" which may be set with either -a, -A, -t,
+    -n, -d, -g and -c or the generic --tag command line option.
+    The default_* configuration options are removed.
+    Based on complaints from Alexandre Buisse and Olivier Schwander.
+    + Fix the way they are exported in the config file.
   * Replace slashes with dashes before renaming
     (reported by Mark McEver in Gna! bug #10127).
     + Add --rename-slash to change dash into any other string.

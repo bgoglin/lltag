@@ -20,16 +20,7 @@
 # Do not use file path when matching filename.
 # no_path = 0
 
-# Default field values.
-# default_ARTIST = ""
-# default_TITLE = ""
-# default_ALBUM = ""
-# default_NUMBER = ""
-# default_GENRE = ""
-# default_DATE = ""
-# default_COMMENT = ""
-
-# Additional tag.
+# Explicit tag.
 # Might be used multiple times.
 # tag = "TAG=value"
 

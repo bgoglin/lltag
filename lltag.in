@@ -66,8 +66,6 @@ Lltag::Misc::init_readline ($self) ;
      'COMMENT' => ' ',
      ) ;
 
-%{$self->{field_default}} = () ;
-
 %{$self->{field_letter_name}} =
     (
      'a' => 'ARTIST',
@@ -104,8 +102,8 @@ sub usage {
     print "  -C, --cddb             Query tags in CDDB\n" ;
     print "  -E, --edit             Edit tags\n" ;
     print map { "  -". $self->{field_name_letter}{$_} .", --". $_.$self->{field_name_trailing_spaces}{$_}
-		    ."<val>    Set the default value for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
-    print "  --tag <TAG=value>      Add <value> to tag <TAG>\n" ;
+		    ."<val>    Add explicit value <val> for ". ucfirst($_) ."\n" } @{$self->{field_names}} ;
+    print "  --tag <TAG=val>        Add explicit value <val> to tag <TAG>\n" ;
     print "  -p, --no-path          Remove the path from filenames when matching\n" ;
     print "  --spaces               Allow no or multiple spaces\n" ;
     print "  --maj                  Upcase first letters of words in tags\n" ;
@@ -160,7 +158,7 @@ $self->{list_formats_opt} = 0 ;
 $self->{show_tags_opt} = "" ;
 $self->{no_tagging_opt} = 0 ;
 
-%{$self->{additional_values}} = () ;
+%{$self->{explicit_values}} = () ;
 
 $self->{ask_opt} = 0 ;
 $self->{guess_opt} = 0 ;
@@ -218,14 +216,8 @@ sub process_option {
 	$self->{guess_opt} = $1 ;
     } elsif (/^no_path\s*=\s*(.+)$/) {
 	$self->{no_path_opt} = $1 ;
-    } elsif (/^default_([^ ]*)\s*=\s*"(.*)"$/) {
-	die "Unrecognized option line #$.: \"$_\"\n"
-	    # TODO: drop non-capitalized field name support on september 20 2006
-	    unless defined $self->{field_name_letter}{uc ($1)} ;
-	# TODO: drop filename support on september 20 2006
-	$self->{field_default}{uc ($1)} = $2 ;
     } elsif (/^tag\s*=\s*"(.+)"$/) {
-	Lltag::Tags::process_additional_tag_value ($self, $1) ;
+	Lltag::Tags::process_explicit_tag_value ($self, $1) ;
     } elsif (/^spaces\s*=\s*(.+)$/) {
 	$self->{spaces_opt} = $1 ;
     } elsif (/^maj\s*=\s*(.+)$/) {
@@ -369,10 +361,9 @@ GetOptions(
 	   'L|list'		=> \$self->{list_formats_opt},
 	   'show-tags=s'	=> \$self->{show_tags_opt},
 	   'S'			=> sub { $self->{show_tags_opt} = "all" ; },
-	   'tag=s'		=> sub { shift ; Lltag::Tags::process_additional_tag_value ($self, shift) ; },
+	   'tag=s'		=> sub { shift ; Lltag::Tags::process_explicit_tag_value ($self, shift) ; },
 	   map { my $field = $_ ;
-		 # use a sub because \$self->{field_default}{$field} always allocates it and assigns it to undef...
-		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; $self->{field_default}{$field} = shift },
+		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; my $value = shift ; Lltag::Tags::process_explicit_tag_value ($self, "$field=$value") },
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
 
@@ -514,27 +505,14 @@ sub tag_with_values {
 }
 
 #######################################################
-# add defaults and additional_values
+# add explicit_values
 
-sub add_defaults {
+sub add_explicit_values {
     my $self = shift ;
     my $values = shift ;
 
-    # then add defaults to not defined tags
-    foreach my $field (@{$self->{field_names}}) {
-	$values->{$field} = $self->{field_default}{$field}
-	    if not defined $values->{$field} and defined $self->{field_default}{$field} ;
-    }
-
-    return $values ;
-}
-
-sub add_additional_values {
-    my $self = shift ;
-    my $values = shift ;
-
-    # append additional values
-    Lltag::Tags::append_tag_values ($self, $values, $self->{additional_values}) ;
+    # append explicit values
+    Lltag::Tags::append_tag_values ($self, $values, $self->{explicit_values}) ;
 
     return $values ;
 }
@@ -553,11 +531,10 @@ sub try_parse_with_preferred {
 
     my ($res, $new_values) = Lltag::Parse::try_to_parse_with_preferred ($self, $file, $parsename) ;
     if ($res == Lltag::Parse->PARSE_SUCCESS) {
-	return add_defaults ($self,
-			     (Lltag::Tags::merge_new_tag_values ($self,
-								 $old_values,
-								 (add_additional_values ($self,
-											 $new_values))))) ;
+	return Lltag::Tags::merge_new_tag_values ($self,
+						  $old_values,
+						  (add_explicit_values ($self,
+									$new_values))) ;
     }
 
     # sanity check
@@ -579,11 +556,10 @@ sub try_parse {
 
     my ($res, $new_values) = Lltag::Parse::try_to_parse ($self, $file, $parsename, $try_internals) ;
     if ($res == Lltag::Parse->PARSE_SUCCESS or $res == Lltag::Parse->PARSE_SUCCESS_PREFERRED) {
-	return add_defaults ($self,
-			     (Lltag::Tags::merge_new_tag_values ($self,
-								 $old_values,
-								 (add_additional_values ($self,
-											 $new_values))))) ;
+	return Lltag::Tags::merge_new_tag_values ($self,
+						  $old_values,
+						  (add_explicit_values ($self,
+									$new_values))) ;
     }
 
     # sanity check
@@ -600,7 +576,7 @@ sub try_edit {
     # save old values before editing
     $current_values = Lltag::Tags::clone_tag_values ($current_values) ;
 
-    # do not add defaults/additionals here since this function might
+    # do not add explicit here since this function might
     # be called on current values without need to add them
     my $res = Lltag::Tags::edit_values ($self, $current_values) ;
     if ($res == Lltag::Tags->EDIT_SUCCESS) {
@@ -623,11 +599,10 @@ sub try_cddb {
 
     my ($res, $new_values) = Lltag::CDDB::get_cddb_tags ($self) ;
     if ($res == Lltag::CDDB->CDDB_SUCCESS) {
-	return add_defaults ($self,
-			     (Lltag::Tags::merge_new_tag_values ($self,
-								 $old_values,
-								 (add_additional_values ($self,
-											 $new_values))))) ;
+	return Lltag::Tags::merge_new_tag_values ($self,
+						  $old_values,
+						  (add_explicit_values ($self,
+									$new_values))) ;
     }
 
     # sanity check
@@ -637,7 +612,7 @@ sub try_cddb {
     return undef ;
 }
 
-sub try_defaults {
+sub try_explicits {
     my $self = shift ;
     my $old_values = shift ;
     my $empty_values = {} ;
@@ -645,11 +620,10 @@ sub try_defaults {
     # save old values before merging
     $old_values = Lltag::Tags::clone_tag_values ($old_values) ;
 
-    return add_defaults ($self,
-			 (Lltag::Tags::merge_new_tag_values ($self,
-							     $old_values,
-							     (add_additional_values ($self,
-										     $empty_values))))) ;
+    return Lltag::Tags::merge_new_tag_values ($self,
+					      $old_values,
+					      (add_explicit_values ($self,
+								    $empty_values))) ;
 }
 
 #######################################################
@@ -665,7 +639,7 @@ sub main_confirm_menu_usage {
     print "    P => Try to parse the file\n" ;
     print "    C => Query CDDB\n" ;
     print "    E => Edit values\n" ;
-    print "    D => Only use default and additional values\n" ;
+    print "    D => Only use explicit values\n" ;
     print "    Z => Reset to no values\n" ;
     print "    R => Revert to old values\n" ;
     print "    O => Display old values\n" ;
@@ -741,7 +715,7 @@ sub main_confirm_menu {
 		if defined $new_values ;
 
 	} elsif ($confirm_reply =~ m/^D/) {
-	    $current_values = try_defaults ($self, $old_values) ;
+	    $current_values = try_explicits ($self, $old_values) ;
 
 	} elsif ($confirm_reply =~ m/^Z/) {
 	    $current_values = {} ;
@@ -866,7 +840,7 @@ while ( @files ) {
 
     # edit, if enabled
     if ($self->{edit_opt}) {
-	my $new_values = try_edit ($self, try_defaults ($self, $old_values)) ;
+	my $new_values = try_edit ($self, try_explicits ($self, $old_values)) ;
 	if (defined $new_values) {
 	    $current_values = $new_values ;
 	    goto CONFIRM ;
@@ -886,8 +860,7 @@ while ( @files ) {
     # if guess or any user-parser or NOTHING else enabled
     if ($self->{guess_opt}
 	or @{$self->{user_format_strings}}
-	or ( !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
-	     and !(keys %{$self->{additional_values}})
+	or ( !(keys %{$self->{explicit_values}})
 	     and !$self->{cddb_opt}
 	     and !$self->{edit_opt}
 	     and !$self->{rename_opt}
@@ -895,8 +868,7 @@ while ( @files ) {
 	# force guess if NOTHING enabled
 	my $try_internals = ($self->{guess_opt}
 			     or ( !@{$self->{user_format_strings}}
-				  and !(grep { defined $self->{field_default}{$_} } (keys %{$self->{field_default}}))
-				  and !(keys %{$self->{additional_values}})
+				  and !(keys %{$self->{explicit_values}})
 				  and !$self->{cddb_opt}
 				  and !$self->{edit_opt}
 				  and !$self->{rename_opt}
@@ -909,7 +881,7 @@ while ( @files ) {
 	}
     }
 
-    $current_values = try_defaults ($self, $old_values) ;
+    $current_values = try_explicits ($self, $old_values) ;
 
   CONFIRM:
     if ($current_main_yes_opt) {
@@ -964,9 +936,10 @@ sub generate_config {
     print NEWCFG "edit = $self->{edit_opt}\n" ;
     print NEWCFG "no_path = $self->{no_path_opt}\n" ;
 
-    map { print NEWCFG "default_$_ = \"$self->{field_default}{$_}\"\n" ; } (keys %{$self->{field_default}}) ;
-
-    map { print NEWCFG "tag = \"$_\"\n" ; } @{$self->{additional_tags}} ;
+    map {
+	my $key = $_ ; my @array = Lltag::Tags::get_tag_value_array($self, $self->{explicit_values}, $_) ;
+	map { print NEWCFG "tag = \"$key=$_\"\n" } @array ;
+    } (keys %{$self->{explicit_values}}) ;
 
     print NEWCFG "spaces = $self->{spaces_opt}\n" ;
     print NEWCFG "maj = $self->{maj_opt}\n" ;
