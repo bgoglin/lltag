@@ -201,6 +201,16 @@ sub convert_tag_stream_to_values {
 	chomp $line ;
 	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
 	next if !$value ;
+
+	# remove the track total from the track number to avoid renaming problems with slashes or so
+	if ($field eq "NUMBER") {
+	    if ($value =~ /^(\d+)/) {
+		$value = $1 ;
+	    } else {
+		return ;
+	    }
+	}
+
 	Lltag::Tags::append_tag_value ($self, $values, $field, $value) ;
     }
 

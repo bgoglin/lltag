@@ -9,6 +9,7 @@ lltag (xxx)
   * Replace slashes with dashes before renaming
     (reported by Mark McEver in Gna! bug #10127).
     + Add --rename-slash to change dash into any other string.
+  * Fix track numbers into actual numbers (without track total).
 
 
 

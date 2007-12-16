@@ -84,6 +84,15 @@ sub read_v2_tag {
 	$field = uc($v2_field) ;
     }
 
+    # remove the track total from the track number to avoid renaming problems with slashes or so
+    if ($field eq "NUMBER") {
+	if ($value =~ /^(.\d+)/) {
+	    $value = $1 ;
+	} else {
+	    return ;
+	}
+    }
+
     Lltag::Tags::append_tag_multiple_value ($self, $values, $field, $value) ;
 }
 
