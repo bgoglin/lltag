@@ -29,6 +29,11 @@ type = basename
 regexp = %L%N%S-%S%A%S-%S%A%L
 indices = NUMBER,ARTIST,TITLE
 
+[%n) %a - %t]
+type = basename
+regexp = %L%N)%S%A%S-%S%A%L
+indices = NUMBER,ARTIST,TITLE
+
 [%n - %t]
 type = basename
 regexp = %L%N%S-%S%A%L

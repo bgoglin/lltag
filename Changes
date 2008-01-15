@@ -1,3 +1,7 @@
+
+  * Add %n) %a - %t to the internal format database.
+
+
 lltag (0.14.2)
 
   * Merge the whole concept of default and additional values into
