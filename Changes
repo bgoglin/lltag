@@ -1,4 +1,5 @@
 
+  * Fix the case of some options in the manpage.
   * Add %n) %a - %t to the internal format database.
 
 
