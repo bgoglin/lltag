@@ -1,3 +1,9 @@
+lltag (0.14.2-2) UNRELEASED; urgency=low
+
+  * Add Vcs-Svn and Vcs-Browser fields.
+
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 27 Feb 2010 16:41:18 +0100
+
 lltag (0.14.2-1) unstable; urgency=low
 
   * New upstream release.
