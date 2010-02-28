@@ -4,6 +4,7 @@ lltag (0.14.2-2) UNRELEASED; urgency=low
   * Bump debhelper compatibility to 5, adjust Build-Depends,
     add ${misc:Depends} to Depends.
   * Bump Standards-Version to 3.8.4, no changes needed.
+  * Wrap Build-Depends, Depends and Recommends.
 
  -- Brice Goglin <bgoglin@debian.org>  Sat, 27 Feb 2010 16:41:18 +0100
 

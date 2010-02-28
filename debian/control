@@ -2,7 +2,9 @@ Source: lltag
 Section: sound
 Priority: extra
 Maintainer: Brice Goglin <bgoglin@debian.org>
-Build-Depends: debhelper (>= 5), quilt (>= 0.40)
+Build-Depends:
+ debhelper (>= 5),
+ quilt (>= 0.40)
 Homepage: http://home.gna.org/lltag/
 Standards-Version: 3.8.4
 Vcs-Svn: svn://svn.gna.org/svn/lltag/branches/debian
@@ -10,8 +12,16 @@ Vcs-Browser: http://svn.gna.org/viewcvs/lltag/branches/debian/
 
 Package: lltag
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}
-Recommends: mp3info, libmp3-tag-perl, vorbis-tools, flac, libterm-readline-gnu-perl | libterm-readline-perl-perl, libwww-perl
+Depends:
+ ${misc:Depends},
+ ${perl:Depends}
+Recommends:
+ mp3info,
+ libmp3-tag-perl,
+ vorbis-tools,
+ flac,
+ libterm-readline-gnu-perl | libterm-readline-perl-perl,
+ libwww-perl
 Description: Automatic command-line mp3/ogg/flac file tagger and renamer
  lltag is a command-line tool manipulating MP3 ID3, OGG or FLAC tags.
  It may be used to tag multiples files at once by comparing their filename
