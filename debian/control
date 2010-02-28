@@ -10,7 +10,7 @@ Vcs-Browser: http://svn.gna.org/viewcvs/lltag/branches/debian/
 
 Package: lltag
 Architecture: all
-Depends: ${perl:Depends}
+Depends: ${misc:Depends}, ${perl:Depends}
 Recommends: mp3info, libmp3-tag-perl, vorbis-tools, flac, libterm-readline-gnu-perl | libterm-readline-perl-perl, libwww-perl
 Description: Automatic command-line mp3/ogg/flac file tagger and renamer
  lltag is a command-line tool manipulating MP3 ID3, OGG or FLAC tags.
