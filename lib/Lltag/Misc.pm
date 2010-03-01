@@ -5,6 +5,9 @@ use strict ;
 use Term::ReadLine;
 use Term::ANSIColor ;
 
+# are we running in a normal terminal ? if not, disable readline, colors and bold/underline formatting
+my $stdio_is_a_tty = 0 ;
+
 ###################################################################
 # rewrite of system which returns a descriptor of a stream
 # containing both stdout and stderr
@@ -93,12 +96,9 @@ sub real_readline {
     return $val ;
 }
 
-# is readline actually working ?
-my $readline_works = 0 ;
-
 # the actual wrapper
 sub readline {
-    die "ERROR: Interactive mode not available in this environment.\n" unless $readline_works ;
+    die "ERROR: Interactive mode not available in this environment.\n" unless $stdio_is_a_tty ;
     return &$myreadline (@_) ;
 }
 
@@ -114,7 +114,7 @@ sub init_readline {
 	open IN, "<$IN" || die "Cannot open $IN for read\n"; close IN ;
 	open OUT, ">$OUT" || die "Cannot open $OUT for write\n"; close OUT ;
     } or return ;
-    $readline_works = 1 ;
+    $stdio_is_a_tty = 1 ;
 
     $term = Term::ReadLine->new('lltag editor') ;
     $attribs = $term->Attribs ;
@@ -139,7 +139,7 @@ sub init_readline {
 
 # exit, saves readline history if supported by the installation
 sub exit_readline {
-    return unless $readline_works ;
+    return unless $stdio_is_a_tty ;
 
     # only keep the last 100 entries
     eval {
@@ -162,10 +162,10 @@ sub exit_readline {
 
 sub print_usage_header {
     print shift ;
-    print color 'underline' ;
+    print color 'underline' if $stdio_is_a_tty;
     print shift ;
     print " - Usage:" ;
-    print color 'reset' ;
+    print color 'reset' if $stdio_is_a_tty ;
     print "\n" ;
 }
 
@@ -174,17 +174,17 @@ sub print_usage_header {
 
 sub print_notice {
     print shift ;
-    print color 'underline' ;
+    print color 'underline' if $stdio_is_a_tty ;
     print "NOTICE:" ;
-    print color 'reset' ;
+    print color 'reset' if $stdio_is_a_tty ;
     print " ".(shift)."\n" ;
 }
 
 sub print_warning {
     print shift ;
-    print color 'underline' ;
+    print color 'underline' if $stdio_is_a_tty ;
     print "WARNING:" ;
-    print color 'reset' ;
+    print color 'reset' if $stdio_is_a_tty ;
     print " ".(shift)."\n" ;
 }
 
@@ -192,8 +192,12 @@ sub print_warning {
 # Print an error in underlined and bold
 
 sub format_error {
-    return (color 'bold').(color 'underline')."ERROR:".(color 'reset')." "
-	.(color 'bold').(shift).(color 'reset') ;
+    if ($stdio_is_a_tty) {
+	return (color 'bold').(color 'underline')."ERROR:".(color 'reset')." "
+	    .(color 'bold').(shift).(color 'reset') ;
+    } else {
+	return "ERROR: ".shift unless $stdio_is_a_tty ;
+    }
 }
 
 sub print_error {
