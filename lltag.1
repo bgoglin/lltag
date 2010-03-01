@@ -37,6 +37,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .RB [ --clear ]
 .RB [ --append ]
 .RB [ --no-tagging ]
+.RB [ --preserve-time ]
 .RB [ "--rename <format>" ]
 .RB [ --rename-ext ]
 .RB [ --rename-min ]
@@ -351,6 +352,12 @@ Do not actually tag files. This might be used to rename files
 without tagging.
 The corresponding configuration file option is
 .IR no_tagging .
+
+.TP
+.B -T, --preserve-time
+Preserve file modification time during tagging.
+The corresponding configuration file option is
+.IR preserve_time .
 
 .TP
 .B --ogg

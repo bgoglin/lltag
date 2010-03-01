@@ -1,4 +1,7 @@
 
+  * Add -T and --preserve-time, and the preserve_time configuration
+    file option, to preserve file modification time during tagging
+    (requested by Adam Rosi-Kessel in Gna! bug #12367).
   * Do not try to initialize readline in non-interactive environment,
     only fail if readline is actually needed.
     Thanks Miroslaw Zalewski in Debian bug #558831.

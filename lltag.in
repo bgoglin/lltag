@@ -116,6 +116,7 @@ sub usage {
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
     print "  --no-tagging           Do not actually tag files\n" ;
+    print "  -T, --preserve-time    Preserve file modification during tagging\n" ;
     Lltag::Rename::rename_usage ($self) ;
     print " General options:\n" ;
     print "  --dry-run              Do nothing but show what would have been done\n" ;
@@ -157,6 +158,7 @@ $self->{recursive_opt} = 0 ;
 $self->{list_formats_opt} = 0 ;
 $self->{show_tags_opt} = "" ;
 $self->{no_tagging_opt} = 0 ;
+$self->{preserve_time} = 0 ;
 
 %{$self->{explicit_values}} = () ;
 
@@ -238,6 +240,8 @@ sub process_option {
 	$self->{append_opt} = $1 ;
     } elsif (/^no_tagging\s*=\s*(.+)$/) {
 	$self->{no_tagging_opt} = $1 ;
+    } elsif (/^preserve_time\s*=\s*(.+)$/) {
+	$self->{preserve_time} = $1 ;
     } elsif (/^rename_format\s*=\s*"(.*)"$/) {
 	if ($1 eq "") {
 	    $self->{rename_opt} = undef ;
@@ -333,6 +337,7 @@ GetOptions(
 	   'clear'		=> \$self->{clear_opt},
 	   'append'		=> \$self->{append_opt},
 	   'no-tagging'		=> \$self->{no_tagging_opt},
+	   'T|preserve-time'	=> \$self->{preserve_time},
 	   'rename=s'		=> \$self->{rename_opt},
 	   'rename-min'		=> \$self->{rename_min_opt},
 	   'rename-sep=s'	=> \$self->{rename_sep_opt},
@@ -899,9 +904,14 @@ while ( @files ) {
 	next ;
 
     } elsif ($res == CONFIRM_TAG) {
-	# actually tagging
-	tag_with_values $file, $backend, $current_values
-	    unless $self->{no_tagging_opt} ;
+	if (!$self->{no_tagging_opt}) {
+	    # save access and modification times
+	    my ($old_atime, $old_mtime) = (stat ($file)) [8, 9] ;
+	    # actually tagging
+	    tag_with_values $file, $backend, $current_values ;
+	    # restore old times if needed
+	    utime $old_atime, $old_mtime, $file if $self->{preserve_time} ;
+	}
     }
 
     # sanity check
@@ -950,6 +960,7 @@ sub generate_config {
     print NEWCFG "clear_tags = $self->{clear_opt}\n" ;
     print NEWCFG "append_tags = $self->{append_opt}\n" ;
     print NEWCFG "no_tagging = $self->{no_tagging_opt}\n" ;
+    print NEWCFG "preserve_time = $self->{preserve_time}\n" ;
 
     print NEWCFG "rename_format = \"" .($self->{rename_opt} ? $self->{rename_opt} : ""). "\"\n" ;
     print NEWCFG "rename_min = $self->{rename_min_opt}\n" ;
