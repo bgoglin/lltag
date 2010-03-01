@@ -93,8 +93,12 @@ sub real_readline {
     return $val ;
 }
 
+# is readline actually working ?
+my $readline_works = 0 ;
+
 # the actual wrapper
 sub readline {
+    die "ERROR: Interactive mode not available in this environment.\n" unless $readline_works ;
     return &$myreadline (@_) ;
 }
 
@@ -103,6 +107,14 @@ sub init_readline {
     my $self = shift ;
     $history_dir = $self->{user_lltag_dir} ;
     $history_file = $self->{lltag_edit_history_filename} ;
+
+    # detect whether readline works
+    eval {
+	my ($IN,$OUT) = Term::ReadLine->findConsole();
+	open IN, "<$IN" || die "Cannot open $IN for read\n"; close IN ;
+	open OUT, ">$OUT" || die "Cannot open $OUT for write\n"; close OUT ;
+    } or return ;
+    $readline_works = 1 ;
 
     $term = Term::ReadLine->new('lltag editor') ;
     $attribs = $term->Attribs ;
@@ -127,6 +139,7 @@ sub init_readline {
 
 # exit, saves readline history if supported by the installation
 sub exit_readline {
+    return unless $readline_works ;
 
     # only keep the last 100 entries
     eval {

@@ -1,4 +1,7 @@
 
+  * Do not try to initialize readline in non-interactive environment,
+    only fail if readline is actually needed.
+    Thanks Miroslaw Zalewski in Debian bug #558831
   * Fix the case of some options in the manpage.
   * Add %n) %a - %t to the internal format database.
 
