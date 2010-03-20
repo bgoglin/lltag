@@ -790,7 +790,8 @@ while ( @ARGV ) {
 if (!@files) {
     print "No files to process.\n"
 	if $self->{verbose_opt} ;
-    # do not exit here, a config file might need to be generated
+    # nothing to do (except maybe a config file to generate), so print the help
+    usage () unless $self->{gencfg_file} ;
 }
 
 # display tags

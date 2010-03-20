@@ -11,6 +11,8 @@
     in non-interactive environment.
   * Fix the case of some options in the manpage.
   * Add %n) %a - %t to the internal format database.
+  * Display the usage when there is nothing to do (requested by Alexandre
+    Buisse).
 
 
 lltag (0.14.2)
