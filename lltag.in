@@ -111,7 +111,7 @@ sub usage {
     print "  --regexp <regexp>      Apply a replace regexp to tags before tagging\n" ;
     print "  --mp3/--ogg/--flac     Force mp3, ogg or flac instead of by-extension detection\n" ;
     print "  --type <type>          Force <tyle> instead of by-extension detection\n" ;
-    print "  --mp3v2                Enable experimental ID3v2 backend for MP3 files\n" ;
+    print "  --mp3v2, --id3v2       Enable experimental ID3v2 backend for MP3 files\n" ;
     print "  --mp3read=[12]         Read ID3v1 and v2 MP3 tags (default is 21)\n" ;
     print "  --clear                Clear all tags of audio files when possible\n" ;
     print "  --append               Append tags only instead of replacing old ones when possible\n" ;
@@ -336,7 +336,7 @@ GetOptions(
 	   'ogg'		=> sub { $self->{type_opt} = "ogg" ; },
 	   'flac'		=> sub { $self->{type_opt} = "flac" ; },
 	   'type=s'		=> sub { shift ; $self->{type_opt} = shift ; },
-	   'mp3v2'              => \$self->{mp3v2_opt},
+	   'mp3v2|id3v2'        => \$self->{mp3v2_opt},
 	   'mp3read=s'          => \$self->{mp3v2_read_opt},
 	   'clear'		=> \$self->{clear_opt},
 	   'append'		=> \$self->{append_opt},
