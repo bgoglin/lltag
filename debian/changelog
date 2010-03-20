@@ -1,4 +1,4 @@
-lltag (0.14.3-1) UNRELEASED; urgency=low
+lltag (0.14.3-1) unstable; urgency=low
 
   * New upstream release.
   * Add Vcs-Svn and Vcs-Browser fields.
@@ -7,7 +7,7 @@ lltag (0.14.3-1) UNRELEASED; urgency=low
   * Bump Standards-Version to 3.8.4, no changes needed.
   * Wrap Build-Depends, Depends and Recommends.
 
- -- Brice Goglin <bgoglin@debian.org>  Sat, 27 Feb 2010 16:41:18 +0100
+ -- Brice Goglin <bgoglin@debian.org>  Sun, 21 Mar 2010 00:08:34 +0100
 
 lltag (0.14.2-1) unstable; urgency=low
 
