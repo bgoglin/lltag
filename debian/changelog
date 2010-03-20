@@ -1,13 +1,15 @@
 lltag (0.14.3-1) unstable; urgency=low
 
   * New upstream release.
+    + Do not try to initialize readline in non-interactive environment,
+      only fail if readline is actually needed, closes: #558831.
   * Add Vcs-Svn and Vcs-Browser fields.
   * Bump debhelper compatibility to 5, adjust Build-Depends,
     add ${misc:Depends} to Depends.
   * Bump Standards-Version to 3.8.4, no changes needed.
   * Wrap Build-Depends, Depends and Recommends.
 
- -- Brice Goglin <bgoglin@debian.org>  Sun, 21 Mar 2010 00:08:34 +0100
+ -- Brice Goglin <bgoglin@debian.org>  Sun, 21 Mar 2010 00:11:47 +0100
 
 lltag (0.14.2-1) unstable; urgency=low
 
