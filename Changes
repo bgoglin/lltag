@@ -14,6 +14,8 @@
   * Fix the case of some options in the manpage.
   * Add %n) %a - %t to the internal format database.
   * Add --id3v2, synonym for --mp3v2 (requested by Alexandre Buisse).
+  * Display basename parsers both with and without path parsers when
+    listing internal parsers.
   * Display the usage when there is nothing to do (requested by Alexandre
     Buisse).
 
