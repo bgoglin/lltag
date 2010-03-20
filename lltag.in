@@ -315,9 +315,13 @@ foreach my $file (@additional_config_files) {
 #######################################################
 # parse cmdline options
 
+# user format list given on the command-line,
+# to be added to front of config file user_format_strings
+my @cmdline_user_format_strings = () ;
+
 # parse options
 GetOptions(
-	   'F|format=s'		=> \@{$self->{user_format_strings}},
+	   'F|format=s'		=> \@cmdline_user_format_strings,
 	   'G|guess'		=> \$self->{guess_opt},
 	   'C|cddb'		=> \$self->{cddb_opt},
 	   'E|edit'		=> \$self->{edit_opt},
@@ -371,6 +375,9 @@ GetOptions(
 		 $self->{field_name_letter}{$field} .'|'. $field .'=s' => sub { shift ; my $value = shift ; Lltag::Tags::process_explicit_tag_value ($self, "$field=$value") },
 	       } @{$self->{field_names}} ,
 	   ) or usage () ;
+
+# add the command-line user format list to the front of the config file user_format_strings
+unshift @{$self->{user_format_strings}},@cmdline_user_format_strings ;
 
 # check that MP3v2 ID3v1 and v2 read order is corect
 die "Invalid MP3 ID3v1 and v2 order given to --mp3read: $self->{mp3v2_read_opt}\n"
