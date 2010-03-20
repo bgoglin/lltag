@@ -813,7 +813,7 @@ if ($self->{show_tags_opt}) {
 	    next if not defined $values->{$field} ;
 	    next unless grep { /^all$/ } @fields_to_show
 		or grep { /^$field$/i } @fields_to_show ;
-	    map { print "  $field=$_\n" } (Lltag::Tags::get_tag_value_array ($self, $values, $field)) ;
+	    map { print "  $field=".($field =~ / -> _/ ? "<binary data>" : $_)."\n" } (Lltag::Tags::get_tag_value_array ($self, $values, $field)) ;
 	}
     }
 

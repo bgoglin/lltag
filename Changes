@@ -4,6 +4,8 @@
     (requested by Adam Rosi-Kessel in Gna! bug #12367).
   * Try command-line given user formats (with -F) before those given
     in the config file (with 'format = ...').
+  * Do not try to display binary data tags such as cover front picture
+    (requested by Alexandre Buisse).
   * Do not try to initialize readline in non-interactive environment,
     only fail if readline is actually needed.
     Thanks Miroslaw Zalewski in Debian bug #558831.

@@ -24,7 +24,9 @@ sub display_one_tag_value {
     my $field = shift ;
     my $prefix = shift ;
 
-    if (ref($values->{$field}) ne 'ARRAY') {
+    if ($field =~ / -> _/) {
+	print $prefix.ucfirst($field).": <binary data>\n"
+    } elsif (ref($values->{$field}) ne 'ARRAY') {
 	print $prefix.ucfirst($field).": "
 	    . ($values->{$field} eq "" ? "<CLEAR>" : $values->{$field}) ."\n"
     } else {
