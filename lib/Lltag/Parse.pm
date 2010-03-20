@@ -376,10 +376,15 @@ sub read_internal_parsers {
 }
 
 sub list_internal_parsers {
+    # path+basename
     foreach my $path_parser (@internal_path_parsers) {
 	foreach my $basename_parser (@internal_basename_parsers) {
 	    print "  $path_parser->{title}/$basename_parser->{title}\n" ;
 	}
+    }
+    # basename only
+    foreach my $basename_parser (@internal_basename_parsers) {
+	print "  $basename_parser->{title}\n" ;
     }
 }
 

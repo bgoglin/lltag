@@ -37,6 +37,7 @@ lltag - tag and rename mp3/ogg/flac music files automagically
 .RB [ --clear ]
 .RB [ --append ]
 .RB [ --no-tagging ]
+.RB [ --preserve-time ]
 .RB [ "--rename <format>" ]
 .RB [ --rename-ext ]
 .RB [ --rename-min ]
@@ -176,11 +177,11 @@ filled with the tag values.
 .SH OPTIONS
 
 .TP
-.BI "-A, --album" " <album>"
+.BI "-A, --ALBUM" " <album>"
 Add a value for the \fIALBUM\fR tag.
 
 .TP
-.BI "-a, --artist" " <artist>"
+.BI "-a, --ARTIST" " <artist>"
 Add a value for the \fIARTIST\fR tag.
 
 .TP
@@ -237,7 +238,7 @@ the environment variable
 may be used (set to something like "http://my.proxy.com").
 
 .TP
-.BI "-c, --comment" " <comment>"
+.BI "-c, --COMMENT" " <comment>"
 Add a value for the \fICOMMENT\fR tag.
 
 .TP
@@ -255,7 +256,7 @@ See
 below for details.
 
 .TP
-.BI "-d, --date" " <date>"
+.BI "-d, --DATE" " <date>"
 Add a value for the \fIDATE\fR tag.
 Note that the ID3 date tag may only store 4 characters (for a year).
 
@@ -293,7 +294,7 @@ The corresponding configuration file option is
 .IR guess .
 
 .TP
-.BI "-g, --genre" " <genre>"
+.BI "-g, --GENRE" " <genre>"
 Add a value for the \fIGENRE\fR tag.
 While some file types accept any string as a genre, some others
 (especially ID3v1 tags in MP3 files) require the string to match
@@ -328,7 +329,7 @@ The corresponding configuration file option is
 .IR type .
 
 .TP
-.B --mp3v2
+.B --mp3v2, --id3v2
 Enable the experimental MP3 ID3v2-aware backend (based on \fRMP3::Tag\fR)
 instead of the old ID3v1-only backend.
 
@@ -342,7 +343,7 @@ If set to \fB12\fR, v2 are appended to v1.
 Note that merging/appending takes care of removing duplicates.
 
 .TP
-.BI "-n, --number" " <number>"
+.BI "-n, --NUMBER" " <number>"
 Add a value for the \fINUMBER\fR tag.
 
 .TP
@@ -351,6 +352,12 @@ Do not actually tag files. This might be used to rename files
 without tagging.
 The corresponding configuration file option is
 .IR no_tagging .
+
+.TP
+.B -T, --preserve-time
+Preserve file modification time during tagging.
+The corresponding configuration file option is
+.IR preserve_time .
 
 .TP
 .B --ogg
@@ -489,7 +496,7 @@ See also
 to get the detailled impact of this option.
 
 .TP
-.BI "-t, --title" " <title>"
+.BI "-t, --TITLE" " <title>"
 Add a value for the \fITITLE\fR tag.
 
 .TP
@@ -962,7 +969,7 @@ lltag --tag foo= bar.ogg
 .RE
 Set the ALBUM, ARTIST and GENRE tag values of the MP3 files in the current directory:
 .RS
-lltag --artist "Queen" --album "Innunendo" --genre "rock" --comment="very cool" *.mp3
+lltag --ARTIST "Queen" --ALBUM "Innunendo" --GENRE "rock" --COMMENT="very cool" *.mp3
 .RE
 Rename a file by assembling its current NUMBER, ARTIST and TITLE tag values:
 .RS

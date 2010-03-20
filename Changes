@@ -1,3 +1,27 @@
+lltag (0.14.3)
+
+  * Add -T and --preserve-time, and the preserve_time configuration
+    file option, to preserve file modification time during tagging
+    (requested by Adam Rosi-Kessel in Gna! bug #12367).
+  * Do not try to display binary data tags such as cover front picture
+    (requested by Alexandre Buisse).
+  * Do not try to initialize readline in non-interactive environment,
+    only fail if readline is actually needed.
+    Thanks Miroslaw Zalewski in Debian bug #558831.
+  * Do not apply colors or bold/underline formatting to output messages
+    in non-interactive environment.
+  * Try command-line given user formats (with -F) before those given
+    in the config file (with 'format = ...').
+  * Add %n) %a - %t to the internal format database.
+  * Add --id3v2, synonym for --mp3v2 (requested by Alexandre Buisse).
+  * Display basename parsers both with and without path parsers when
+    listing internal parsers.
+  * Display the usage when there is nothing to do (requested by Alexandre
+    Buisse).
+  * Fix the case of some options in the manpage.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 21 Mar 2010 00:06:00 +0100
+
 lltag (0.14.2)
 
   * Merge the whole concept of default and additional values into
