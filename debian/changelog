@@ -1,4 +1,4 @@
-lltag (0.14.3-2) UNRELEASED; urgency=low
+lltag (0.14.3-2) unstable; urgency=low
 
   * Add descriptions to patches.
   * Switch to dpkg-source 3.0 (quilt) format
@@ -6,7 +6,7 @@ lltag (0.14.3-2) UNRELEASED; urgency=low
   * Register howto.html to doc-base.
   * Add 01_fix_typos.patch to make lintian happy.
 
- -- Brice Goglin <bgoglin@debian.org>  Sat, 03 Jul 2010 18:16:57 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 03 Jul 2010 18:19:50 +0200
 
 lltag (0.14.3-1) unstable; urgency=low
 
