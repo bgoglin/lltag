@@ -1,1 +1,2 @@
 debianize_dependencies_in_warnings.patch
+01_fix_typos.patch 
