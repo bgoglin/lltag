@@ -3,8 +3,9 @@ lltag (0.14.3-2) UNRELEASED; urgency=low
   * Add descriptions to patches.
   * Switch to dpkg-source 3.0 (quilt) format
   * Bump Standards-Version to 3.9.0, no changes needed.
+  * Register howto.html to doc-base.
 
- -- Brice Goglin <bgoglin@debian.org>  Sat, 03 Jul 2010 17:03:57 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 03 Jul 2010 17:37:06 +0200
 
 lltag (0.14.3-1) unstable; urgency=low
 

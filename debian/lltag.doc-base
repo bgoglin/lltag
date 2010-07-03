@@ -1,0 +1,10 @@
+Document: howto
+Title: How-To?
+Author: Brice Goglin
+Abstract: This manual describes what lltag is, and how it can be used.
+Section: Sound
+
+Format: HTML
+Index: /usr/share/doc/lltag/howto.html
+Files: /usr/share/doc/lltag/*.html
+
