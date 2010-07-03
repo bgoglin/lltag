@@ -1,3 +1,4 @@
+Replace raw perl dependencies with Debian package dependencies.
 ---
  lib/Lltag/CDDB.pm  |    4 ++--
  lib/Lltag/FLAC.pm  |    2 +-
