@@ -5,7 +5,7 @@ Maintainer: Brice Goglin <bgoglin@debian.org>
 Build-Depends:
  debhelper (>= 5)
 Homepage: http://home.gna.org/lltag/
-Standards-Version: 3.8.4
+Standards-Version: 3.9.0
 Vcs-Svn: svn://svn.gna.org/svn/lltag/branches/debian
 Vcs-Browser: http://svn.gna.org/viewcvs/lltag/branches/debian/
 
