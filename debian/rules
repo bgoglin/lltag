@@ -5,22 +5,12 @@
 #export DH_VERBOSE=1
 #export DH_COMPAT=3
 
-include /usr/share/quilt/quilt.make
-
-#configure: configure-stamp
-#configure-stamp:
-#	dh_testdir
-#	touch configure-stamp
-
-#build: configure-stamp build-stamp
-build: build-stamp
-build-stamp: patch
+build:
 	dh_testdir
 	make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man PERL_INSTALLDIRS=vendor
 	touch build-stamp
 
-clean: clean-patched unpatch
-clean-patched:
+clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp
