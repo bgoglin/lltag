@@ -863,7 +863,7 @@ to match anything and ignore it.
 to match %.
 
 .RE
-Additionaly, while renaming, the following codes are available:
+Additionally, while renaming, the following codes are available:
 .RS
 
 .I "%F"
@@ -953,31 +953,31 @@ User configuration file.
 .RE
 Show all tags for each OGG files in the current directory:
 .RS
-lltag -S *.ogg
+lltag \-S *.ogg
 .RE
 Show only a selected list of tags for all files in all subdirectories:
 .RS
-lltag --show-tags artist,album,title,number -R .
+lltag \-\-show-tags artist,album,title,number \-R .
 .RE
 Set an arbitrary tag in a file (only works with OGG vorbis or FLAC files):
 .RS
-lltag --tag foo=nil foo.ogg
+lltag \-\-tag foo=nil foo.ogg
 .RE
 Delete the foo tag from a file:
 .RS
-lltag --tag foo= bar.ogg
+lltag \-\-tag foo= bar.ogg
 .RE
 Set the ALBUM, ARTIST and GENRE tag values of the MP3 files in the current directory:
 .RS
-lltag --ARTIST "Queen" --ALBUM "Innunendo" --GENRE "rock" --COMMENT="very cool" *.mp3
+lltag \-\-ARTIST "Queen" \-\-ALBUM "Innunendo" \-\-GENRE "rock" \-\-COMMENT="very cool" *.mp3
 .RE
 Rename a file by assembling its current NUMBER, ARTIST and TITLE tag values:
 .RS
-lltag --no-tagging --rename "%n - %a - %t" foobar.ogg
+lltag \-\-no\-tagging \-\-rename "%n - %a - %t" foobar.ogg
 .RE
 Clear all tags in all FLAC files:
 .RS
-lltag --clear *.flac
+lltag \-\-clear *.flac
 
 
 
