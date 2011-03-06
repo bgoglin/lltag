@@ -110,7 +110,7 @@ sub usage {
     print "  --sep <s1|s2|...>      Replace |-separated strings with space in tags\n" ;
     print "  --regexp <regexp>      Apply a replace regexp to tags before tagging\n" ;
     print "  --mp3/--ogg/--flac     Force mp3, ogg or flac instead of by-extension detection\n" ;
-    print "  --type <type>          Force <tyle> instead of by-extension detection\n" ;
+    print "  --type <type>          Force <type> instead of by-extension detection\n" ;
     print "  --mp3v2, --id3v2       Enable experimental ID3v2 backend for MP3 files\n" ;
     print "  --mp3read=[12]         Read ID3v1 and v2 MP3 tags (default is 21)\n" ;
     print "  --clear                Clear all tags of audio files when possible\n" ;

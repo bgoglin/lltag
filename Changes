@@ -1,4 +1,5 @@
 
+  * Fix a typo in usage (reported by Jonas Kölker in Gna! bug #17836).
   * Fix miscellaneous typos everywhere, reported by Debian's lintian.
 
 
