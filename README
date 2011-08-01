@@ -4,7 +4,7 @@ lltag installation instructions
 You don't care about this if you use Debian or Gentoo prepackaged
 versions that are available on http://bgoglin.free.fr/lltag
 
-Run 'make install' as root.
+Run 'make' followed by 'make install' as root.
 
 By default, everything is installed in /usr/local/.
 Most directories might be replaced by overriding their default values
