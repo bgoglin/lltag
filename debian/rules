@@ -5,6 +5,10 @@
 #export DH_VERBOSE=1
 #export DH_COMPAT=3
 
+build-arch: build
+
+build-indep: build
+
 build:
 	dh_testdir
 	make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man PERL_INSTALLDIRS=vendor
