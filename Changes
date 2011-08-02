@@ -1,7 +1,9 @@
+lltag (0.14.4)
 
   * Fix a typo in usage (reported by Jonas Kölker in Gna! bug #17836).
   * Fix miscellaneous typos everywhere, reported by Debian's lintian.
 
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 02 Aug 2011 13:32:00 +0100
 
 lltag (0.14.3)
 
