@@ -1,8 +1,9 @@
 lltag (0.14.4-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Drop 01_fix_typos.patch, applied upstream.
 
- -- Brice Goglin <bgoglin@debian.org>  Tue, 02 Aug 2011 13:34:31 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Tue, 02 Aug 2011 13:35:20 +0200
 
 lltag (0.14.3-2) unstable; urgency=low
 
