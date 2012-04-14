@@ -1,3 +1,9 @@
+lltag (0.14.4-2) UNRELEASED; urgency=low
+
+  * Fix copyright-refers-to-symlink-license.
+
+ -- Brice Goglin <bgoglin@debian.org>  Sat, 14 Apr 2012 08:21:46 +0200
+
 lltag (0.14.4-1) unstable; urgency=low
 
   * New upstream release.
