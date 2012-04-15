@@ -1,4 +1,4 @@
-lltag (0.14.4-2) UNRELEASED; urgency=low
+lltag (0.14.4-2) unstable; urgency=low
 
   * Bump Standards-Version to 3.9.3, no changes needed.
   * Fix copyright-refers-to-symlink-license.
@@ -6,7 +6,7 @@ lltag (0.14.4-2) UNRELEASED; urgency=low
     are not upper case, closes: #666677.
   * Add 02-howto_fixes.patch to cleanup howto.html.
 
- -- Brice Goglin <bgoglin@debian.org>  Sun, 15 Apr 2012 09:20:02 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Sun, 15 Apr 2012 09:20:29 +0200
 
 lltag (0.14.4-1) unstable; urgency=low
 
