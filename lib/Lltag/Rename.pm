@@ -78,9 +78,12 @@ sub rename_with_values {
 
     print "  Renaming with format '$self->{rename_opt}'...\n" ;
 
-    foreach my $field (keys %{$values}) {
+    # make sure we find tags through their upcase names
+    my $ucvalues = Lltag::Tags::clone_tag_values_uc ($self, $values) ;
+
+    foreach my $field (keys %{$ucvalues}) {
 	# use the first tag for renaming
-	my $val = Lltag::Tags::get_tag_unique_value ($self, $values, $field) ;
+	my $val = Lltag::Tags::get_tag_unique_value ($self, $ucvalues, $field) ;
 	$val = lc ($val)
 	    if $self->{rename_min_opt} ;
 	$val =~ s/ /$self->{rename_sep_opt}/g

@@ -374,4 +374,32 @@ sub apply_regexp_to_tag {
     return $val ;
 }
 
+#######################################################
+# clone tag values (to be able to modify without changing the original) and merge tags case-insensitively
+
+sub clone_tag_values_uc {
+    my $self = shift ;
+    my $old_values = shift ;
+
+    return undef unless defined $old_values ;
+
+    # clone the hash
+    my %new_values;
+
+    # use upcase values first
+    for my $field (keys %{$old_values}) {
+	if ($field eq uc($field)) {
+	    append_tag_multiple_value $self, \%new_values, uc($field), $old_values->{$field} ;
+	}
+    }
+    # other values then
+    for my $field (keys %{$old_values}) {
+	if ($field ne uc($field)) {
+	    append_tag_multiple_value $self, \%new_values, uc($field), $old_values->{$field} ;
+	}
+    }
+
+    return \%new_values ;
+}
+
 1 ;

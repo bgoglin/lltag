@@ -1,3 +1,8 @@
+
+  * When renaming, use tags even if their name is not upper-case
+    as usual (reported by Mathieu Roy  in Debian bug #666677).
+
+
 lltag (0.14.4)
 
   * Fix a typo in usage (reported by Jonas Kölker in Gna! bug #17836).
