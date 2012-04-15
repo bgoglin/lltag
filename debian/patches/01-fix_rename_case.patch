@@ -1,0 +1,56 @@
+Index: lib/Lltag/Rename.pm
+===================================================================
+--- a/lib/Lltag/Rename.pm	(révision 635)
++++ b/lib/Lltag/Rename.pm	(révision 636)
+@@ -78,9 +78,12 @@
+ 
+     print "  Renaming with format '$self->{rename_opt}'...\n" ;
+ 
+-    foreach my $field (keys %{$values}) {
++    # make sure we find tags through their upcase names
++    my $ucvalues = Lltag::Tags::clone_tag_values_uc ($self, $values) ;
++
++    foreach my $field (keys %{$ucvalues}) {
+ 	# use the first tag for renaming
+-	my $val = Lltag::Tags::get_tag_unique_value ($self, $values, $field) ;
++	my $val = Lltag::Tags::get_tag_unique_value ($self, $ucvalues, $field) ;
+ 	$val = lc ($val)
+ 	    if $self->{rename_min_opt} ;
+ 	$val =~ s/ /$self->{rename_sep_opt}/g
+Index: lib/Lltag/Tags.pm
+===================================================================
+--- a/lib/Lltag/Tags.pm	(révision 635)
++++ b/lib/Lltag/Tags.pm	(révision 636)
+@@ -374,4 +374,32 @@
+     return $val ;
+ }
+ 
++#######################################################
++# clone tag values (to be able to modify without changing the original) and merge tags case-insensitively
++
++sub clone_tag_values_uc {
++    my $self = shift ;
++    my $old_values = shift ;
++
++    return undef unless defined $old_values ;
++
++    # clone the hash
++    my %new_values;
++
++    # use upcase values first
++    for my $field (keys %{$old_values}) {
++	if ($field eq uc($field)) {
++	    append_tag_multiple_value $self, \%new_values, uc($field), $old_values->{$field} ;
++	}
++    }
++    # other values then
++    for my $field (keys %{$old_values}) {
++	if ($field ne uc($field)) {
++	    append_tag_multiple_value $self, \%new_values, uc($field), $old_values->{$field} ;
++	}
++    }
++
++    return \%new_values ;
++}
++
+ 1 ;
