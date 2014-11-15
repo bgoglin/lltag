@@ -1,3 +1,8 @@
+Cleanup howto.html.
+---
+ howto.html |   64 +++++++++++++++----------------------------------------------
+ 1 file changed, 16 insertions(+), 48 deletions(-)
+
 Index: doc/howto.html
 ===================================================================
 --- a/doc/howto.html	(révision 628)

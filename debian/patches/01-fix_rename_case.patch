@@ -1,3 +1,9 @@
+Fix renaming when tag names are not upper case, closes: #666677.
+---
+ Rename.pm |    7 +++++--
+ Tags.pm   |   28 ++++++++++++++++++++++++++++
+ 2 files changed, 33 insertions(+), 2 deletions(-)
+
 Index: lib/Lltag/Rename.pm
 ===================================================================
 --- a/lib/Lltag/Rename.pm	(révision 635)
