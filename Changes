@@ -1,7 +1,9 @@
+lltag (0.14.5)
 
   * When renaming, use tags even if their name is not upper-case
-    as usual (reported by Mathieu Roy  in Debian bug #666677).
+    as usual (reported by Mathieu Roy in Debian bug #666677).
 
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Tue, 02 Aug 2016 22:15:00 +0100
 
 lltag (0.14.4)
 
