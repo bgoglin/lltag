@@ -1,3 +1,15 @@
+lltag (0.14.5-1) unstable; urgency=low
+
+  * New upstream release.
+  * Drop 01-fix_rename_case.patch and 02-howto_fixes.patch,
+    applied upstream.
+  * Bump Standards-Version to 3.9.8, no changes needed.
+  * Bump debhelper compatibility level to 9, no change needed.
+  * Use dh_prep instead of dh_clean -k.
+  * Add signature information to debian/watch.
+
+ -- Brice Goglin <bgoglin@debian.org>  Tue, 02 Aug 2016 22:20:51 +0200
+
 lltag (0.14.4-2) unstable; urgency=low
 
   * Bump Standards-Version to 3.9.3, no changes needed.

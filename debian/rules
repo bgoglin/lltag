@@ -24,7 +24,7 @@ clean:
 install: build
 	dh_testdir
 	dh_testroot
-	dh_clean -k
+	dh_prep
 	make install DESTDIR=$(CURDIR)/debian/lltag PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man PERL_INSTALLDIRS=vendor
 
 # Build architecture-dependent files here.

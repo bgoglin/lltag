@@ -3,11 +3,13 @@ Section: sound
 Priority: extra
 Maintainer: Brice Goglin <bgoglin@debian.org>
 Build-Depends:
- debhelper (>= 5)
+ debhelper (>= 9)
 Homepage: http://home.gna.org/lltag/
-Standards-Version: 3.9.3
+Standards-Version: 3.9.8
 Vcs-Svn: svn://svn.gna.org/svn/lltag/branches/debian
 Vcs-Browser: http://svn.gna.org/viewcvs/lltag/branches/debian/
+# gna.org doesn't support https for Vcs-*
+# (vcs-field-uses-insecure-uri lintian info)
 
 Package: lltag
 Architecture: all
