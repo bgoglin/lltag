@@ -1,3 +1,9 @@
+
+  * The lltag website has moved to http://bgoglin.free.fr/lltag
+  * The repository moved to http://github.com/bgoglin/lltag
+  * The mailing list is now lltag@googlegroups.com
+
+
 lltag (0.14.5)
 
   * When renaming, use tags even if their name is not upper-case
