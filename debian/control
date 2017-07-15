@@ -4,12 +4,10 @@ Priority: extra
 Maintainer: Brice Goglin <bgoglin@debian.org>
 Build-Depends:
  debhelper (>= 9)
-Homepage: http://home.gna.org/lltag/
+Homepage: http://bgoglin.free.fr/lltag/
 Standards-Version: 3.9.8
-Vcs-Svn: svn://svn.gna.org/svn/lltag/branches/debian
-Vcs-Browser: http://svn.gna.org/viewcvs/lltag/branches/debian/
-# gna.org doesn't support https for Vcs-*
-# (vcs-field-uses-insecure-uri lintian info)
+Vcs-Git: https://github.com/bgoglin/lltag.git
+Vcs-Browser: https://github.com/bgoglin/lltag
 
 Package: lltag
 Architecture: all

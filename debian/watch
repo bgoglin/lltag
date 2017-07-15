@@ -1,4 +1,3 @@
 version=3
 
-opts="pgpsigurlmangle=s/$/.sig/" \
-http://download.gna.org/lltag/lltag-([\d\w\.]+).tar.bz2 debian uupdate
+https://github.com/bgoglin/lltag/tags .*/lltag-([\d\w\.]+).tar.gz debian uupdate
