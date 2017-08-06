@@ -1,8 +1,12 @@
+lltag is a frontend to tag (and rename) mp3/ogg/flac files automagically.
+
+See http://bgoglin.free.fr/lltag/ for details.
+
 lltag installation instructions
 ===============================
 
-You don't care about this if you use Debian or Gentoo prepackaged
-versions that are available on http://bgoglin.free.fr/lltag
+You don't care about this if you use Debian or Gentoo or any other
+distribution that includes prepackaged lltag versions.
 
 Run 'make' followed by 'make install' as root.
 
