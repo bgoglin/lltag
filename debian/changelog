@@ -4,6 +4,7 @@ lltag (0.14.6-1) UNRELEASED; urgency=low
   * Really bump debhelper compatibility level to 9.
   * Update to new webpage and repository URLs.
   * Remove signature information from debian/watch until supported on new host.
+  * Bump Standards-Version to 4.0.1, no changes needed.
 
  -- Brice Goglin <bgoglin@debian.org>  Sun, 06 Aug 2017 21:53:06 +0200
 
