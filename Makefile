@@ -1,6 +1,6 @@
 NAME	=	lltag
-ifeq ($(shell [ -d .svn ] && echo 1),1)
-	VERSION	=	$(shell cat VERSION)+svn.$(shell date +%Y%m%d)
+ifeq ($(shell [ -d .git ] && echo 1),1)
+	VERSION	=	$(shell cat VERSION)+git$(shell date +%Y%m%d).$(shell git show -s --pretty=format:%h)
 else
 	VERSION	=	$(shell cat VERSION)
 endif

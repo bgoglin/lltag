@@ -35,5 +35,5 @@ Term::ReadLine::Perl may also be used but it might not be able
 to save the history between two lltag invocation.
 
 If you experience any problem,
-please see http://home.gna.org/lltag
-or report to <lltag-users AT gna.org>.
+please see http://bgoglin.free.fr/lltag
+or report to <lltag AT googlegroups.com>.
