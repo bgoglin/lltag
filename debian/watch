@@ -1,3 +1,4 @@
 version=3
 
-https://github.com/bgoglin/lltag/tags .*/lltag-([\d\w\.]+).tar.gz debian uupdate
+opts=pgpsigurlmangle=s/archive\/(\d\S+)\.tar\.gz/releases\/download\/$1\/$1\.tar\.gz\.asc/ \
+ https://github.com/bgoglin/lltag/releases .*/lltag-([\d\w\.]+).tar.gz
