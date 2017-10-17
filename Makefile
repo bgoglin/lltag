@@ -31,7 +31,7 @@ lltag:: lltag.in VERSION build-lib
 clean:: clean-lib
 	rm -f lltag
 
-install:: install-lib
+install:: install-lib lltag
 	install -d -m 0755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(SYSCONFDIR)/lltag/
 	install -m 0755 lltag $(DESTDIR)$(BINDIR)/lltag
 	install -m 0644 formats $(DESTDIR)$(SYSCONFDIR)/lltag/
