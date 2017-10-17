@@ -9,12 +9,21 @@ You don't care about this if you use Debian or Gentoo or any other
 distribution that includes prepackaged lltag versions.
 
 Run 'make' followed by 'make install' as root.
+*Both* command-lines must use the same variables for configuring
+installation paths.
 
 By default, everything is installed in /usr/local/.
-Most directories might be replaced by overriding their default values
-on the command line.
-For instance, a traditional installation might be achieved with
- make install PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
+Most directories might be changed by overriding their default values
+on the command-line.
+For instance, a traditional installation (binary in /usr/bin, data in
+/usr/share, and configuration in /etc) might be achieved with:
+
+$ make PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
+$ make install PREFIX=/usr SYSCONFDIR=/etc MANDIR=/usr/share/man
+
+If you don't want or can't install as root, you may use
+$ make PREFIX=/home/login/where/you/want
+$ make install PREFIX=/home/login/where/you/want
 
 Note that 'make uninstall' (with same options) allows to uninstall.
 
