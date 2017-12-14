@@ -23,8 +23,9 @@ sub read_tags {
 	if $status ;
     @output = map {
 	my $line = $_ ;
-	$line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/ ;
-	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
+	$line =~ s/^\s*comment\[\d+\]\s*:\s*(.*)/$1/i ;
+	$line =~ s/^tracknumber=/NUMBER=/i ;
+	$line =~ s/^track number=/NUMBER=/i ;
 	$line
 	} ( grep { /comment\[\d+\]/ } @output ) ;
     return Lltag::Tags::convert_tag_stream_to_values ($self, @output) ;
