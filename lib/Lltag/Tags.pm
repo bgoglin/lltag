@@ -201,7 +201,7 @@ sub convert_tag_stream_to_values {
 
     while (my $line = shift @_) {
 	chomp $line ;
-	my ($field, $value) = ($line =~ m/^(.*)=(.*)$/) ;
+	my ($field, $value) = ($line =~ m/^(.*?)=(.*)$/) ;
 	next if !$value ;
 
 	# remove the track total from the track number to avoid renaming problems with slashes or so
