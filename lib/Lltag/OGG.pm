@@ -22,7 +22,7 @@ sub read_tags {
 	if $status ;
     @output = map {
 	my $line = $_ ;
-	$line =~ s/^TRACKNUMBER=/NUMBER=/ ;
+	$line =~ s/^TRACKNUMBER=/NUMBER=/i ;
 	$line
 	} @output ;
     return Lltag::Tags::convert_tag_stream_to_values ($self, @output) ;
