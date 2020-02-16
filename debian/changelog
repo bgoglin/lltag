@@ -5,6 +5,7 @@ lltag (0.14.6-2) UNRELEASED; urgency=low
 
   [ Debian Janitor ]
   * Trim trailing whitespace.
+  * Bump debhelper from old 9 to 12.
 
  -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Aug 2017 09:32:33 +0200
 
