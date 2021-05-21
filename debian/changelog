@@ -1,6 +1,11 @@
 lltag (0.14.6-2) UNRELEASED; urgency=low
 
+  [ Brice Goglin ]
   * Enable release signature on github.
+
+  [ Debian Janitor ]
+  * Remove constraints unnecessary since stretch:
+    + Build-Depends: Drop versioned constraint on debhelper.
 
  -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Aug 2017 09:32:33 +0200
 
