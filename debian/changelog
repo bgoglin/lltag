@@ -6,6 +6,7 @@ lltag (0.14.6-2) UNRELEASED; urgency=low
   [ Debian Janitor ]
   * Remove constraints unnecessary since stretch:
     + Build-Depends: Drop versioned constraint on debhelper.
+  * Trim trailing whitespace.
 
  -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Aug 2017 09:32:33 +0200
 
@@ -269,7 +270,7 @@ lltag (0.5-1) unstable; urgency=low
 
 lltag (0.4.2-1) unstable; urgency=low
 
-  * New upstream release. 
+  * New upstream release.
 
  -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Mon,  7 Mar 2005 00:00:04 +0100
 
