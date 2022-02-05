@@ -9,6 +9,7 @@ lltag (0.14.6-2) UNRELEASED; urgency=low
   * Trim trailing whitespace.
   * Bump debhelper dependency to >= 9, since that's what is used in
     debian/compat.
+  * Bump debhelper from deprecated 9 to 13.
 
  -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Aug 2017 09:32:33 +0200
 
