@@ -11,6 +11,7 @@ lltag (0.14.6-2) UNRELEASED; urgency=low
     debian/compat.
   * Bump debhelper from deprecated 9 to 13.
   * Set debhelper-compat version in Build-Depends.
+  * Change priority extra to priority optional.
 
  -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Aug 2017 09:32:33 +0200
 
