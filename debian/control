@@ -1,6 +1,6 @@
 Source: lltag
 Section: sound
-Priority: extra
+Priority: optional
 Maintainer: Brice Goglin <bgoglin@debian.org>
 Build-Depends: debhelper-compat (= 13)
 Homepage: http://bgoglin.free.fr/lltag/
