@@ -2,8 +2,7 @@ Source: lltag
 Section: sound
 Priority: extra
 Maintainer: Brice Goglin <bgoglin@debian.org>
-Build-Depends:
- debhelper (>= 13~)
+Build-Depends: debhelper-compat (= 13)
 Homepage: http://bgoglin.free.fr/lltag/
 Standards-Version: 4.0.1
 Vcs-Git: https://github.com/bgoglin/lltag.git
