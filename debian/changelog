@@ -13,6 +13,8 @@ lltag (0.14.6-2) UNRELEASED; urgency=low
   * Set debhelper-compat version in Build-Depends.
   * Change priority extra to priority optional.
   * Re-export upstream signing key without extra signatures.
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository,
+    Repository-Browse.
 
  -- Brice Goglin <bgoglin@debian.org>  Fri, 11 Aug 2017 09:32:33 +0200
 
